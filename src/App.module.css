@@ -10,16 +10,3 @@
 .header {
   text-align: center;
 }
-
-.link {
-  color: #b318f0;
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
