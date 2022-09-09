@@ -4,6 +4,7 @@ const adminSecret = import.meta.env.VITE_HASURA_ADMIN_SECRET;
 const getEntriesQuery = `
 query GetEntries {
     food_diary_diary_entry(order_by: { day: desc, consumed_at: asc }, limit: 10) {
+        id
         day
         consumed_at
         servings
@@ -159,4 +160,15 @@ type CreateDiaryEntryRecipeInput = {
 
 export async function createDiaryEntry(entry: CreateDiaryEntryInput) {
   return (await fetchQuery(createDiaryEntryQuery, { entry })).json();
+}
+
+const deleteDiaryEntryQuery = `
+mutation DeleteEntry($id: Int!) {
+  delete_food_diary_diary_entry_by_pk(id: $id) {
+    id
+  }
+}`;
+
+export async function deleteDiaryEntry(id: number) {
+  return (await fetchQuery(deleteDiaryEntryQuery, { id })).json();
 }

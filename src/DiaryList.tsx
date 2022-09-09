@@ -1,10 +1,34 @@
 import type { Component } from "solid-js";
 import { createSignal, createResource, Index } from "solid-js";
 import { Link } from "@solidjs/router";
-import { fetchEntries } from "./Api";
+import { fetchEntries, deleteDiaryEntry } from "./Api";
+
+function removeEntry(entry, entriesQuery, mutate) {
+  const newQuery = {
+    ...entriesQuery,
+    data: {
+      ...entriesQuery.data,
+      food_diary_diary_entry: (
+        entriesQuery?.data?.food_diary_diary_entry || []
+      ).filter((e) => e.id !== entry.id),
+    },
+  };
+  mutate(newQuery);
+}
+async function deleteEntry(entry, entriesQuery, mutate) {
+  try {
+    removeEntry(entry, entriesQuery, mutate);
+    const response = await deleteDiaryEntry(entry.id);
+    if (!response.data) {
+      mutate(entriesQuery);
+    }
+  } catch (e) {
+    console.error("Failed to delete entry: ", e);
+  }
+}
 
 const DiaryList: Component = () => {
-  const [getEntriesQuery] = createResource(fetchEntries);
+  const [getEntriesQuery, { mutate }] = createResource(fetchEntries);
   const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];
   const entriesByDay = () =>
     Object.entries(
@@ -40,6 +64,15 @@ const DiaryList: Component = () => {
                           {pluralize(entry().servings, "serving", "servings")}{" "}
                           at {parseAndFormatTime(entry().consumed_at)}
                         </small>
+                      </p>
+                      <p>
+                        <button
+                          onClick={() =>
+                            deleteEntry(entry(), getEntriesQuery(), mutate)
+                          }
+                        >
+                          Delete
+                        </button>
                       </p>
                     </li>
                   )}
