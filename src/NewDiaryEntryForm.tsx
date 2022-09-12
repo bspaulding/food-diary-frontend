@@ -1,5 +1,5 @@
 import type { Component } from "solid-js";
-import { createSignal, createResource, Index, Show } from "solid-js";
+import { createSignal, Index, Show } from "solid-js";
 import { Link } from "@solidjs/router";
 import {
   searchItemsAndRecipes,
@@ -7,6 +7,8 @@ import {
   createDiaryEntry,
 } from "./Api";
 import { throttle } from "@solid-primitives/scheduled";
+import createAuthorizedResource from "./createAuthorizedResource";
+import { useAuth } from "./Auth0";
 
 type RecipeId = number;
 type NutritionItemId = number;
@@ -23,8 +25,11 @@ type Props = {
 
 const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
   const [search, setSearch] = createSignal("");
-  const [getRecentItemsQuery] = createResource(fetchRecentEntries);
-  const [getItemsQuery] = createResource(search, searchItemsAndRecipes);
+  const [getRecentItemsQuery] = createAuthorizedResource(fetchRecentEntries);
+  const [getItemsQuery] = createAuthorizedResource(
+    search,
+    searchItemsAndRecipes
+  );
   const nutritionItems = () =>
     getItemsQuery()?.data?.food_diary_search_nutrition_items || [];
   const recipes = () => getItemsQuery()?.data?.food_diary_search_recipes || [];
@@ -95,6 +100,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
 export default NewDiaryEntryForm;
 
 const LoggableItem: Component = ({ recipe, nutritionItem }) => {
+  const [{ accessToken }] = useAuth();
   const [logging, setLogging] = createSignal(false);
   const [servings, setServings] = createSignal(1);
   const [created, setCreated] = createSignal(false);
@@ -118,7 +124,7 @@ const LoggableItem: Component = ({ recipe, nutritionItem }) => {
                 nutrition_item_id: nutritionItem?.id,
               };
               setSaving(true);
-              await createDiaryEntry(entry);
+              await createDiaryEntry(accessToken(), entry);
               setSaving(false);
               setCreated(true);
               setTimeout(() => setCreated(false), 1000);

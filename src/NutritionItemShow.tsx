@@ -1,11 +1,11 @@
 import type { Component } from "solid-js";
 import { useParams, Link } from "@solidjs/router";
-import { createResource } from "solid-js";
 import { fetchNutritionItem } from "./Api";
+import createAuthorizedResource from "./createAuthorizedResource";
 
 const NutritionItemShow: Component = () => {
   const params = useParams();
-  const [nutritionItemQuery] = createResource(
+  const [nutritionItemQuery] = createAuthorizedResource(
     () => params.id,
     fetchNutritionItem
   );

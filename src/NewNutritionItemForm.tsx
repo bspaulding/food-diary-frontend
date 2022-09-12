@@ -5,18 +5,18 @@ import { useNavigate } from "@solidjs/router";
 import styles from "./NewNutritionItemForm.module.css";
 import type { NutritionItem } from "./Api";
 import { createNutritionItem } from "./Api";
+import { useAuth } from "./Auth0";
 
 const fromTextInput = (setter: Setter<string>) => (event) => {
-  console.log("fromTextInput for ", setter);
   setter(event.target.value || "");
 };
 
 const fromNumberInput = (setter: Setter<number>) => (event) => {
-  console.log("fromNumberInput for ", setter);
   setter(parseInt(event.target.value, 10));
 };
 
 const NewNutritionItemForm: Component = () => {
+  const [{ accessToken }] = useAuth();
   const [disabled, setDisabled] = createSignal(false);
   const navigate = useNavigate();
 
@@ -188,7 +188,7 @@ const NewNutritionItemForm: Component = () => {
       <fieldset>
         <button
           disabled={disabled()}
-          onClick={() => saveItem(setDisabled, navigate, item())}
+          onClick={() => saveItem(accessToken, setDisabled, navigate, item())}
         >
           Save
         </button>
@@ -200,12 +200,13 @@ const NewNutritionItemForm: Component = () => {
 export default NewNutritionItemForm;
 
 const saveItem = async (
+  accessToken: Accessor<string>,
   setLoading: Setter<boolean>,
   navigator: Navigator,
   item: NutritionItem
 ) => {
   setLoading(true);
-  const response = await createNutritionItem(item);
+  const response = await createNutritionItem(accessToken(), item);
   const id = response.data?.insert_food_diary_nutrition_item_one.id;
   navigator(`/nutrition_item/${id}`);
 };

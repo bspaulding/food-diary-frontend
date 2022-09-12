@@ -1,7 +1,9 @@
 import type { Component } from "solid-js";
-import { createSignal, createResource, Index } from "solid-js";
+import { Index } from "solid-js";
 import { Link } from "@solidjs/router";
 import { fetchEntries, deleteDiaryEntry } from "./Api";
+import createAuthorizedResource from "./createAuthorizedResource";
+import { useAuth } from "./Auth0";
 
 function removeEntry(entry, entriesQuery, mutate) {
   const newQuery = {
@@ -15,10 +17,15 @@ function removeEntry(entry, entriesQuery, mutate) {
   };
   mutate(newQuery);
 }
-async function deleteEntry(entry, entriesQuery, mutate) {
+async function deleteEntry(
+  accessToken: Accessor<string>,
+  entry,
+  entriesQuery,
+  mutate
+) {
   try {
     removeEntry(entry, entriesQuery, mutate);
-    const response = await deleteDiaryEntry(entry.id);
+    const response = await deleteDiaryEntry(accessToken(), entry.id);
     if (!response.data) {
       mutate(entriesQuery);
     }
@@ -28,7 +35,8 @@ async function deleteEntry(entry, entriesQuery, mutate) {
 }
 
 const DiaryList: Component = () => {
-  const [getEntriesQuery, { mutate }] = createResource(fetchEntries);
+  const [{ accessToken }] = useAuth();
+  const [getEntriesQuery, { mutate }] = createAuthorizedResource(fetchEntries);
   const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];
   const entriesByDay = () =>
     Object.entries(
@@ -68,7 +76,12 @@ const DiaryList: Component = () => {
                       <p>
                         <button
                           onClick={() =>
-                            deleteEntry(entry(), getEntriesQuery(), mutate)
+                            deleteEntry(
+                              accessToken,
+                              entry(),
+                              getEntriesQuery(),
+                              mutate
+                            )
                           }
                         >
                           Delete

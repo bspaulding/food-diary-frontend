@@ -1,5 +1,4 @@
 import type { Component } from "solid-js";
-import { createResource } from "solid-js";
 import { Routes, Route } from "@solidjs/router";
 import styles from "./App.module.css";
 import DiaryList from "./DiaryList";
@@ -7,7 +6,6 @@ import NewNutritionItemForm from "./NewNutritionItemForm";
 import NutritionItemShow from "./NutritionItemShow";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
 import NewRecipeForm from "./NewRecipeForm";
-import AuthCallback from "./AuthCallback";
 import { useAuth } from "./Auth0";
 
 const App: Component = () => {

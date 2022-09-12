@@ -1,5 +1,4 @@
 const host = "https://direct-satyr-14.hasura.app/v1/graphql";
-const adminSecret = import.meta.env.VITE_HASURA_ADMIN_SECRET;
 
 const getEntriesQuery = `
 query GetEntries {
@@ -14,18 +13,22 @@ query GetEntries {
 }
 `;
 
-async function fetchQuery(query: string, variables: object = {}) {
+async function fetchQuery(
+  accessToken: string,
+  query: string,
+  variables: object = {}
+) {
   return await fetch(`${host}`, {
     method: "POST",
     headers: {
-      "x-hasura-admin-secret": adminSecret,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ query, variables }),
   });
 }
 
-export async function fetchEntries() {
-  const response = await fetchQuery(getEntriesQuery);
+export async function fetchEntries(accessToken: string) {
+  const response = await fetchQuery(accessToken, getEntriesQuery);
   return response.json();
 }
 
@@ -43,8 +46,13 @@ query SearchItemsAndRecipes($search: String!) {
 }
 `;
 
-export async function searchItemsAndRecipes(search: string) {
-  const response = await fetchQuery(searchItemsAndRecipesQuery, { search });
+export async function searchItemsAndRecipes(
+  accessToken: string,
+  search: string
+) {
+  const response = await fetchQuery(accessToken, searchItemsAndRecipesQuery, {
+    search,
+  });
   return response.json();
 }
 
@@ -73,8 +81,11 @@ export type NutritionItem = {
   proteinGrams: number;
 };
 
-export async function createNutritionItem(item: NutritionItem) {
-  const response = await fetchQuery(createNutritionItemMutation, {
+export async function createNutritionItem(
+  accessToken: string,
+  item: NutritionItem
+) {
+  const response = await fetchQuery(accessToken, createNutritionItemMutation, {
     nutritionItem: objectToSnakeCaseKeys(item),
   });
   return response.json();
@@ -119,8 +130,8 @@ query GetNutritionItem($id: Int!) {
   }
 }
 `;
-export async function fetchNutritionItem(id: number) {
-  const response = await fetchQuery(getNutritionItemQuery, { id });
+export async function fetchNutritionItem(accessToken: string, id: number) {
+  const response = await fetchQuery(accessToken, getNutritionItemQuery, { id });
   return response.json();
 }
 
@@ -133,8 +144,8 @@ query GetRecentEntryItems {
 }
 `;
 
-export async function fetchRecentEntries() {
-  return (await fetchQuery(getRecentEntriesQuery)).json();
+export async function fetchRecentEntries(accessToken: string) {
+  return (await fetchQuery(accessToken, getRecentEntriesQuery)).json();
 }
 
 const createDiaryEntryQuery = `
@@ -158,8 +169,13 @@ type CreateDiaryEntryRecipeInput = {
   recipe_id: number;
 };
 
-export async function createDiaryEntry(entry: CreateDiaryEntryInput) {
-  return (await fetchQuery(createDiaryEntryQuery, { entry })).json();
+export async function createDiaryEntry(
+  accessToken: string,
+  entry: CreateDiaryEntryInput
+) {
+  return (
+    await fetchQuery(accessToken, createDiaryEntryQuery, { entry })
+  ).json();
 }
 
 const deleteDiaryEntryQuery = `
@@ -169,6 +185,6 @@ mutation DeleteEntry($id: Int!) {
   }
 }`;
 
-export async function deleteDiaryEntry(id: number) {
-  return (await fetchQuery(deleteDiaryEntryQuery, { id })).json();
+export async function deleteDiaryEntry(accessToken: string, id: number) {
+  return (await fetchQuery(accessToken, deleteDiaryEntryQuery, { id })).json();
 }
