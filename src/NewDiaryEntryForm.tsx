@@ -1,14 +1,10 @@
 import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
 import { Link } from "@solidjs/router";
-import {
-  searchItemsAndRecipes,
-  fetchRecentEntries,
-  createDiaryEntry,
-} from "./Api";
-import { throttle } from "@solid-primitives/scheduled";
+import { fetchRecentEntries, createDiaryEntry } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
+import SearchItemsForm from "./SearchItemsForm";
 
 type RecipeId = number;
 type NutritionItemId = number;
@@ -24,15 +20,7 @@ type Props = {
 };
 
 const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
-  const [search, setSearch] = createSignal("");
   const [getRecentItemsQuery] = createAuthorizedResource(fetchRecentEntries);
-  const [getItemsQuery] = createAuthorizedResource(
-    search,
-    searchItemsAndRecipes
-  );
-  const nutritionItems = () =>
-    getItemsQuery()?.data?.food_diary_search_nutrition_items || [];
-  const recipes = () => getItemsQuery()?.data?.food_diary_search_recipes || [];
   const recentItems = () =>
     getRecentItemsQuery()?.data?.food_diary_recently_logged_items || [];
 
@@ -62,37 +50,14 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
           </Index>
         </ul>
       </div>
-      <section>
-        <input
-          type="search"
-          placeholder="Search Previous Items"
-          name="entry-item-search"
-          onInput={throttle((event) => {
-            setSearch(event.target.value);
-          }, 1000)}
-          value={search()}
-        />
-        <div>
-          <h2>Search Results</h2>
-          <p>{nutritionItems().length + recipes().length} items</p>
-          <ul>
-            <Index each={nutritionItems()}>
-              {(item) => (
-                <li>
-                  <LoggableItem nutritionItem={item()} />
-                </li>
-              )}
-            </Index>
-            <Index each={recipes()}>
-              {(recipe) => (
-                <li>
-                  <LoggableItem recipe={recipe()} />
-                </li>
-              )}
-            </Index>
-          </ul>
-        </div>
-      </section>
+      <SearchItemsForm>
+        {({ nutritionItem, recipe }) => (
+          <li>
+            <LoggableItem nutritionItem={nutritionItem} recipe={recipe} />
+            <small>{recipe ? "[RECIPE]" : "[ITEM]"}</small>
+          </li>
+        )}
+      </SearchItemsForm>
     </div>
   );
 };

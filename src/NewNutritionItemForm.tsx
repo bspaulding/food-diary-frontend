@@ -6,6 +6,7 @@ import styles from "./NewNutritionItemForm.module.css";
 import type { NutritionItem } from "./Api";
 import { createNutritionItem } from "./Api";
 import { useAuth } from "./Auth0";
+import { accessorsToObject } from "./Util";
 
 const fromTextInput = (setter: Setter<string>) => (event) => {
   setter(event.target.value || "");
@@ -15,7 +16,11 @@ const fromNumberInput = (setter: Setter<number>) => (event) => {
   setter(parseInt(event.target.value, 10));
 };
 
-const NewNutritionItemForm: Component = () => {
+type Props = {
+  onSaved?: (id: number) => {};
+};
+
+const NewNutritionItemForm: Component = ({ onSaved }: Props) => {
   const [{ accessToken }] = useAuth();
   const [disabled, setDisabled] = createSignal(false);
   const navigate = useNavigate();
@@ -188,7 +193,12 @@ const NewNutritionItemForm: Component = () => {
       <fieldset>
         <button
           disabled={disabled()}
-          onClick={() => saveItem(accessToken, setDisabled, navigate, item())}
+          onClick={async () => {
+            const id = await saveItem(accessToken(), setDisabled, item());
+            if (!onSaved) {
+              navigate(`/nutrition_item/${id}`);
+            }
+          }}
         >
           Save
         </button>
@@ -200,27 +210,12 @@ const NewNutritionItemForm: Component = () => {
 export default NewNutritionItemForm;
 
 const saveItem = async (
-  accessToken: Accessor<string>,
+  accessToken: string,
   setLoading: Setter<boolean>,
-  navigator: Navigator,
   item: NutritionItem
 ) => {
   setLoading(true);
-  const response = await createNutritionItem(accessToken(), item);
+  const response = await createNutritionItem(accessToken, item);
   const id = response.data?.insert_food_diary_nutrition_item_one.id;
-  navigator(`/nutrition_item/${id}`);
+  return id;
 };
-
-type Accessors<T> = {
-  [P in keyof T]: () => T[P];
-};
-
-function accessorsToObject<T>(accessors: Accessors<T>): T {
-  return Object.entries(accessors).reduce(
-    (acc, [k, v]) => ({
-      ...acc,
-      [k]: v(),
-    }),
-    {}
-  );
-}

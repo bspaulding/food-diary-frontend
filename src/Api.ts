@@ -56,6 +56,22 @@ export async function searchItemsAndRecipes(
   return response.json();
 }
 
+const searchItemsOnlyQuery = `
+query SearchItems($search: String!) {
+  food_diary_search_nutrition_items(args: { search: $search }) {
+    id,
+    description
+  }
+}
+`;
+
+export async function searchItemsOnly(accessToken: string, search: string) {
+  const response = await fetchQuery(accessToken, searchItemsOnlyQuery, {
+    search,
+  });
+  return response.json();
+}
+
 const createNutritionItemMutation = `
 mutation CreateNutritionItem($nutritionItem: food_diary_nutrition_item_insert_input!) {
 	insert_food_diary_nutrition_item_one(object: $nutritionItem) {
@@ -187,4 +203,71 @@ mutation DeleteEntry($id: Int!) {
 
 export async function deleteDiaryEntry(accessToken: string, id: number) {
   return (await fetchQuery(accessToken, deleteDiaryEntryQuery, { id })).json();
+}
+
+export type InsertRecipeInput = {
+  name: string;
+  total_servings: number;
+  recipe_items: InsertRecipeItemInput[];
+};
+
+export type InsertRecipeItemInput =
+  | InsertRecipeItemExistingItem
+  | InsertRecipeItemNewItem;
+
+export type InsertRecipeItemExistingItem = {
+  servings: number;
+  nutrition_item: { id: number; description: string };
+};
+
+export type InsertRecipeItemNewItem = {
+  servings: number;
+  nutrition_item: NutritionItem;
+};
+
+const createRecipeMutation = `
+mutation CreateRecipe($input: food_diary_recipe_insert_input!) {
+  insert_food_diary_recipe_one(object: $input) {
+    id
+  }
+}
+`;
+
+export async function createRecipe(
+  accessToken: string,
+  formInput: InsertRecipeInput
+) {
+  const input = {
+    ...formInput,
+    recipe_items: {
+      data: formInput.recipe_items.map((item) => ({
+        servings: item.servings,
+        nutrition_item_id: item.nutrition_item.id,
+      })),
+    },
+  };
+  return (
+    await fetchQuery(accessToken, createRecipeMutation, { input })
+  ).json();
+}
+
+const fetchRecipeQuery = `
+query GetRecipe($id: Int!) {
+  food_diary_recipe_by_pk(id: $id) {
+    id,
+    name,
+    total_servings,
+    recipe_items {
+      servings
+      nutrition_item {
+        id,
+        description
+      }
+    }
+  }
+}
+`;
+
+export async function fetchRecipe(accessToken: string, id: number) {
+  return (await fetchQuery(accessToken, fetchRecipeQuery, { id })).json();
 }

@@ -16,7 +16,7 @@ export function useAuth() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = createSignal(false);
   const [user, setUser] = createSignal<object>();
-  const [accessToken, setAccessToken] = createSignal<object>();
+  const [accessToken, setAccessToken] = createSignal<string>("");
   const [auth0] = createResource(async function () {
     const client = await configureAuth0Client();
     const params = new URLSearchParams(location.search);
