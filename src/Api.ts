@@ -27,7 +27,24 @@ async function fetchQuery(
   });
 }
 
-export async function fetchEntries(accessToken: string) {
+export type DiaryEntry = {
+  id: number;
+  day: string;
+  consumed_at: string;
+  servings: number;
+  nutrition_item: { description: string };
+  recipe: { name: string };
+};
+
+export type GetEntriesQueryResponse = {
+  data: {
+    food_diary_diary_entry: DiaryEntry[];
+  };
+};
+
+export async function fetchEntries(
+  accessToken: string
+): Promise<GetEntriesQueryResponse> {
   const response = await fetchQuery(accessToken, getEntriesQuery);
   return response.json();
 }
@@ -46,10 +63,17 @@ query SearchItemsAndRecipes($search: String!) {
 }
 `;
 
+export type SearchItemsAndRecipesQueryResponse = {
+  data: {
+    food_diary_search_nutrition_items: { id: number; description: string }[];
+    food_diary_search_recipes: { id: number; name: string }[];
+  };
+};
+
 export async function searchItemsAndRecipes(
   accessToken: string,
   search: string
-) {
+): Promise<SearchItemsAndRecipesQueryResponse> {
   const response = await fetchQuery(accessToken, searchItemsAndRecipesQuery, {
     search,
   });

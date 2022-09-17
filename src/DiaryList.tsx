@@ -1,12 +1,18 @@
-import type { Component } from "solid-js";
+import type { Accessor, Component, Setter } from "solid-js";
 import { Index } from "solid-js";
 import { Link } from "@solidjs/router";
+import type { DiaryEntry, GetEntriesQueryResponse } from "./Api";
 import { fetchEntries, deleteDiaryEntry } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
+import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
 
-function removeEntry(entry, entriesQuery, mutate) {
-  const newQuery = {
+function removeEntry(
+  entry: DiaryEntry,
+  entriesQuery: GetEntriesQueryResponse,
+  mutate: Setter<GetEntriesQueryResponse>
+) {
+  mutate({
     ...entriesQuery,
     data: {
       ...entriesQuery.data,
@@ -14,14 +20,13 @@ function removeEntry(entry, entriesQuery, mutate) {
         entriesQuery?.data?.food_diary_diary_entry || []
       ).filter((e) => e.id !== entry.id),
     },
-  };
-  mutate(newQuery);
+  });
 }
 async function deleteEntry(
   accessToken: Accessor<string>,
-  entry,
-  entriesQuery,
-  mutate
+  entry: DiaryEntry,
+  entriesQuery: GetEntriesQueryResponse,
+  mutate: Setter<GetEntriesQueryResponse>
 ) {
   try {
     removeEntry(entry, entriesQuery, mutate);
@@ -100,16 +105,3 @@ const DiaryList: Component = () => {
 };
 
 export default DiaryList;
-
-const timeFormat = new Intl.DateTimeFormat("en-US", { timeStyle: "short" });
-function parseAndFormatTime(timestamp: string): string {
-  return timeFormat.format(new Date(timestamp));
-}
-
-const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "full" });
-function parseAndFormatDay(timestamp: string): string {
-  return dateFormat.format(new Date(timestamp));
-}
-
-const pluralize = (n, singular, plural) =>
-  `${n} ${n === 1 ? singular : plural}`;
