@@ -6,7 +6,7 @@ type Props = {
 };
 
 const DateBadge: Component<Props> = ({ class: klass, date }) => (
-  <div class={`${klass || ""} text-center text-xl`}>
+  <div class={`${klass || ""} text-center text-xl font-semibold`}>
     <p class="text-4xl">{dayOfMonth.format(date)}</p>
     <p class="uppercase">{month.format(date)}</p>
   </div>

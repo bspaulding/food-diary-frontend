@@ -7,6 +7,7 @@ import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
 import DateBadge from "./DateBadge";
+import ButtonLink from "./ButtonLink";
 
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
@@ -25,8 +26,8 @@ const DiaryList: Component = () => {
 
   return (
     <>
-      <p>
-        <Link href="/diary_entry/new">Add New Entry</Link>
+      <p class="mb-3">
+        <ButtonLink href="/diary_entry/new">Add New Entry</ButtonLink>
       </p>
       <ul class="mt-4">
         <Index each={entriesByDay()}>
@@ -82,7 +83,7 @@ const DiaryList: Component = () => {
                       </p>
                       <Show when={entry().recipe?.id}>
                         <p>
-                          <span class="bg-indigo-600 text-slate-50 px-2 py-1 rounded text-xs">
+                          <span class="bg-slate-400 text-slate-50 px-2 py-1 rounded text-xs">
                             RECIPE
                           </span>
                         </p>

@@ -5,6 +5,7 @@ import { fetchRecentEntries, createDiaryEntry } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
 import SearchItemsForm from "./SearchItemsForm";
+import ButtonLink from "./ButtonLink";
 
 type RecipeId = number;
 type NutritionItemId = number;
@@ -26,17 +27,13 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
 
   return (
     <div>
-      <p>
-        <Link href="/">Back to Diary</Link>
-      </p>
-      <p>
-        <Link href="/nutrition_item/new">Add New Nutrition Item</Link>
-      </p>
-      <p>
-        <Link href="/recipe/new">Create New Recipe</Link>
-      </p>
+      <div class="flex space-x-4 mb-4">
+        <ButtonLink href="/">Back to Diary</ButtonLink>
+        <ButtonLink href="/nutrition_item/new">Add Item</ButtonLink>
+        <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
+      </div>
       <div>
-        <h2>Recently Logged Items</h2>
+        <h2>Suggestions</h2>
         <ul>
           <Index each={recentItems()}>
             {(item) => (
@@ -71,10 +68,20 @@ const LoggableItem: Component = ({ recipe, nutritionItem }) => {
   const [created, setCreated] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   return (
-    <p>
-      {nutritionItem?.description || recipe?.name}
-      {logging() ? (
-        <>
+    <div class="ml-7">
+      <div class="flex items-center -ml-7">
+        <button
+          class={`mr-1 text-3xl text-indigo-600 transition-transform ${
+            logging() ? "rotate-45" : ""
+          }`}
+          onClick={() => setLogging((l) => !l)}
+        >
+          ⊕
+        </button>
+        <p>{nutritionItem?.description || recipe?.name}</p>
+      </div>
+      <Show when={logging()}>
+        <div class="ml-2 flex">
           <input
             type="number"
             value={servings()}
@@ -82,6 +89,7 @@ const LoggableItem: Component = ({ recipe, nutritionItem }) => {
             style={{ width: "50px" }}
           />
           <button
+            class="ml-2 bg-indigo-600 text-slate-50 py-1 px-3 text-lg rounded-md"
             onClick={async () => {
               const entry = {
                 servings: servings(),
@@ -98,15 +106,12 @@ const LoggableItem: Component = ({ recipe, nutritionItem }) => {
           >
             Save
           </button>
-          <button onClick={() => setLogging(false)}>Cancel</button>
           <Show when={saving()}>Saving...</Show>
-        </>
-      ) : (
-        <button onClick={() => setLogging(true)}>Log This</button>
-      )}
+        </div>
+      </Show>
       <Show when={created()}>
         <span style={{ color: "green" }}>✔</span>
       </Show>
-    </p>
+    </div>
   );
 };

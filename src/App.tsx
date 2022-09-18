@@ -12,12 +12,12 @@ const App: Component = () => {
   const [{ user, isAuthenticated, auth0 }] = useAuth();
 
   return (
-    <div class="font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-16">
+    <div class="font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-20">
       <header class="fixed top-0 left-0 right-0 h-16 flex px-4 justify-start items-center bg-slate-50">
         <h1 class="text-2xl font-bold">Food Diary</h1>
         <Show when={user()}>
           <img
-            class="absolute right-2 w-12 h-12 border rounded-full"
+            class="absolute right-2 w-12 h-12 border border-slate-800 rounded-full"
             src={user().picture}
           />
         </Show>
