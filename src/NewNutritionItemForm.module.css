@@ -28,7 +28,7 @@
     background: cornflowerblue;
     padding: var(--vertical-spacing) 0px;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
     color: white;
 }
@@ -51,8 +51,8 @@
 .form fieldset.facts label {
     grid-column: 1 / var(--columns);
     display: flex;
-    align-items: center;
-    justify-content: end;
+    align-items: flex-end;
+    justify-content: flex-end;
 }
 
 .form fieldset.facts input {

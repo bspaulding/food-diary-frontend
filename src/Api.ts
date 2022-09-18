@@ -2,13 +2,14 @@ const host = "https://direct-satyr-14.hasura.app/v1/graphql";
 
 const getEntriesQuery = `
 query GetEntries {
-    food_diary_diary_entry(order_by: { day: desc, consumed_at: asc }, limit: 10) {
+    food_diary_diary_entry(order_by: { day: desc, consumed_at: asc }) {
         id
         day
         consumed_at
+        calories
         servings
-        nutrition_item { description }
-        recipe { name }
+        nutrition_item { id, description, calories }
+        recipe { id, name, calories }
     }
 }
 `;
@@ -32,8 +33,8 @@ export type DiaryEntry = {
   day: string;
   consumed_at: string;
   servings: number;
-  nutrition_item: { description: string };
-  recipe: { name: string };
+  nutrition_item: { id: number; description: string; calories: number };
+  recipe: { id: number; name: string; calories: number };
 };
 
 export type GetEntriesQueryResponse = {

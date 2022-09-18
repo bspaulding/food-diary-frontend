@@ -1,6 +1,5 @@
 import type { Component } from "solid-js";
 import { Routes, Route } from "@solidjs/router";
-import styles from "./App.module.css";
 import DiaryList from "./DiaryList";
 import NewNutritionItemForm from "./NewNutritionItemForm";
 import NutritionItemShow from "./NutritionItemShow";
@@ -13,12 +12,14 @@ const App: Component = () => {
   const [{ user, isAuthenticated, auth0 }] = useAuth();
 
   return (
-    <div class={styles.App}>
-      <header class={styles.header}>
-        <h1>Food Diary</h1>
+    <div class="font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-16">
+      <header class="fixed top-0 left-0 right-0 h-16 flex px-4 justify-start items-center bg-slate-50">
+        <h1 class="text-2xl font-bold">Food Diary</h1>
         <Show when={user()}>
-          <img class={styles.Avatar} src={user().picture} />
-          <p> {user().name || user().nickname} </p>
+          <img
+            class="absolute right-2 w-12 h-12 border rounded-full"
+            src={user().picture}
+          />
         </Show>
       </header>
       {isAuthenticated() ? (
