@@ -6,6 +6,7 @@ import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
 import SearchItemsForm from "./SearchItemsForm";
 import ButtonLink from "./ButtonLink";
+import SegmentedControl from "./SegmentedControl";
 
 type RecipeId = number;
 type NutritionItemId = number;
@@ -32,29 +33,44 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
         <ButtonLink href="/nutrition_item/new">Add Item</ButtonLink>
         <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
       </div>
-      <div>
-        <h2>Suggestions</h2>
-        <ul>
-          <Index each={recentItems()}>
-            {(item) => (
-              <li>
-                <LoggableItem
-                  recipe={item().recipe}
-                  nutritionItem={item().nutrition_item}
-                />
-              </li>
-            )}
-          </Index>
-        </ul>
-      </div>
-      <SearchItemsForm>
-        {({ nutritionItem, recipe }) => (
-          <li>
-            <LoggableItem nutritionItem={nutritionItem} recipe={recipe} />
-            <small>{recipe ? "[RECIPE]" : "[ITEM]"}</small>
-          </li>
+      <SegmentedControl segments={["Suggestions", "Search"]}>
+        {(segment) => (
+          <>
+            <Show when={segment === "Suggestions"}>
+              <div>
+                <h2 class="text-lg font-semibold">Suggested Items</h2>
+                <ul>
+                  <Index each={recentItems()}>
+                    {(item) => (
+                      <li>
+                        <LoggableItem
+                          recipe={item().recipe}
+                          nutritionItem={item().nutrition_item}
+                        />
+                      </li>
+                    )}
+                  </Index>
+                </ul>
+              </div>
+            </Show>
+            <Show when={segment === "Search"}>
+              <SearchItemsForm>
+                {({ nutritionItem, recipe }) => (
+                  <li>
+                    <LoggableItem
+                      nutritionItem={nutritionItem}
+                      recipe={recipe}
+                    />
+                    <span class="bg-slate-400 text-slate-50 px-2 py-1 rounded text-xs ml-8">
+                      {recipe ? "RECIPE" : "ITEM"}
+                    </span>
+                  </li>
+                )}
+              </SearchItemsForm>
+            </Show>
+          </>
         )}
-      </SearchItemsForm>
+      </SegmentedControl>
     </div>
   );
 };

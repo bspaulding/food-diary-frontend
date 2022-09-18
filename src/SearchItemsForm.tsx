@@ -29,8 +29,9 @@ const SearchItemsForm: Component = ({ children, queryType }: Props) => {
   const recipes = () => getItemsQuery()?.data?.food_diary_search_recipes || [];
 
   return (
-    <section>
+    <section class="flex flex-col mt-5">
       <input
+        class="border rounded px-2 text-lg"
         type="search"
         placeholder="Search Previous Items"
         name="entry-item-search"
@@ -39,17 +40,28 @@ const SearchItemsForm: Component = ({ children, queryType }: Props) => {
         }, 1000)}
         value={search()}
       />
-      <div>
-        <h2>Search Results</h2>
-        <p>{nutritionItems().length + recipes().length} items</p>
-        <ul>
-          <Index each={nutritionItems()}>
-            {(item) => children({ nutritionItem: item() })}
-          </Index>
-          <Index each={recipes()}>
-            {(recipe) => children({ recipe: recipe() })}
-          </Index>
-        </ul>
+      <div class="px-1">
+        <Show when={!search().length}>
+          <p class="text-center mt-4 text-slate-400">
+            Search for an item or recipe you've previously added.
+          </p>
+        </Show>
+        <Show when={search().length}>
+          <p class="text-center mt-4 text-slate-400">
+            <Show when={getItemsQuery.loading}>Searching...</Show>
+            <Show when={!getItemsQuery.loading}>
+              {nutritionItems().length + recipes().length} items
+            </Show>
+          </p>
+          <ul>
+            <Index each={nutritionItems()}>
+              {(item) => children({ nutritionItem: item() })}
+            </Index>
+            <Index each={recipes()}>
+              {(recipe) => children({ recipe: recipe() })}
+            </Index>
+          </ul>
+        </Show>
       </div>
     </section>
   );
