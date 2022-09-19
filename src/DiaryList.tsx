@@ -32,7 +32,7 @@ const DiaryList: Component = () => {
       <ul class="mt-4">
         <Index each={entriesByDay()}>
           {(dayEntries, i) => (
-            <li class="grid grid-cols-6 -ml-4">
+            <li class="grid grid-cols-6 -ml-4 mb-6">
               <div>
                 <DateBadge
                   class="col-span-1"

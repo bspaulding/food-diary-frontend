@@ -2,7 +2,6 @@ import type { Component, Accessor, Setter } from "solid-js";
 import { createSignal } from "solid-js";
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
-import styles from "./NewNutritionItemForm.module.css";
 import type { NutritionItem } from "./Api";
 import { createNutritionItem } from "./Api";
 import { useAuth } from "./Auth0";
@@ -59,8 +58,8 @@ const NewNutritionItemForm: Component = ({ onSaved }: Props) => {
     });
 
   return (
-    <form class={styles.form}>
-      <fieldset>
+    <form>
+      <fieldset class="flex flex-col">
         <label for="description">Description</label>
         <input
           type="text"
@@ -70,8 +69,8 @@ const NewNutritionItemForm: Component = ({ onSaved }: Props) => {
           onInput={fromTextInput(setDescription)}
         />
       </fieldset>
-      <fieldset class={styles.facts}>
-        <legend>Nutrition Facts</legend>
+      <fieldset class="flex flex-col my-4">
+        <legend class="font-semibold">Nutrition Facts</legend>
 
         <label for="calories">Calories</label>
         <input
@@ -190,8 +189,9 @@ const NewNutritionItemForm: Component = ({ onSaved }: Props) => {
           onInput={fromNumberInput(setProteinGrams)}
         />
       </fieldset>
-      <fieldset>
+      <fieldset class="mb-4">
         <button
+          class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
           disabled={disabled()}
           onClick={async () => {
             const id = await saveItem(accessToken(), setDisabled, item());
@@ -200,7 +200,7 @@ const NewNutritionItemForm: Component = ({ onSaved }: Props) => {
             }
           }}
         >
-          Save
+          {disabled() ? "Saving..." : "Save"}
         </button>
       </fieldset>
     </form>

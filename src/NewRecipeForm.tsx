@@ -1,11 +1,11 @@
 import type { Component } from "solid-js";
 import { createSignal, Index } from "solid-js";
 import { Link, useNavigate } from "@solidjs/router";
-import styles from "./NewNutritionItemForm.module.css";
 import type { InsertRecipeInput } from "./Api";
 import { createRecipe } from "./Api";
 import SearchItemsForm, { ItemsQueryType } from "./SearchItemsForm";
 import { useAuth } from "./Auth0";
+import ButtonLink from "./ButtonLink";
 
 const NewRecipeForm: Component = () => {
   const [{ accessToken }] = useAuth();
@@ -16,12 +16,12 @@ const NewRecipeForm: Component = () => {
   });
   const navigate = useNavigate();
   return (
-    <>
-      <Link href="/">Back to entries</Link>
-      <h2>New Recipe</h2>
-      <form class={styles.form}>
-        <fieldset>
-          <legend>Info</legend>
+    <div>
+      <ButtonLink href="/">Back to entries</ButtonLink>
+      <h2 class="font-bold text-xl mt-4">New Recipe</h2>
+      <form class="flex flex-col">
+        <fieldset class="flex flex-col">
+          <legend class="font-semibold">Info</legend>
           <label for="name">Name</label>
           <input
             type="text"
@@ -53,18 +53,19 @@ const NewRecipeForm: Component = () => {
           />
         </fieldset>
         <fieldset>
-          <legend>Items</legend>
+          <legend class="font-semibold">Items</legend>
           <small>{input().recipe_items.length} items in recipe.</small>
           <ul>
             <Index each={input().recipe_items}>
               {(item, i) => (
-                <li>
+                <li class="flex flex-row place-content-between items-center">
                   <p>{item().nutrition_item.description}</p>
                   <input
                     type="number"
                     value={item().servings}
                     min="0"
                     step="0.1"
+                    class="w-20"
                     onInput={(event) => {
                       const servings = parseFloat(event.target.value, 10);
                       if (isNaN(servings)) {
@@ -89,12 +90,12 @@ const NewRecipeForm: Component = () => {
           </ul>
         </fieldset>
         <fieldset>
-          <legend>Add New Items</legend>
+          <legend class="font-semibold">Add New Items</legend>
           <SearchItemsForm queryType={ItemsQueryType.ItemsOnly}>
-            {({ nutritionItem }) => (
-              <li>
-                <p>{nutritionItem.description}</p>
+            {({ clear, nutritionItem }) => (
+              <li class="flex flex-row">
                 <button
+                  class="mr-1 text-3xl text-indigo-600 transition-transform "
                   onClick={(event) => {
                     event.preventDefault();
                     setInput((input) => ({
@@ -107,17 +108,20 @@ const NewRecipeForm: Component = () => {
                         },
                       ],
                     }));
+                    clear();
                     return false;
                   }}
                 >
-                  Add to Recipe
+                  ⊕
                 </button>
+                <p>{nutritionItem.description}</p>
               </li>
             )}
           </SearchItemsForm>
         </fieldset>
-        <fieldset>
+        <fieldset class="mt-4">
           <button
+            class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
             onClick={async (event) => {
               event.preventDefault();
               const response = await createRecipe(accessToken(), input());
@@ -132,7 +136,7 @@ const NewRecipeForm: Component = () => {
           </button>
         </fieldset>
       </form>
-    </>
+    </div>
   );
 };
 

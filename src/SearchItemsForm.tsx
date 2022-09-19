@@ -27,6 +27,7 @@ const SearchItemsForm: Component = ({ children, queryType }: Props) => {
   const nutritionItems = () =>
     getItemsQuery()?.data?.food_diary_search_nutrition_items || [];
   const recipes = () => getItemsQuery()?.data?.food_diary_search_recipes || [];
+  const clear = () => setSearch("");
 
   return (
     <section class="flex flex-col mt-5">
@@ -55,10 +56,10 @@ const SearchItemsForm: Component = ({ children, queryType }: Props) => {
           </p>
           <ul>
             <Index each={nutritionItems()}>
-              {(item) => children({ nutritionItem: item() })}
+              {(item) => children({ clear, nutritionItem: item() })}
             </Index>
             <Index each={recipes()}>
-              {(recipe) => children({ recipe: recipe() })}
+              {(recipe) => children({ clear, recipe: recipe() })}
             </Index>
           </ul>
         </Show>
