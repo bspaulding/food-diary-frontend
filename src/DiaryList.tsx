@@ -1,5 +1,5 @@
 import type { Accessor, Component, Setter } from "solid-js";
-import { Index } from "solid-js";
+import { Index, Show } from "solid-js";
 import { Link } from "@solidjs/router";
 import type { DiaryEntry, GetEntriesQueryResponse } from "./Api";
 import { fetchEntries, deleteDiaryEntry } from "./Api";
@@ -30,6 +30,9 @@ const DiaryList: Component = () => {
         <ButtonLink href="/diary_entry/new">Add New Entry</ButtonLink>
       </p>
       <ul class="mt-4">
+        <Show when={entries().length === 0}>
+          <p class="text-slate-400 text-center">No entries, yet...</p>
+        </Show>
         <Index each={entriesByDay()}>
           {(dayEntries, i) => (
             <li class="grid grid-cols-6 -ml-4 mb-6">

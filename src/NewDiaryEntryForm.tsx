@@ -40,6 +40,11 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
               <div>
                 <h2 class="text-lg font-semibold">Suggested Items</h2>
                 <ul>
+                  <Show when={recentItems().length === 0}>
+                    <p class="text-slate-400 text-center">
+                      No suggestions available
+                    </p>
+                  </Show>
                   <Index each={recentItems()}>
                     {(item) => (
                       <li>

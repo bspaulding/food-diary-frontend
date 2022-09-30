@@ -1,4 +1,4 @@
-const host = "https://direct-satyr-14.hasura.app/v1/graphql";
+const host = "/api/v1/graphql";
 
 const getEntriesQuery = `
 query GetEntries {
