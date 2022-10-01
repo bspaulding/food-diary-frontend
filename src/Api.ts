@@ -1,4 +1,4 @@
-const host = "/api/v1/graphql";
+const host = "https://food-diary.motingo.com/api/v1/graphql";
 
 const getEntriesQuery = `
 query GetEntries {
@@ -56,7 +56,7 @@ query SearchItemsAndRecipes($search: String!) {
     id,
     description
   }
-  
+
   food_diary_search_recipes(args: { search: $search }) {
     id,
     name
@@ -101,11 +101,11 @@ const createNutritionItemMutation = `
 mutation CreateNutritionItem($nutritionItem: food_diary_nutrition_item_insert_input!) {
 	insert_food_diary_nutrition_item_one(object: $nutritionItem) {
     id
-  }  
+  }
 }
 `;
 
-export type NutritionItem = {
+export type NutritionItemAttrs = {
   description: string;
   calories: number;
   totalFatGrams: number;
@@ -121,6 +121,10 @@ export type NutritionItem = {
   addedSugarsGrams: number;
   proteinGrams: number;
 };
+
+export type NutritionItem = NutritionItemAttrs & {
+	id: number;
+}
 
 export async function createNutritionItem(
   accessToken: string,
@@ -295,4 +299,31 @@ query GetRecipe($id: Int!) {
 
 export async function fetchRecipe(accessToken: string, id: number) {
   return (await fetchQuery(accessToken, fetchRecipeQuery, { id })).json();
+}
+
+export type NewDiaryEntry = {
+	consumed_at: string,
+	servings: number,
+	nutrition_item: NutritionItemAttrs
+}
+
+const insertDiaryEntriesWithItemsMutation = `
+mutation InsertDiaryEntriesWithNewItems($entries: [food_diary_diary_entry_insert_input!]!){
+  insert_food_diary_diary_entry(objects: $entries) {
+    affected_rows
+  }
+}
+`;
+
+export async function insertDiaryEntries(accessToken: string, entries: NewDiaryEntry[]) {
+	return (await fetchQuery(
+					accessToken,
+					insertDiaryEntriesWithItemsMutation, {
+						entries: entries.map(entry => ({
+								...entry,
+									nutrition_item: {
+													data: objectToSnakeCaseKeys(entry.nutrition_item),
+									}
+						}))
+					})).json();
 }

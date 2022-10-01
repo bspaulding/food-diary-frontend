@@ -6,6 +6,7 @@ import NutritionItemShow from "./NutritionItemShow";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
 import NewRecipeForm from "./NewRecipeForm";
 import RecipeShow from "./RecipeShow";
+import ImportDiaryEntries from "./ImportDiaryEntries";
 import { useAuth } from "./Auth0";
 
 const App: Component = () => {
@@ -26,6 +27,7 @@ const App: Component = () => {
         <Routes>
           <Route path="/" component={DiaryList} />
           <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
+          <Route path="/diary_entry/import" component={ImportDiaryEntries} />
           <Route path="/nutrition_item/new" component={NewNutritionItemForm} />
           <Route path="/nutrition_item/:id" component={NutritionItemShow} />
           <Route path="/nutrition_item/:id" component={NutritionItemShow} />

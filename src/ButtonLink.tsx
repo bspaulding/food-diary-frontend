@@ -3,15 +3,16 @@ import { Link } from "@solidjs/router";
 
 type Props = {
   children: string;
+	class?: string;
   href: string;
 };
 
-const ButtonLink: Component<Props> = ({ children, href }) => (
+const ButtonLink: Component<Props> = (props) => (
   <Link
-    class="bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md"
-    href={href}
+    class={`bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md ${props['class']}`}
+    href={props.href}
   >
-    {children}
+    {props.children}
   </Link>
 );
 
