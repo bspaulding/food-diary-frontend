@@ -3,6 +3,7 @@ import { Routes, Route } from "@solidjs/router";
 import DiaryList from "./DiaryList";
 import NewNutritionItemForm from "./NewNutritionItemForm";
 import NutritionItemShow from "./NutritionItemShow";
+import NutritionItemEdit from "./NutritionItemEdit";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
 import NewRecipeForm from "./NewRecipeForm";
 import RecipeShow from "./RecipeShow";
@@ -30,7 +31,10 @@ const App: Component = () => {
           <Route path="/diary_entry/import" component={ImportDiaryEntries} />
           <Route path="/nutrition_item/new" component={NewNutritionItemForm} />
           <Route path="/nutrition_item/:id" component={NutritionItemShow} />
-          <Route path="/nutrition_item/:id" component={NutritionItemShow} />
+          <Route
+            path="/nutrition_item/:id/edit"
+            component={NutritionItemEdit}
+          />
           <Route path="/recipe/new" component={NewRecipeForm} />
           <Route path="/recipe/:id" component={RecipeShow} />
         </Routes>

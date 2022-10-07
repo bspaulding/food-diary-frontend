@@ -1,9 +1,11 @@
 import type { Component } from "solid-js";
+import { Show } from "solid-js";
 import { useParams, Link } from "@solidjs/router";
 import { fetchNutritionItem } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
+import NewNutritionItemForm from "./NewNutritionItemForm";
 
-const NutritionItemShow: Component = () => {
+const NutritionItemEdit: Component = () => {
   const params = useParams();
   const [nutritionItemQuery] = createAuthorizedResource(
     () => params.id,
@@ -13,16 +15,10 @@ const NutritionItemShow: Component = () => {
   const nutritionItem = () =>
     nutritionItemQuery()?.data?.food_diary_nutrition_item_by_pk || {};
   return (
-    <div style={{ margin: "18px" }}>
-      <p>
-        <Link href="/">Back to entries</Link>
-      </p>
-      <p>
-        <Link href={`/nutrition_item/${params.id}/edit`}>Edit</Link>
-      </p>
-      <pre>{JSON.stringify(nutritionItem(), null, 2)}</pre>
-    </div>
+    <Show when={nutritionItem().id}>
+      <NewNutritionItemForm initialItem={nutritionItem()} />
+    </Show>
   );
 };
 
-export default NutritionItemShow;
+export default NutritionItemEdit;

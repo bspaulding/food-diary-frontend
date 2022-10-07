@@ -136,6 +136,25 @@ export async function createNutritionItem(
   return response.json();
 }
 
+const updateNutritionItemMutation = `
+mutation UpdateItem($id: Int!, $attrs: food_diary_nutrition_item_set_input!) {
+  update_food_diary_nutrition_item_by_pk(pk_columns: {id: $id }, _set: $attrs) {
+    id
+  }
+}
+`;
+
+export async function updateNutritionItem(
+  accessToken: string,
+  item: NutritionItem
+) {
+  const response = await fetchQuery(accessToken, updateNutritionItemMutation, {
+		id: item.id,
+    attrs: objectToSnakeCaseKeys(item),
+  });
+  return response.json();
+}
+
 function isUppercase(s: string): boolean {
   return s === s.toUpperCase();
 }

@@ -3,7 +3,7 @@ import { createSignal } from "solid-js";
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
 import type { NutritionItem } from "./Api";
-import { createNutritionItem } from "./Api";
+import { createNutritionItem, updateNutritionItem } from "./Api";
 import { useAuth } from "./Auth0";
 import { accessorsToObject } from "./Util";
 
@@ -17,30 +17,59 @@ const fromNumberInput = (setter: Setter<number>) => (event) => {
 
 type Props = {
   onSaved?: (id: number) => {};
+  initialItem?: NutritionItem;
 };
 
-const NewNutritionItemForm: Component = ({ onSaved }: Props) => {
+const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
   const [{ accessToken }] = useAuth();
   const [disabled, setDisabled] = createSignal(false);
   const navigate = useNavigate();
 
-  const [description, setDescription] = createSignal("");
-  const [calories, setCalories] = createSignal(0);
-  const [totalFatGrams, setTotalFatGrams] = createSignal(0);
-  const [saturatedFatGrams, setSaturatedFatGrams] = createSignal(0);
-  const [transFatGrams, setTransFatGrams] = createSignal(0);
-  const [polyunsaturatedFatGrams, setPolyunsaturatedFatGrams] = createSignal(0);
-  const [monounsaturatedFatGrams, setMonounsaturatedFatGrams] = createSignal(0);
-  const [cholesterolMilligrams, setCholesterolMilligrams] = createSignal(0);
-  const [sodiumMilligrams, setSodiumMilligrams] = createSignal(0);
-  const [totalCarbohydrateGrams, setTotalCarbohydrateGrams] = createSignal(0);
-  const [dietaryFiberGrams, setDietaryFiberGrams] = createSignal(0);
-  const [totalSugarsGrams, setTotalSugarsGrams] = createSignal(0);
-  const [addedSugarsGrams, setAddedSugarsGrams] = createSignal(0);
-  const [proteinGrams, setProteinGrams] = createSignal(0);
+  const [id, _setId] = createSignal(initialItem?.id);
+  const [description, setDescription] = createSignal(
+    initialItem?.description || ""
+  );
+  const [calories, setCalories] = createSignal(initialItem?.calories || 0);
+  const [totalFatGrams, setTotalFatGrams] = createSignal(
+    initialItem?.totalFatGrams || 0
+  );
+  const [saturatedFatGrams, setSaturatedFatGrams] = createSignal(
+    initialItem?.saturatedFatGrams || 0
+  );
+  const [transFatGrams, setTransFatGrams] = createSignal(
+    initialItem?.transFatGrams || 0
+  );
+  const [polyunsaturatedFatGrams, setPolyunsaturatedFatGrams] = createSignal(
+    initialItem?.polyunsaturatedFatGrams || 0
+  );
+  const [monounsaturatedFatGrams, setMonounsaturatedFatGrams] = createSignal(
+    initialItem?.monounsaturatedFatGrams || 0
+  );
+  const [cholesterolMilligrams, setCholesterolMilligrams] = createSignal(
+    initialItem?.cholesterolMilligrams || 0
+  );
+  const [sodiumMilligrams, setSodiumMilligrams] = createSignal(
+    initialItem?.sodiumMilligrams || 0
+  );
+  const [totalCarbohydrateGrams, setTotalCarbohydrateGrams] = createSignal(
+    initialItem?.totalCarbohydrateGrams || 0
+  );
+  const [dietaryFiberGrams, setDietaryFiberGrams] = createSignal(
+    initialItem?.dietaryFiberGrams || 0
+  );
+  const [totalSugarsGrams, setTotalSugarsGrams] = createSignal(
+    initialItem?.totalSugarsGrams || 0
+  );
+  const [addedSugarsGrams, setAddedSugarsGrams] = createSignal(
+    initialItem?.addedSugarsGrams || 0
+  );
+  const [proteinGrams, setProteinGrams] = createSignal(
+    initialItem?.proteinGrams || 0
+  );
 
   const item = () =>
     accessorsToObject({
+      id,
       description,
       calories,
       totalFatGrams,
@@ -215,7 +244,13 @@ const saveItem = async (
   item: NutritionItem
 ) => {
   setLoading(true);
-  const response = await createNutritionItem(accessToken, item);
-  const id = response.data?.insert_food_diary_nutrition_item_one.id;
-  return id;
+  if (item.id) {
+    const response = await updateNutritionItem(accessToken, item);
+    const id = response.data?.update_food_diary_nutrition_item_by_pk.id;
+    return id;
+  } else {
+    const response = await createNutritionItem(accessToken, item);
+    const id = response.data?.insert_food_diary_nutrition_item_one.id;
+    return id;
+  }
 };
