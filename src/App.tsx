@@ -7,6 +7,7 @@ import NutritionItemEdit from "./NutritionItemEdit";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
 import NewRecipeForm from "./NewRecipeForm";
 import RecipeShow from "./RecipeShow";
+import RecipeEdit from "./RecipeEdit";
 import ImportDiaryEntries from "./ImportDiaryEntries";
 import { useAuth } from "./Auth0";
 
@@ -37,6 +38,7 @@ const App: Component = () => {
           />
           <Route path="/recipe/new" component={NewRecipeForm} />
           <Route path="/recipe/:id" component={RecipeShow} />
+          <Route path="/recipe/:id/edit" component={RecipeEdit} />
         </Routes>
       ) : (
         <button onClick={() => auth0()?.loginWithRedirect()}>Log In</button>

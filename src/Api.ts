@@ -253,15 +253,20 @@ export async function deleteDiaryEntry(accessToken: string, id: number) {
   return (await fetchQuery(accessToken, deleteDiaryEntryQuery, { id })).json();
 }
 
-export type InsertRecipeInput = {
+export type RecipeAttrs = {
   name: string;
   total_servings: number;
   recipe_items: InsertRecipeItemInput[];
 };
 
+export type Recipe = RecipeAttrs & {
+	id: number;
+};
+
 export type InsertRecipeItemInput =
-  | InsertRecipeItemExistingItem
-  | InsertRecipeItemNewItem;
+  | InsertRecipeItemExistingItem;
+// TODO: Support nested new item creation
+  // | InsertRecipeItemNewItem;
 
 export type InsertRecipeItemExistingItem = {
   servings: number;
@@ -270,7 +275,7 @@ export type InsertRecipeItemExistingItem = {
 
 export type InsertRecipeItemNewItem = {
   servings: number;
-  nutrition_item: NutritionItem;
+  nutrition_item: NutritionItemAttrs;
 };
 
 const createRecipeMutation = `
@@ -281,11 +286,8 @@ mutation CreateRecipe($input: food_diary_recipe_insert_input!) {
 }
 `;
 
-export async function createRecipe(
-  accessToken: string,
-  formInput: InsertRecipeInput
-) {
-  const input = {
+function transformRecipeInput(formInput: RecipeAttrs) {
+  return {
     ...formInput,
     recipe_items: {
       data: formInput.recipe_items.map((item) => ({
@@ -294,8 +296,40 @@ export async function createRecipe(
       })),
     },
   };
+}
+
+export async function createRecipe(
+  accessToken: string,
+  formInput: RecipeAttrs
+) {
   return (
-    await fetchQuery(accessToken, createRecipeMutation, { input })
+    await fetchQuery(accessToken, createRecipeMutation, { input: transformRecipeInput(formInput) })
+  ).json();
+}
+
+const updateRecipeMutation = `
+mutation UpdateRecipe($id: Int!, $attrs: food_diary_recipe_set_input!, $items: [food_diary_recipe_item_insert_input!]!) {
+  update_food_diary_recipe_by_pk(pk_columns: {id: $id }, _set: $attrs) {
+    id
+  }
+  delete_food_diary_recipe_item(where: { recipe_id: { _eq: $id } }) {
+    affected_rows
+  }
+  insert_food_diary_recipe_item(objects: $items) {
+    affected_rows
+  }
+}
+`;
+
+export async function updateRecipe(
+	accessToken: string,
+	recipe: Recipe
+) {
+	const { id, ...attrs } = recipe;
+	const { recipe_items, ...recipeAttrs } = transformRecipeInput(attrs);
+	const recipeItemsInput = recipe_items.data.map(item => ({ ...item, recipe_id: id }));
+  return (
+    await fetchQuery(accessToken, updateRecipeMutation, { id, attrs: recipeAttrs, items: recipeItemsInput })
   ).json();
 }
 

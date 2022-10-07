@@ -11,7 +11,10 @@ const RecipeShow: Component = () => {
 
   return (
     <>
-      <Link href="/">Back to entries</Link>
+      <p>
+        <Link href="/">Back to entries</Link>
+        <Link href={`/recipe/${params.id}/edit`}>Edit</Link>
+      </p>
       <pre>{JSON.stringify(recipe(), null, 2)}</pre>
     </>
   );
