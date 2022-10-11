@@ -10,6 +10,7 @@ const UserProfile: Component = () => {
         class="border border-slate-800 rounded-full mb-4 max-w-xs"
       />
       <p class="font-semibold text-lg">{user()?.nickname || user()?.name}</p>
+      <p class="text-lg">{user()?.email}</p>
       <button
         class="text-red-600"
         onClick={() => {

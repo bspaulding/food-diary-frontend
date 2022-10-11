@@ -1,20 +1,13 @@
 import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
-import { parse } from "csv-parse/browser/esm/sync";
-import * as dayjs from "dayjs";
-import * as customParseFormat from "dayjs/plugin/customParseFormat";
-import * as timezone from "dayjs/plugin/timezone";
-import * as advancedFormat from "dayjs/plugin/advancedFormat";
+import { format, parseISO } from "date-fns";
 import type { NewDiaryEntry } from "./Api";
 import type { Either } from "./Either";
 import { Left, Right, isRight, isLeft } from "./Either";
 import { useAuth } from "./Auth0";
 import { insertDiaryEntries } from "./Api";
 import ButtonLink from "./ButtonLink";
-
-dayjs.extend(customParseFormat);
-dayjs.extend(advancedFormat);
-dayjs.extend(timezone);
+import { parseCSV, rowToEntry } from "./CSVImport";
 
 function readFile(file: File) {
   return new Promise((resolve, reject) => {
@@ -25,66 +18,6 @@ function readFile(file: File) {
     reader.addEventListener("error", reject);
     reader.readAsText(file);
   });
-}
-
-function parseCSV(csv: string) {
-  const lines = parse(csv);
-  const header = lines[0];
-  const rows = lines.slice(1);
-  console.log({ header, rows });
-  return rows.map((row) =>
-    row.reduce(
-      (acc, cell, i) => ({
-        ...acc,
-        [header[i]]: cell,
-      }),
-      {}
-    )
-  );
-}
-
-function parseNumber(parser, value) {
-  const parsed = parser(value, 10);
-  return isNaN(parsed) ? 0 : parsed;
-}
-
-function rowToEntry(row: string[]): Either<object, NewDiaryEntry> {
-  try {
-    return Right({
-      consumed_at: dayjs(row["Consumed At"], [
-        "YYYY-MM-DD h:mm A",
-        "YYYY-MM-DD H:mm",
-      ]).toISOString(),
-      servings: parseFloat(row["Servings"], 10),
-      nutrition_item: {
-        description: row["Description"],
-        calories: parseNumber(parseInt, row["Calories"]),
-        totalFatGrams: parseNumber(parseFloat, row["Total Fat (g)"]),
-        saturatedFatGrams: parseNumber(parseFloat, row["Saturated Fat (g)"]),
-        transFatGrams: parseNumber(parseFloat, row["Trans Fat (g)"]),
-        polyunsaturatedFatGrams: parseNumber(
-          parseFloat,
-          row["Polyunsaturated Fat (g)"]
-        ),
-        monounsaturatedFatGrams: parseNumber(
-          parseFloat,
-          row["Monounsaturated Fat (g)"]
-        ),
-        cholesterolMilligrams: parseNumber(parseFloat, row["Cholesterol (mg)"]),
-        sodiumMilligrams: parseNumber(parseFloat, row["Sodium (mg)"]),
-        totalCarbohydrateGrams: parseNumber(
-          parseFloat,
-          row["Total Carbohydrate (g)"]
-        ),
-        dietaryFiberGrams: parseNumber(parseFloat, row["Dietary Fiber (g)"]),
-        totalSugarsGrams: parseNumber(parseFloat, row["Total Sugars (g)"]),
-        addedSugarsGrams: parseNumber(parseFloat, row["Added Sugars (g)"]),
-        proteinGrams: parseNumber(parseFloat, row["Protein (g)"]),
-      },
-    });
-  } catch (e: any) {
-    return Left({ error: e, row });
-  }
 }
 
 const ImportDiaryEntries: Component = () => {
@@ -173,8 +106,9 @@ const ImportDiaryEntries: Component = () => {
                         {row().nutrition_item.description}
                       </p>
                       <p class="text-xs">
-                        {dayjs(row().consumed_at).format(
-                          "MMMM D, YYYY [at] h:mm A z"
+                        {format(
+                          parseISO(row().consumed_at),
+                          "MMMM d, yyyy pppp"
                         )}
                       </p>
                     </td>
