@@ -1,8 +1,9 @@
 import type { Component } from "solid-js";
 import { useAuth } from "./Auth0";
+import { fetchExportEntries } from "./Api";
 
 const UserProfile: Component = () => {
-  const [{ user, isAuthenticated, auth0 }] = useAuth();
+  const [{ user, isAuthenticated, auth0, accessToken }] = useAuth();
   return (
     <div class="flex flex-col items-center">
       <img
@@ -20,6 +21,26 @@ const UserProfile: Component = () => {
         }}
       >
         Logout
+      </button>
+      <button
+        onClick={async () => {
+          const entries = await fetchExportEntries(accessToken());
+          const data = JSON.stringify(entries);
+          const blob = new Blob([data], { type: "text/json" });
+          const url = URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "food-diary-entries.json";
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+
+          URL.revokeObjectURL(url);
+          a.remove();
+        }}
+      >
+        Export Entries As CSV
       </button>
     </div>
   );
