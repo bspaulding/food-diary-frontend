@@ -1,6 +1,7 @@
 import type { Component } from "solid-js";
 import { useAuth } from "./Auth0";
 import { fetchExportEntries } from "./Api";
+import { entriesToCsv } from "./CSVExport";
 
 const UserProfile: Component = () => {
   const [{ user, isAuthenticated, auth0, accessToken }] = useAuth();
@@ -18,14 +19,14 @@ const UserProfile: Component = () => {
         </a>
         <button
           onClick={async () => {
-            const entries = await fetchExportEntries(accessToken());
-            const data = JSON.stringify(entries);
-            const blob = new Blob([data], { type: "text/json" });
+            const responseData = await fetchExportEntries(accessToken());
+            const data = entriesToCsv(responseData.data.food_diary_diary_entry);
+            const blob = new Blob([data], { type: "text/csv" });
             const url = URL.createObjectURL(blob);
 
             const a = document.createElement("a");
             a.href = url;
-            a.download = "food-diary-entries.json";
+            a.download = "food-diary-entries.csv";
             a.style.display = "none";
             document.body.appendChild(a);
             a.click();
