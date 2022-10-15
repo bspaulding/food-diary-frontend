@@ -28,7 +28,6 @@ const DiaryList: Component = () => {
     <>
       <p class="mb-3">
         <ButtonLink href="/diary_entry/new">Add New Entry</ButtonLink>
-        <ButtonLink class="ml-3" href="/diary_entry/import">Import Entries</ButtonLink>
       </p>
       <ul class="mt-4">
         <Show when={entries().length === 0}>
