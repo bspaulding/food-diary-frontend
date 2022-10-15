@@ -123,8 +123,8 @@ export type NutritionItemAttrs = {
 };
 
 export type NutritionItem = NutritionItemAttrs & {
-	id: number;
-}
+  id: number;
+};
 
 export async function createNutritionItem(
   accessToken: string,
@@ -149,7 +149,7 @@ export async function updateNutritionItem(
   item: NutritionItem
 ) {
   const response = await fetchQuery(accessToken, updateNutritionItemMutation, {
-		id: item.id,
+    id: item.id,
     attrs: objectToSnakeCaseKeys(item),
   });
   return response.json();
@@ -260,13 +260,12 @@ export type RecipeAttrs = {
 };
 
 export type Recipe = RecipeAttrs & {
-	id: number;
+  id: number;
 };
 
-export type InsertRecipeItemInput =
-  | InsertRecipeItemExistingItem;
+export type InsertRecipeItemInput = InsertRecipeItemExistingItem;
 // TODO: Support nested new item creation
-  // | InsertRecipeItemNewItem;
+// | InsertRecipeItemNewItem;
 
 export type InsertRecipeItemExistingItem = {
   servings: number;
@@ -303,7 +302,9 @@ export async function createRecipe(
   formInput: RecipeAttrs
 ) {
   return (
-    await fetchQuery(accessToken, createRecipeMutation, { input: transformRecipeInput(formInput) })
+    await fetchQuery(accessToken, createRecipeMutation, {
+      input: transformRecipeInput(formInput),
+    })
   ).json();
 }
 
@@ -321,15 +322,19 @@ mutation UpdateRecipe($id: Int!, $attrs: food_diary_recipe_set_input!, $items: [
 }
 `;
 
-export async function updateRecipe(
-	accessToken: string,
-	recipe: Recipe
-) {
-	const { id, ...attrs } = recipe;
-	const { recipe_items, ...recipeAttrs } = transformRecipeInput(attrs);
-	const recipeItemsInput = recipe_items.data.map(item => ({ ...item, recipe_id: id }));
+export async function updateRecipe(accessToken: string, recipe: Recipe) {
+  const { id, ...attrs } = recipe;
+  const { recipe_items, ...recipeAttrs } = transformRecipeInput(attrs);
+  const recipeItemsInput = recipe_items.data.map((item) => ({
+    ...item,
+    recipe_id: id,
+  }));
   return (
-    await fetchQuery(accessToken, updateRecipeMutation, { id, attrs: recipeAttrs, items: recipeItemsInput })
+    await fetchQuery(accessToken, updateRecipeMutation, {
+      id,
+      attrs: recipeAttrs,
+      items: recipeItemsInput,
+    })
   ).json();
 }
 
@@ -355,10 +360,10 @@ export async function fetchRecipe(accessToken: string, id: number) {
 }
 
 export type NewDiaryEntry = {
-	consumed_at: string,
-	servings: number,
-	nutrition_item: NutritionItemAttrs
-}
+  consumed_at: string;
+  servings: number;
+  nutrition_item: NutritionItemAttrs;
+};
 
 const insertDiaryEntriesWithItemsMutation = `
 mutation InsertDiaryEntriesWithNewItems($entries: [food_diary_diary_entry_insert_input!]!){
@@ -368,15 +373,59 @@ mutation InsertDiaryEntriesWithNewItems($entries: [food_diary_diary_entry_insert
 }
 `;
 
-export async function insertDiaryEntries(accessToken: string, entries: NewDiaryEntry[]) {
-	return (await fetchQuery(
-					accessToken,
-					insertDiaryEntriesWithItemsMutation, {
-						entries: entries.map(entry => ({
-								...entry,
-									nutrition_item: {
-													data: objectToSnakeCaseKeys(entry.nutrition_item),
-									}
-						}))
-					})).json();
+export async function insertDiaryEntries(
+  accessToken: string,
+  entries: NewDiaryEntry[]
+) {
+  return (
+    await fetchQuery(accessToken, insertDiaryEntriesWithItemsMutation, {
+      entries: entries.map((entry) => ({
+        ...entry,
+        nutrition_item: {
+          data: objectToSnakeCaseKeys(entry.nutrition_item),
+        },
+      })),
+    })
+  ).json();
+}
+
+const exportEntriesQuery = `
+fragment nutritionItem on food_diary_nutrition_item {
+  description
+  calories
+  total_fat_grams
+  saturated_fat_grams
+  trans_fat_grams
+  polyunsaturated_fat_grams
+  monounsaturated_fat_grams
+  cholesterol_milligrams
+  sodium_milligrams
+  total_carbohydrate_grams
+  dietary_fiber_grams
+  total_sugars_grams
+  added_sugars_grams
+  protein_grams
+}
+
+query ExportEntries {
+  food_diary_diary_entry {
+    servings
+    consumed_at
+    nutrition_item {
+      ...nutritionItem
+    }
+    recipe {
+      name
+      recipe_items {
+				servings
+        nutrition_item {
+          ...nutritionItem
+        }
+      }
+    }
+  }
+}`;
+
+export async function fetchExportEntries(accessToken: string) {
+  return (await fetchQuery(accessToken, exportEntriesQuery)).json();
 }
