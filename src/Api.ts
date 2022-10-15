@@ -1,4 +1,4 @@
-const host = "https://food-diary.motingo.com/api/v1/graphql";
+const host = "/api/v1/graphql";
 
 const getEntriesQuery = `
 query GetEntries {
