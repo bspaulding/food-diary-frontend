@@ -1,11 +1,11 @@
+# Food Diary Frontend
+
+This is a vite/solidjs frontend for food-diary.motingo.com.
+
 ## Usage
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
-
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
-
 ```bash
-$ npm install # or pnpm install or yarn install
+$ npm install
 ```
 
 ### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
@@ -31,4 +31,4 @@ Your app is ready to be deployed!
 
 ## Deployment
 
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+See the Dockerfile. This is an nginx static site with the dist folder.
