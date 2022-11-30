@@ -19,6 +19,8 @@ jobs:
         node-version: 16
     - run: npm ci
     - run: npm test
+      env:
+        TZ: America/Los_Angeles
 
   build-and-publish-image:
     needs: test
