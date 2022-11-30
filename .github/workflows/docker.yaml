@@ -19,6 +19,7 @@ jobs:
     - run: npm test
 
   build-and-publish-image:
+    depends-on: test
     runs-on: ubuntu-latest
 
     steps:
