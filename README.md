@@ -1,6 +1,6 @@
 # Food Diary Frontend
 
-This is a [SolidJS](https://solidjs.com) frontend for food-diary.motingo.com.
+This is a [SolidJS](https://solidjs.com) frontend for [food-diary.motingo.com](https://food-diary.motingo.com).
 
 ## Usage
 
