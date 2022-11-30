@@ -8,6 +8,11 @@ import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
 import DateBadge from "./DateBadge";
 import ButtonLink from "./ButtonLink";
+import { parseISO, format } from "date-fns";
+
+function localDay(timestamp: string) {
+  return format(parseISO(timestamp), "yyyy-MM-dd");
+}
 
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
@@ -18,7 +23,10 @@ const DiaryList: Component = () => {
       entries().reduce(
         (acc, entry) => ({
           ...acc,
-          [entry.day]: [...(acc[entry.day] || []), entry],
+          [localDay(entry.consumed_at)]: [
+            ...(acc[localDay(entry.consumed_at)] || []),
+            entry,
+          ],
         }),
         {}
       )

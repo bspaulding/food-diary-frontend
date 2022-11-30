@@ -4,7 +4,6 @@ const getEntriesQuery = `
 query GetEntries {
     food_diary_diary_entry(order_by: { day: desc, consumed_at: asc }) {
         id
-        day
         consumed_at
         calories
         servings
