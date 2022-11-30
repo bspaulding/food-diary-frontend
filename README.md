@@ -1,14 +1,12 @@
 # Food Diary Frontend
 
-This is a vite/solidjs frontend for food-diary.motingo.com.
+This is a [SolidJS](https://solidjs.com) frontend for food-diary.motingo.com.
 
 ## Usage
 
 ```bash
 $ npm install
 ```
-
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
 
 ## Available Scripts
 
