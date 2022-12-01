@@ -8,10 +8,10 @@ import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
 import DateBadge from "./DateBadge";
 import ButtonLink from "./ButtonLink";
-import { parseISO, format } from "date-fns";
+import { parseISO, format, formatISO, startOfDay, compareDesc } from "date-fns";
 
 function localDay(timestamp: string) {
-  return format(parseISO(timestamp), "yyyy-MM-dd");
+  return formatISO(startOfDay(parseISO(timestamp)));
 }
 
 const DiaryList: Component = () => {
@@ -30,7 +30,9 @@ const DiaryList: Component = () => {
         }),
         {}
       )
-    );
+    ).sort(function (a, b) {
+      return compareDesc(parseISO(a[0]), parseISO(b[0]));
+    });
 
   return (
     <>
@@ -47,13 +49,15 @@ const DiaryList: Component = () => {
               <div>
                 <DateBadge
                   class="col-span-1"
-                  date={new Date(dayEntries()[0])}
+                  date={parseISO(dayEntries()[0])}
                 />
                 <div class="text-center text-xl mt-4">
                   <p>
-                    {dayEntries()[1].reduce(
-                      (acc, entry) => acc + entry.calories,
-                      0
+                    {Math.ceil(
+                      dayEntries()[1].reduce(
+                        (acc, entry) => acc + entry.calories,
+                        0
+                      )
                     )}
                   </p>
                   <p class="text-sm uppercase">KCAL</p>
