@@ -104,6 +104,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="calories">Calories</label>
         <input
           type="number"
+          step="0.1"
           name="calories"
           disabled={disabled()}
           value={calories()}
@@ -113,6 +114,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="total-fat-grams">Total Fat (g)</label>
         <input
           type="number"
+          step="0.1"
           name="total-fat-grams"
           disabled={disabled()}
           value={totalFatGrams()}
@@ -122,6 +124,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="saturated-fat-grams">Saturated Fat (g)</label>
         <input
           type="number"
+          step="0.1"
           name="saturated-fat-grams"
           disabled={disabled()}
           value={saturatedFatGrams()}
@@ -131,6 +134,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="trans-fat-grams">Trans Fat (g)</label>
         <input
           type="number"
+          step="0.1"
           name="trans-fat-grams"
           disabled={disabled()}
           value={transFatGrams()}
@@ -140,6 +144,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="polyunsaturated-fat-grams">Polyunsaturated Fat (g)</label>
         <input
           type="number"
+          step="0.1"
           name="polyunsaturated-fat-grams"
           disabled={disabled()}
           value={polyunsaturatedFatGrams()}
@@ -149,6 +154,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="monounsaturated-fat-grams">Monounsaturated Fat (g)</label>
         <input
           type="number"
+          step="0.1"
           name="monounsaturated-fat-grams"
           disabled={disabled()}
           value={monounsaturatedFatGrams()}
@@ -158,6 +164,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="cholesterol-milligrams">Cholesterol (mg)</label>
         <input
           type="number"
+          step="0.1"
           name="cholesterol-milligrams"
           disabled={disabled()}
           value={cholesterolMilligrams()}
@@ -167,6 +174,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="sodium-milligrams">Sodium (mg)</label>
         <input
           type="number"
+          step="0.1"
           name="sodium-milligrams"
           disabled={disabled()}
           value={sodiumMilligrams()}
@@ -176,6 +184,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="total-carbohydrate-grams">Total Carbohydrate (g)</label>
         <input
           type="number"
+          step="0.1"
           name="total-carbohydrate-grams"
           disabled={disabled()}
           value={totalCarbohydrateGrams()}
@@ -185,6 +194,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="dietary-fiber-grams">Dietary Fiber (g)</label>
         <input
           type="number"
+          step="0.1"
           name="dietary-fiber-grams"
           disabled={disabled()}
           value={dietaryFiberGrams()}
@@ -194,6 +204,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="total-sugars-grams">Total Sugars (g)</label>
         <input
           type="number"
+          step="0.1"
           name="total-sugars-grams"
           disabled={disabled()}
           value={totalSugarsGrams()}
@@ -203,6 +214,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="added-sugars-grams">Added Sugars (g)</label>
         <input
           type="number"
+          step="0.1"
           name="added-sugars-grams"
           disabled={disabled()}
           value={addedSugarsGrams()}
@@ -212,6 +224,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         <label for="protein-grams">Protein (g)</label>
         <input
           type="number"
+          step="0.1"
           name="protein-grams"
           disabled={disabled()}
           value={proteinGrams()}
