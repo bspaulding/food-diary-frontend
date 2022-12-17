@@ -8,10 +8,21 @@ import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
 import DateBadge from "./DateBadge";
 import ButtonLink from "./ButtonLink";
-import { parseISO, format, formatISO, startOfDay, compareDesc } from "date-fns";
+import {
+  parseISO,
+  format,
+  formatISO,
+  startOfDay,
+  compareAsc,
+  compareDesc,
+} from "date-fns";
 
 function localDay(timestamp: string) {
   return formatISO(startOfDay(parseISO(timestamp)));
+}
+
+function compareEntriesByConsumedAt(a, b) {
+  return compareAsc(parseISO(a.consumed_at), parseISO(b.consumed_at));
 }
 
 const DiaryList: Component = () => {
@@ -64,7 +75,7 @@ const DiaryList: Component = () => {
                 </div>
               </div>
               <ul class="col-span-5 mb-6">
-                <Index each={dayEntries()[1]}>
+                <Index each={dayEntries()[1].sort(compareEntriesByConsumedAt)}>
                   {(entry, i) => (
                     <li class="mb-4">
                       <p class="font-semibold">{entry().calories} kcal</p>
