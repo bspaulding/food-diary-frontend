@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "prettier": "./node_modules/.bin/prettier"
   },
   "license": "MIT",
   "devDependencies": {

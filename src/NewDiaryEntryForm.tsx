@@ -105,9 +105,15 @@ const LoggableItem: Component = ({ recipe, nutritionItem }) => {
         <div class="ml-2 flex">
           <input
             type="number"
+            inputmode="decimal"
             step="0.1"
             value={servings()}
-            onInput={(event) => setServings(parseInt(event.target.value, 10))}
+            onInput={(event) => {
+              const parsed = parseFloat(event.target.value, 10);
+              if (!isNaN(parsed)) {
+                setServings(parsed);
+              }
+            }}
             style={{ "min-width": "50px" }}
           />
           <button
