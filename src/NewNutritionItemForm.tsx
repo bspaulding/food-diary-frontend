@@ -12,7 +12,10 @@ const fromTextInput = (setter: Setter<string>) => (event) => {
 };
 
 const fromNumberInput = (setter: Setter<number>) => (event) => {
-  setter(parseInt(event.target.value, 10));
+  const parsed = parseFloat(event.target.value, 10);
+  if (!isNaN(parsed)) {
+    setter(parsed);
+  }
 };
 
 type Props = {
