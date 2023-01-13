@@ -25,6 +25,37 @@ function compareEntriesByConsumedAt(a, b) {
   return compareAsc(parseISO(a.consumed_at), parseISO(b.consumed_at));
 }
 
+function totalMacro(key, entries) {
+  return parseInt(
+    entries.reduce(
+      (acc: number, entry) =>
+        acc +
+        (entry.nutrition_item?.[key] ||
+          entry.recipe?.recipe_items.reduce(
+            (acc, recipe_item) => recipe_item.nutrition_item[key],
+            0
+          ) ||
+          0),
+      0
+    ),
+    10
+  );
+}
+
+const EntryMacro: Component<{
+  value: string;
+  unit?: string;
+  label: string;
+}> = ({ value, unit, label }) => (
+  <div class="text-center text-xl mt-4">
+    <p>
+      {value}
+      {unit}
+    </p>
+    <p class="text-sm uppercase">{label}</p>
+  </div>
+);
+
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
   const [getEntriesQuery, { mutate }] = createAuthorizedResource(fetchEntries);
@@ -62,19 +93,37 @@ const DiaryList: Component = () => {
                   class="col-span-1"
                   date={parseISO(dayEntries()[0])}
                 />
-                <div class="text-center text-xl mt-4">
-                  <p>
-                    {Math.ceil(
-                      dayEntries()[1].reduce(
-                        (acc, entry) => acc + entry.calories,
-                        0
-                      )
-                    )}
-                  </p>
-                  <p class="text-sm uppercase">KCAL</p>
-                </div>
+                <EntryMacro
+                  value={Math.ceil(
+                    dayEntries()[1].reduce(
+                      (acc, entry) => acc + entry.calories,
+                      0
+                    )
+                  )}
+                  unit=""
+                  label="KCAL"
+                />
               </div>
               <ul class="col-span-5 mb-6">
+                <li class="mb-4">
+                  <div class="flex flex-row justify-around">
+                    <EntryMacro
+                      value={totalMacro("added_sugars_grams", dayEntries()[1])}
+                      unit="g"
+                      label="Added Sugar"
+                    />
+                    <EntryMacro
+                      value={totalMacro("protein_grams", dayEntries()[1])}
+                      unit="g"
+                      label="Protein"
+                    />
+                    <EntryMacro
+                      value={totalMacro("total_fat_grams", dayEntries()[1])}
+                      unit="g"
+                      label="Total Fat"
+                    />
+                  </div>
+                </li>
                 <Index each={dayEntries()[1].sort(compareEntriesByConsumedAt)}>
                   {(entry, i) => (
                     <li class="mb-4">

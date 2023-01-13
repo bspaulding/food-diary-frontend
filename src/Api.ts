@@ -1,14 +1,20 @@
 const host = "/api/v1/graphql";
 
 const getEntriesQuery = `
+fragment Macros on food_diary_nutrition_item {
+	total_fat_grams
+  added_sugars_grams
+	protein_grams
+}
+
 query GetEntries {
     food_diary_diary_entry(order_by: { day: desc, consumed_at: asc }) {
         id
         consumed_at
         calories
         servings
-        nutrition_item { id, description, calories }
-        recipe { id, name, calories }
+        nutrition_item { id, description, calories, ...Macros }
+        recipe { id, name, calories, recipe_items { nutrition_item { ...Macros } } }
     }
 }
 `;
