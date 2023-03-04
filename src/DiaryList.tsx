@@ -78,9 +78,11 @@ const DiaryList: Component = () => {
 
   return (
     <>
-      <p class="mb-3">
+      <div class="flex space-x-4 mb-4">
         <ButtonLink href="/diary_entry/new">Add New Entry</ButtonLink>
-      </p>
+        <ButtonLink href="/nutrition_item/new">Add Item</ButtonLink>
+        <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
+      </div>
       <ul class="mt-4">
         <Show when={entries().length === 0}>
           <p class="text-slate-400 text-center">No entries, yet...</p>
