@@ -3,6 +3,7 @@ import { useParams, Link } from "@solidjs/router";
 import { fetchNutritionItem } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import ButtonLink from "./ButtonLink";
+import { LoggableItem } from "./NewDiaryEntryForm";
 
 const keys_denylist = ["id", "description"];
 
@@ -40,6 +41,7 @@ const NutritionItemShow: Component = () => {
 
   const nutritionItem = () =>
     nutritionItemQuery()?.data?.food_diary_nutrition_item_by_pk || {};
+  const itemLoaded = () => !!nutritionItemQuery()?.data;
   return (
     <div style={{ margin: "18px" }}>
       <div class="flex space-x-4 mb-4">
@@ -49,6 +51,11 @@ const NutritionItemShow: Component = () => {
         </ButtonLink>
       </div>
       <h1 class="font-semibold text-2xl">{nutritionItem().description}</h1>
+      <Show when={itemLoaded()}>
+        <LoggableItem
+          nutritionItem={{ id: nutritionItem().id, description: "Log It" }}
+        />
+      </Show>
       <div class="text-lg">
         {Object.keys(nutritionItem())
           .filter((k) => keys_denylist.indexOf(k) < 0)

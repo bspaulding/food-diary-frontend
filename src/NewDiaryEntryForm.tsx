@@ -82,7 +82,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
 
 export default NewDiaryEntryForm;
 
-const LoggableItem: Component = ({ recipe, nutritionItem }) => {
+export const LoggableItem: Component = ({ recipe, nutritionItem }) => {
   const [{ accessToken }] = useAuth();
   const [logging, setLogging] = createSignal(false);
   const [servings, setServings] = createSignal(1);
