@@ -14,7 +14,7 @@ query GetEntries {
         calories
         servings
         nutrition_item { id, description, calories, ...Macros }
-        recipe { id, name, calories, recipe_items { nutrition_item { ...Macros } } }
+        recipe { id, name, calories, recipe_items { servings, nutrition_item { ...Macros } } }
     }
 }
 `;

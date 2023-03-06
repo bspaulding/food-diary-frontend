@@ -25,17 +25,24 @@ function compareEntriesByConsumedAt(a, b) {
   return compareAsc(parseISO(a.consumed_at), parseISO(b.consumed_at));
 }
 
+function recipeTotalForKey(key, recipe) {
+  recipe && console.log("recipeTotalForKey", recipe);
+  return (recipe?.recipe_items || []).reduce(
+    (acc, recipe_item) =>
+      acc + recipe_item.servings * recipe_item.nutrition_item[key],
+    0
+  );
+}
+
+function entryTotalMacro(key, entry) {
+  const itemTotal = entry.nutrition_item?.[key] || 0;
+  return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
+}
+
 function totalMacro(key, entries) {
   return parseInt(
     entries.reduce(
-      (acc: number, entry) =>
-        acc +
-        (entry.nutrition_item?.[key] ||
-          entry.recipe?.recipe_items.reduce(
-            (acc, recipe_item) => recipe_item.nutrition_item[key],
-            0
-          ) ||
-          0),
+      (acc: number, entry) => acc + entryTotalMacro(key, entry),
       0
     ),
     10
@@ -129,7 +136,10 @@ const DiaryList: Component = () => {
                 <Index each={dayEntries()[1].sort(compareEntriesByConsumedAt)}>
                   {(entry, i) => (
                     <li class="mb-4">
-                      <p class="font-semibold">{entry().calories} kcal</p>
+                      <p class="font-semibold">
+                        {entry().calories} kcal,{" "}
+                        {entryTotalMacro("protein_grams", entry())}g protein
+                      </p>
                       <p>
                         <Link
                           href={
