@@ -7,6 +7,7 @@ import { useAuth } from "./Auth0";
 import SearchItemsForm from "./SearchItemsForm";
 import ButtonLink from "./ButtonLink";
 import SegmentedControl from "./SegmentedControl";
+import { parseISO, format } from "date-fns";
 
 type RecipeId = number;
 type NutritionItemId = number;
@@ -24,7 +25,7 @@ type Props = {
 const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
   const [getRecentItemsQuery] = createAuthorizedResource(fetchRecentEntries);
   const recentItems = () =>
-    getRecentItemsQuery()?.data?.food_diary_recently_logged_items || [];
+    getRecentItemsQuery()?.data?.food_diary_diary_entry_recent || [];
 
   return (
     <div>
@@ -52,6 +53,13 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
                           recipe={item().recipe}
                           nutritionItem={item().nutrition_item}
                         />
+                        <p class="text-xs ml-8 mb-2">
+                          Logged at{" "}
+                          {format(
+                            parseISO(item().consumed_at),
+                            "hh:mma' on ' MMMM dd, yyyy"
+                          )}
+                        </p>
                       </li>
                     )}
                   </Index>

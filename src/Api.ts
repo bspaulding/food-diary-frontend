@@ -206,9 +206,10 @@ export async function fetchNutritionItem(accessToken: string, id: number) {
 
 const getRecentEntriesQuery = `
 query GetRecentEntryItems {
-  food_diary_recently_logged_items {
+  food_diary_diary_entry_recent(order_by: {consumed_at:desc}, limit: 10) {
+    consumed_at
+  	nutrition_item { id, description }
     recipe { id, name }
-    nutrition_item { id, description }
   }
 }
 `;
