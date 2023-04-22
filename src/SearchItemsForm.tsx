@@ -1,6 +1,6 @@
 import type { Component } from "solid-js";
 import { createSignal, Index } from "solid-js";
-import { throttle } from "@solid-primitives/scheduled";
+import { debounce } from "@solid-primitives/scheduled";
 import { searchItemsAndRecipes, searchItemsOnly } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 
@@ -36,9 +36,9 @@ const SearchItemsForm: Component = ({ children, queryType }: Props) => {
         type="search"
         placeholder="Search Previous Items"
         name="entry-item-search"
-        onInput={throttle((event) => {
-          setSearch(event.target.value);
-        }, 1000)}
+        onInput={debounce((event: InputEvent) => {
+          setSearch((event.target as HTMLInputElement).value);
+        }, 500)}
         value={search()}
       />
       <div class="px-1">
