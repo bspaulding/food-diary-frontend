@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser exposing (Document)
+import Browser.Navigation
 import DiaryEntry exposing (DiaryEntry)
 import Dict
 import GraphQLRequest exposing (GraphQLRequest)
@@ -12,10 +13,13 @@ import Json.Encode as E
 import Month
 import Task
 import Time
+import Url
 
 
 type alias Model =
-    { zone : Time.Zone
+    { navigationKey : Browser.Navigation.Key
+    , url : Url.Url
+    , zone : Time.Zone
     , entries : List DiaryEntry
     }
 
@@ -23,6 +27,8 @@ type alias Model =
 type Msg
     = EntriesReceived (Result Http.Error String)
     | NewTimeZone Time.Zone
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
 
 
 getNewTimeZone : Cmd Msg
@@ -36,12 +42,19 @@ fetchEntries =
 
 
 main =
-    Browser.document { init = init, view = view, update = update, subscriptions = subscriptions }
+    Browser.application
+        { init = init
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { zone = Time.utc, entries = [] }, Cmd.batch [ getNewTimeZone, fetchEntries ] )
+init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init flags url key =
+    ( { navigationKey = key, url = url, zone = Time.utc, entries = [] }, Cmd.batch [ getNewTimeZone, fetchEntries ] )
 
 
 subscriptions : Model -> Sub msg
@@ -52,6 +65,17 @@ subscriptions _ =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LinkClicked req ->
+            case req of
+                Browser.Internal url ->
+                    ( model, Browser.Navigation.pushUrl model.navigationKey (Url.toString url) )
+
+                Browser.External href ->
+                    ( model, Browser.Navigation.load href )
+
+        UrlChanged url ->
+            ( { model | url = url }, Cmd.none )
+
         NewTimeZone zone ->
             ( { model | zone = zone }, Cmd.none )
 
@@ -103,15 +127,15 @@ body model =
     ]
 
 
-btn href label =
-    button [ class "bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md" ] [ text label ]
+linkBtn url label =
+    a [ href url, class "bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md" ] [ text label ]
 
 
 globalNavigation =
     div [ class "flex space-x-4 mb-4" ]
-        [ btn "/diary_entry/new" "Add New Entry"
-        , btn "/nutrition_item/new" "Add Item"
-        , btn "/recipe/new" "Add Recipe"
+        [ linkBtn "/diary_entry/new" "Add New Entry"
+        , linkBtn "/nutrition_item/new" "Add Item"
+        , linkBtn "/recipe/new" "Add Recipe"
         ]
 
 
