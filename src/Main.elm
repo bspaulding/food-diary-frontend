@@ -128,6 +128,9 @@ body model =
             Route.DiaryEntryList ->
                 diaryEntries model
 
+            Route.NotFound ->
+                div [] [ text "Oops! Something went wrong." ]
+
             _ ->
                 div [] [ text "TODO" ]
         ]
