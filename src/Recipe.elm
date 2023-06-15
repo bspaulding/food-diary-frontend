@@ -22,7 +22,7 @@ decoder =
         (field "id" int)
         (field "name" string)
         (field "total_servings" float)
-        (field "items" (list recipeItemDecoder))
+        (field "recipe_items" (list recipeItemDecoder))
 
 
 recipeItemDecoder : D.Decoder RecipeItem
@@ -30,3 +30,24 @@ recipeItemDecoder =
     D.map2 RecipeItem
         (field "servings" (maybe float))
         (field "nutrition_item" NutritionItem.decoder)
+
+
+proteinGrams : Recipe -> Float
+proteinGrams recipe =
+    List.map (\item -> item.nutrition_item.protein_grams) recipe.items
+        |> List.foldl (+) 0
+        |> (*) recipe.total_servings
+
+
+addedSugar : Recipe -> Float
+addedSugar recipe =
+    List.map (\item -> item.nutrition_item.added_sugars_grams) recipe.items
+        |> List.foldl (+) 0
+        |> (*) recipe.total_servings
+
+
+totalFat : Recipe -> Float
+totalFat recipe =
+    List.map (\item -> item.nutrition_item.total_fat_grams) recipe.items
+        |> List.foldl (+) 0
+        |> (*) recipe.total_servings
