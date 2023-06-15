@@ -124,9 +124,18 @@ body model =
     [ div [ class "font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-20" ]
         [ globalHeader
         , globalNavigation
-        , ul [ class "mt-4" ] (List.map (diaryDay model.zone) (orderDays (Dict.toList (DiaryEntry.groupByDay model.zone model.entries))))
+        , case model.route of
+            Route.DiaryEntryList ->
+                diaryEntries model
+
+            _ ->
+                div [] [ text "TODO" ]
         ]
     ]
+
+
+diaryEntries model =
+    ul [ class "mt-4" ] (List.map (diaryDay model.zone) (orderDays (Dict.toList (DiaryEntry.groupByDay model.zone model.entries))))
 
 
 linkBtn url label =
