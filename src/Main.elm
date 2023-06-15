@@ -11,6 +11,7 @@ import Http
 import Json.Decode as D
 import Json.Encode as E
 import Month
+import Route exposing (Route)
 import Task
 import Time
 import Url
@@ -19,6 +20,7 @@ import Url
 type alias Model =
     { navigationKey : Browser.Navigation.Key
     , url : Url.Url
+    , route : Route
     , zone : Time.Zone
     , entries : List DiaryEntry
     }
@@ -54,7 +56,7 @@ main =
 
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
-    ( { navigationKey = key, url = url, zone = Time.utc, entries = [] }, Cmd.batch [ getNewTimeZone, fetchEntries ] )
+    ( { navigationKey = key, url = url, route = Route.parse url, zone = Time.utc, entries = [] }, Cmd.batch [ getNewTimeZone, fetchEntries ] )
 
 
 subscriptions : Model -> Sub msg
@@ -74,7 +76,7 @@ update msg model =
                     ( model, Browser.Navigation.load href )
 
         UrlChanged url ->
-            ( { model | url = url }, Cmd.none )
+            ( { model | url = url, route = Route.parse url }, Cmd.none )
 
         NewTimeZone zone ->
             ( { model | zone = zone }, Cmd.none )
@@ -133,7 +135,7 @@ linkBtn url label =
 
 globalNavigation =
     div [ class "flex space-x-4 mb-4" ]
-        [ linkBtn "/diary_entry/new" "Add New Entry"
+        [ linkBtn "/diary_entry/new" "Add Entry"
         , linkBtn "/nutrition_item/new" "Add Item"
         , linkBtn "/recipe/new" "Add Recipe"
         ]
