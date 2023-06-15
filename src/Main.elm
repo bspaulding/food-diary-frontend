@@ -30,69 +30,9 @@ getNewTimeZone =
     Task.perform NewTimeZone Time.here
 
 
-fetchEntriesQuery : GraphQLRequest
-fetchEntriesQuery =
-    { query = """
-query FetchDiaryEntries {
-  food_diary_diary_entry(order_by: { consumed_at: desc }, limit: 50) {
-    id
-    servings
-    calories
-    consumed_at
-    nutrition_item {
-      id
-      added_sugars_grams
-      calories
-      cholesterol_milligrams
-      description
-      dietary_fiber_grams
-      monounsaturated_fat_grams
-      polyunsaturated_fat_grams
-      protein_grams
-      saturated_fat_grams
-      sodium_milligrams
-      total_carbohydrate_grams
-      trans_fat_grams
-      total_sugars_grams
-      total_fat_grams
-    }
-    recipe {
-      id
-      calories
-      name
-      total_servings
-      recipe_items {
-        nutrition_item {
-          added_sugars_grams
-          calories
-          cholesterol_milligrams
-          description
-          dietary_fiber_grams
-          id
-          monounsaturated_fat_grams
-          polyunsaturated_fat_grams
-          protein_grams
-          saturated_fat_grams
-          sodium_milligrams
-          total_carbohydrate_grams
-          total_fat_grams
-          total_sugars_grams
-          trans_fat_grams
-        }
-        servings
-      }
-    }
-  }
-}
-
-"""
-    , variables = E.object []
-    }
-
-
 fetchEntries : Cmd Msg
 fetchEntries =
-    GraphQLRequest.make fetchEntriesQuery (Http.expectString EntriesReceived)
+    GraphQLRequest.make DiaryEntry.fetchEntriesQuery (Http.expectString EntriesReceived)
 
 
 main =

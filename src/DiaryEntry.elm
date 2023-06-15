@@ -1,8 +1,10 @@
 module DiaryEntry exposing (..)
 
 import Dict exposing (Dict)
+import GraphQLRequest exposing (GraphQLRequest)
 import Iso8601
 import Json.Decode as D exposing (at, field, float, int, maybe)
+import Json.Encode as E
 import Month
 import NutritionItem exposing (NutritionItem)
 import Recipe exposing (Recipe)
@@ -187,3 +189,67 @@ totalTotalFat entries =
     List.map totalFat entries
         |> List.foldl (+) 0
         |> floor
+
+
+
+-- graphql queries
+
+
+fetchEntriesQuery : GraphQLRequest
+fetchEntriesQuery =
+    { query = """
+query FetchDiaryEntries {
+  food_diary_diary_entry(order_by: { consumed_at: desc }, limit: 50) {
+    id
+    servings
+    calories
+    consumed_at
+    nutrition_item {
+      id
+      added_sugars_grams
+      calories
+      cholesterol_milligrams
+      description
+      dietary_fiber_grams
+      monounsaturated_fat_grams
+      polyunsaturated_fat_grams
+      protein_grams
+      saturated_fat_grams
+      sodium_milligrams
+      total_carbohydrate_grams
+      trans_fat_grams
+      total_sugars_grams
+      total_fat_grams
+    }
+    recipe {
+      id
+      calories
+      name
+      total_servings
+      recipe_items {
+        nutrition_item {
+          added_sugars_grams
+          calories
+          cholesterol_milligrams
+          description
+          dietary_fiber_grams
+          id
+          monounsaturated_fat_grams
+          polyunsaturated_fat_grams
+          protein_grams
+          saturated_fat_grams
+          sodium_milligrams
+          total_carbohydrate_grams
+          total_fat_grams
+          total_sugars_grams
+          trans_fat_grams
+        }
+        servings
+      }
+    }
+  }
+}
+
+"""
+    , variables = E.object []
+    }
