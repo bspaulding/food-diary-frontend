@@ -3,7 +3,7 @@ module DiaryEntry exposing (..)
 import Dict exposing (Dict)
 import GraphQLRequest exposing (GraphQLRequest)
 import Iso8601
-import Json.Decode as D exposing (at, field, float, int, maybe)
+import Json.Decode as D exposing (at, field, float, int, maybe, oneOf, string)
 import Json.Encode as E
 import Month
 import NutritionItem exposing (NutritionItem)
@@ -52,6 +52,36 @@ decodeEntriesResponse res =
     D.decodeString (at [ "data", "food_diary_diary_entry" ] (D.list diaryEntryDecoder)) res
 
 
+type RecentEntry
+    = RecentEntryItem Int String Time.Posix
+    | RecentEntryRecipe Int String Time.Posix
+
+
+decodeRecentEntries : String -> Result D.Error (List RecentEntry)
+decodeRecentEntries res =
+    D.decodeString (at [ "data", "food_diary_diary_entry_recent" ] (D.list recentEntryDecoder)) res
+
+
+recentItemDecoder : D.Decoder RecentEntry
+recentItemDecoder =
+    D.map3 RecentEntryItem
+        (at [ "nutrition_item", "id" ] int)
+        (at [ "nutrition_item", "description" ] string)
+        (field "consumed_at" Iso8601.decoder)
+
+
+recentRecipeDecoder =
+    D.map3 RecentEntryRecipe
+        (at [ "recipe", "id" ] int)
+        (at [ "recipe", "name" ] string)
+        (field "consumed_at" Iso8601.decoder)
+
+
+recentEntryDecoder : D.Decoder RecentEntry
+recentEntryDecoder =
+    oneOf [ recentItemDecoder, recentRecipeDecoder ]
+
+
 type alias DayOfYear =
     -- day, month, year
     ( Int, Int, Int )
@@ -79,37 +109,6 @@ groupByDay zone entries =
             Dict.update (dayOfYear zone entry) (insertEntry entry) b
     in
     List.foldl reduce Dict.empty entries
-
-
-timeOfDay : Time.Zone -> DiaryEntry -> String
-timeOfDay zone entry =
-    let
-        hr23 =
-            Time.toHour zone entry.consumed_at
-
-        meridian =
-            if hr23 >= 12 then
-                "pm"
-
-            else
-                "am"
-
-        hr12 =
-            if hr23 > 12 then
-                hr23 - 12
-
-            else
-                hr23
-    in
-    String.fromInt hr12
-        ++ ":"
-        ++ pad "0" 2 (String.fromInt (Time.toMinute zone entry.consumed_at))
-        ++ meridian
-
-
-pad : String -> Int -> String -> String
-pad p l cs =
-    List.foldl (\_ s -> p ++ s) cs (List.range 1 (l - String.length cs))
 
 
 totalCalories : List DiaryEntry -> Int
@@ -195,9 +194,45 @@ totalTotalFat entries =
 -- graphql queries
 
 
+itemPropsFragment : String
+itemPropsFragment =
+    """
+fragment ItemProps on food_diary_nutrition_item {
+  added_sugars_grams
+  calories
+  cholesterol_milligrams
+  description
+  dietary_fiber_grams
+  id
+  monounsaturated_fat_grams
+  polyunsaturated_fat_grams
+  protein_grams
+  saturated_fat_grams
+  sodium_milligrams
+  total_carbohydrate_grams
+  total_fat_grams
+  total_sugars_grams
+  trans_fat_grams
+}
+"""
+
+
+recentlyLoggedItemsQuery : GraphQLRequest
+recentlyLoggedItemsQuery =
+    { query = itemPropsFragment ++ """
+query GetRecentEntryItems {
+  food_diary_diary_entry_recent(order_by: {consumed_at:desc}, limit: 10) {
+    consumed_at
+    nutrition_item {id, description}
+    recipe { id, name }
+  }
+}
+""", variables = E.object [] }
+
+
 fetchEntriesQuery : GraphQLRequest
 fetchEntriesQuery =
-    { query = """
+    { query = itemPropsFragment ++ """
 query FetchDiaryEntries {
   food_diary_diary_entry(order_by: { consumed_at: desc }, limit: 50) {
     id
@@ -205,21 +240,7 @@ query FetchDiaryEntries {
     calories
     consumed_at
     nutrition_item {
-      id
-      added_sugars_grams
-      calories
-      cholesterol_milligrams
-      description
-      dietary_fiber_grams
-      monounsaturated_fat_grams
-      polyunsaturated_fat_grams
-      protein_grams
-      saturated_fat_grams
-      sodium_milligrams
-      total_carbohydrate_grams
-      trans_fat_grams
-      total_sugars_grams
-      total_fat_grams
+      ...ItemProps
     }
     recipe {
       id
@@ -228,21 +249,7 @@ query FetchDiaryEntries {
       total_servings
       recipe_items {
         nutrition_item {
-          added_sugars_grams
-          calories
-          cholesterol_milligrams
-          description
-          dietary_fiber_grams
-          id
-          monounsaturated_fat_grams
-          polyunsaturated_fat_grams
-          protein_grams
-          saturated_fat_grams
-          sodium_milligrams
-          total_carbohydrate_grams
-          total_fat_grams
-          total_sugars_grams
-          trans_fat_grams
+          ...ItemProps
         }
         servings
       }
@@ -253,3 +260,37 @@ query FetchDiaryEntries {
 """
     , variables = E.object []
     }
+
+
+type CreateDiaryEntryInput
+    = CreateDiaryEntryRecipeInput Int Float
+    | CreateDiaryEntryItemInput Int Float
+
+
+createDiaryEntryMutation : CreateDiaryEntryInput -> GraphQLRequest
+createDiaryEntryMutation input =
+    { query =
+        """
+mutation CreateDiaryEntry($entry: food_diary_diary_entry_insert_input!) {
+  insert_food_diary_diary_entry_one(object: $entry) {
+    id
+  }
+}
+"""
+    , variables =
+        E.object
+            [ ( "entry"
+              , case input of
+                    CreateDiaryEntryRecipeInput id servings ->
+                        E.object [ ( "servings", E.float servings ), ( "recipe_id", E.int id ) ]
+
+                    CreateDiaryEntryItemInput id servings ->
+                        E.object [ ( "servings", E.float servings ), ( "nutrition_item_id", E.int id ) ]
+              )
+            ]
+    }
+
+
+decodeEntryCreatedResponse : String -> Result D.Error Int
+decodeEntryCreatedResponse =
+    D.decodeString (at [ "data", "insert_food_diary_diary_entry_one", "id" ] int)
