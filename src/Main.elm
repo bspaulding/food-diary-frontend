@@ -19,7 +19,7 @@ import OAuth exposing (ResponseType(..))
 import OAuth.AuthorizationCode.PKCE as OAuth
 import OAuthConfiguration exposing (Configuration, UserInfo, cCODE_VERIFIER_SIZE, cSTATE_SIZE, convertBytes)
 import Recipe exposing (Recipe)
-import Route exposing (Route)
+import Route exposing (DiaryEntryCreateTab(..), Route)
 import Set exposing (Set)
 import Task
 import Time
@@ -198,7 +198,7 @@ cmdForRoute model route =
         ( Just token, Route.DiaryEntryList ) ->
             Cmd.batch [ getNewTimeZone, fetchEntries token ]
 
-        ( Just token, Route.DiaryEntryCreate ) ->
+        ( Just token, Route.DiaryEntryCreate Suggestions ) ->
             Cmd.batch [ getNewTimeZone, fetchRecentItems token ]
 
         _ ->
@@ -497,8 +497,8 @@ bodyView model =
                 Route.DiaryEntryList ->
                     diaryEntries model
 
-                Route.DiaryEntryCreate ->
-                    diaryEntryCreate model
+                Route.DiaryEntryCreate tab ->
+                    diaryEntryCreate model tab
 
                 Route.NotFound ->
                     div [] [ text "Oops! Something went wrong." ]
@@ -613,8 +613,55 @@ pluralize x singular plural =
         plural
 
 
-diaryEntryCreate : Model -> Html Msg
-diaryEntryCreate model =
+diaryEntryCreate : Model -> DiaryEntryCreateTab -> Html Msg
+diaryEntryCreate model tab =
+    let
+        activeClass =
+            "bg-slate-500 text-slate-50 shadow-inner cursor-default"
+
+        inactiveClass =
+            "cursor-pointer"
+    in
+    div []
+        [ ul [ class "flex flex-row justify-center mb-2" ]
+            [ li
+                [ class
+                    ("px-3 py-1 bg-slate-200 border border-slate-500 rounded-l-full "
+                        ++ (if tab == Suggestions then
+                                activeClass
+
+                            else
+                                inactiveClass
+                           )
+                    )
+                ]
+                [ a [ href "/diary_entry/new/suggestions" ] [ text "Suggestions" ] ]
+            , li
+                [ class
+                    ("px-3 py-1 bg-slate-200 border border-slate-500 rounded-r-full "
+                        ++ (if tab == Search then
+                                activeClass
+
+                            else
+                                inactiveClass
+                           )
+                    )
+                ]
+                [ a [ href "/diary_entry/new/search" ] [ text "Search" ] ]
+            ]
+        , div []
+            (case tab of
+                Suggestions ->
+                    diaryEntryCreateSuggestions model
+
+                Search ->
+                    diaryEntryCreateSearch model
+            )
+        ]
+
+
+diaryEntryCreateSuggestions : Model -> List (Html Msg)
+diaryEntryCreateSuggestions model =
     let
         makeLoggable : RecentEntry -> ( List (Html Msg), LoggableItem )
         makeLoggable entry =
@@ -623,16 +670,14 @@ diaryEntryCreate model =
         loggables =
             List.map makeLoggable model.recentEntries
     in
-    div []
-        [ ul [ class "flex flex-row justify-center mb-2" ]
-            [ li [ class "px-3 py-1 bg-slate-200 border border-slate-500 rounded-l-full false bg-slate-500 text-slate-50 shadow-inner cursor-default false" ] [ text "Suggestions" ]
-            , li [ class "px-3 py-1 bg-slate-200 border border-slate-500 false rounded-r-full false cursor-pointer" ] [ text "Search" ]
-            ]
-        , div []
-            [ h2 [ class "text-lg font-semibold" ] [ text "Suggested Items" ]
-            , ul [] (List.map (\( c, i ) -> loggableItem c i (Set.member (LoggableItem.id i) model.activeLoggableItemIds) (Maybe.withDefault 1 (Dict.get (LoggableItem.id i) model.activeLoggableServingsById))) loggables)
-            ]
-        ]
+    [ h2 [ class "text-lg font-semibold" ] [ text "Suggested Items" ]
+    , ul [] (List.map (\( c, i ) -> loggableItem c i (Set.member (LoggableItem.id i) model.activeLoggableItemIds) (Maybe.withDefault 1 (Dict.get (LoggableItem.id i) model.activeLoggableServingsById))) loggables)
+    ]
+
+
+diaryEntryCreateSearch : Model -> List (Html Msg)
+diaryEntryCreateSearch model =
+    [ text "TODO Search" ]
 
 
 timeOfDay : Time.Zone -> Time.Posix -> String
