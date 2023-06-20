@@ -14,7 +14,7 @@ import Json.Encode as E
 import LoggableItem exposing (LoggableItem(..))
 import Month
 import NutritionItem exposing (NutritionItem)
-import OAuth
+import OAuth exposing (ResponseType(..))
 import OAuth.AuthorizationCode.PKCE as OAuth
 import OAuthConfiguration exposing (Configuration, UserInfo, cCODE_VERIFIER_SIZE, cSTATE_SIZE, convertBytes)
 import Recipe exposing (Recipe)
@@ -42,6 +42,7 @@ type alias Model =
     , activeLoggableServingsById : Dict Int Float
     , redirectUri : Url.Url
     , authFlow : OAuthFlow
+    , accessToken : Maybe OAuth.Token
     }
 
 
@@ -85,19 +86,19 @@ getNewTimeZone =
     Task.perform NewTimeZone Time.here
 
 
-fetchEntries : Cmd Msg
-fetchEntries =
-    GraphQLRequest.make DiaryEntry.fetchEntriesQuery (Http.expectString EntriesReceived)
+fetchEntries : OAuth.Token -> Cmd Msg
+fetchEntries token =
+    GraphQLRequest.make DiaryEntry.fetchEntriesQuery token (Http.expectString EntriesReceived)
 
 
-fetchRecentItems : Cmd Msg
-fetchRecentItems =
-    GraphQLRequest.make DiaryEntry.recentlyLoggedItemsQuery (Http.expectString RecentItemsReceived)
+fetchRecentItems : OAuth.Token -> Cmd Msg
+fetchRecentItems token =
+    GraphQLRequest.make DiaryEntry.recentlyLoggedItemsQuery token (Http.expectString RecentItemsReceived)
 
 
-createDiaryEntry : DiaryEntry.CreateDiaryEntryInput -> Cmd Msg
-createDiaryEntry input =
-    GraphQLRequest.make (DiaryEntry.createDiaryEntryMutation input) (Http.expectString CreateDiaryEntryResponse)
+createDiaryEntry : OAuth.Token -> DiaryEntry.CreateDiaryEntryInput -> Cmd Msg
+createDiaryEntry token input =
+    GraphQLRequest.make (DiaryEntry.createDiaryEntryMutation input) token (Http.expectString CreateDiaryEntryResponse)
 
 
 main : Program (Maybe (List Int)) Model Msg
@@ -135,10 +136,8 @@ init mflags origin navigationKey =
             , activeLoggableServingsById = Dict.empty
             , redirectUri = redirectUri
             , authFlow = Idle
+            , accessToken = Nothing
             }
-
-        initCmds =
-            Cmd.batch [ getNewTimeZone, cmdForRoute route ]
     in
     case OAuth.parseCode origin of
         OAuth.Empty ->
@@ -165,7 +164,10 @@ init mflags origin navigationKey =
 getAccessToken : Configuration -> Url -> OAuth.AuthorizationCode -> OAuth.CodeVerifier -> Cmd Msg
 getAccessToken { clientId, tokenEndpoint } redirectUri code codeVerifier =
     Http.request <|
-        OAuth.makeTokenRequest GotAccessToken
+        OAuth.makeTokenRequestWith OAuth.AuthorizationCode
+            OAuth.defaultAuthenticationSuccessDecoder
+            (Dict.fromList [ ( "audience", GraphQLRequest.audience ) ])
+            GotAccessToken
             { credentials =
                 { clientId = clientId
                 , secret = Nothing
@@ -182,14 +184,14 @@ subscriptions =
     always <| randomBytes GotRandomBytes
 
 
-cmdForRoute : Route -> Cmd Msg
-cmdForRoute route =
-    case route of
-        Route.DiaryEntryList ->
-            fetchEntries
+cmdForRoute : Model -> Route -> Cmd Msg
+cmdForRoute model route =
+    case ( model.accessToken, route ) of
+        ( Just token, Route.DiaryEntryList ) ->
+            Cmd.batch [ getNewTimeZone, fetchEntries token ]
 
-        Route.DiaryEntryCreate ->
-            fetchRecentItems
+        ( Just token, Route.DiaryEntryCreate ) ->
+            Cmd.batch [ getNewTimeZone, fetchRecentItems token ]
 
         _ ->
             Cmd.none
@@ -211,7 +213,7 @@ update msg model =
                 route =
                     Route.parse url
             in
-            ( { model | url = url, route = route }, cmdForRoute route )
+            ( { model | url = url, route = route }, cmdForRoute model route )
 
         NewTimeZone zone ->
             ( { model | zone = zone }, Cmd.none )
@@ -247,20 +249,25 @@ update msg model =
             )
 
         SubmitLoggingItem loggable ->
-            case Dict.get (LoggableItem.id loggable) model.activeLoggableServingsById of
-                Just servings ->
-                    let
-                        input =
-                            case loggable of
-                                LoggableItem item ->
-                                    CreateDiaryEntryItemInput item.id servings
+            case model.accessToken of
+                Just token ->
+                    case Dict.get (LoggableItem.id loggable) model.activeLoggableServingsById of
+                        Just servings ->
+                            let
+                                input =
+                                    case loggable of
+                                        LoggableItem item ->
+                                            CreateDiaryEntryItemInput item.id servings
 
-                                LoggableRecipe recipe ->
-                                    CreateDiaryEntryRecipeInput recipe.id servings
-                    in
-                    ( model, createDiaryEntry input )
+                                        LoggableRecipe recipe ->
+                                            CreateDiaryEntryRecipeInput recipe.id servings
+                            in
+                            ( model, createDiaryEntry token input )
 
-                Nothing ->
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                _ ->
                     ( model, Cmd.none )
 
         CancelLoggingItem loggable ->
@@ -356,7 +363,7 @@ gotRandomBytes model bytes =
             in
             ( { model | authFlow = Idle }
             , authorization
-                |> OAuth.makeAuthorizationUrl
+                |> OAuth.makeAuthorizationUrlWith Code (Dict.fromList [ ( "audience", GraphQLRequest.audience ) ])
                 |> Url.toString
                 |> Browser.Navigation.load
             )
@@ -417,7 +424,7 @@ gotAccessToken model authenticationResponse =
             )
 
         Ok { token } ->
-            ( { model | authFlow = Authenticated token }
+            ( { model | authFlow = Authenticated token, accessToken = Just token }
             , Task.perform (always UserInfoRequested) (Task.succeed 0)
             )
 

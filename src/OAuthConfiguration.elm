@@ -44,7 +44,7 @@ configuration =
     , clientId =
         "NAk5igfLGjmTOsHjWPGDTens9FWbstN9"
     , scope =
-        [ "openid", "profile" ]
+        [ "openid", "profile", "email" ]
     }
 
 
