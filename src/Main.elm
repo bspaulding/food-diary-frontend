@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser exposing (Document)
 import Browser.Navigation
@@ -14,12 +14,21 @@ import Json.Encode as E
 import LoggableItem exposing (LoggableItem(..))
 import Month
 import NutritionItem exposing (NutritionItem)
+import OAuth
+import OAuth.AuthorizationCode.PKCE as OAuth
+import OAuthConfiguration exposing (Configuration, UserInfo, cCODE_VERIFIER_SIZE, cSTATE_SIZE, convertBytes)
 import Recipe exposing (Recipe)
 import Route exposing (Route)
 import Set exposing (Set)
 import Task
 import Time
-import Url
+import Url exposing (Url)
+
+
+port genRandomBytes : Int -> Cmd msg
+
+
+port randomBytes : (List Int -> msg) -> Sub msg
 
 
 type alias Model =
@@ -31,6 +40,8 @@ type alias Model =
     , recentEntries : List RecentEntry
     , activeLoggableItemIds : Set Int
     , activeLoggableServingsById : Dict Int Float
+    , redirectUri : Url.Url
+    , authFlow : OAuthFlow
     }
 
 
@@ -45,6 +56,28 @@ type Msg
     | NewTimeZone Time.Zone
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
+    | SignInRequested
+    | GotRandomBytes (List Int)
+    | GotAccessToken (Result Http.Error OAuth.AuthenticationSuccess)
+    | UserInfoRequested
+    | GotUserInfo (Result Http.Error UserInfo)
+
+
+type OAuthFlow
+    = Idle
+    | Authorized OAuth.AuthorizationCode OAuth.CodeVerifier
+    | Authenticated OAuth.Token
+    | Done UserInfo
+    | Errored OAuthError
+
+
+type OAuthError
+    = ErrStateMismatch
+    | ErrFailedToConvertBytes
+    | ErrAuthorization OAuth.AuthorizationError
+    | ErrAuthentication OAuth.AuthenticationError
+    | ErrHTTPGetAccessToken
+    | ErrHTTPGetUserInfo
 
 
 getNewTimeZone : Cmd Msg
@@ -67,9 +100,10 @@ createDiaryEntry input =
     GraphQLRequest.make (DiaryEntry.createDiaryEntryMutation input) (Http.expectString CreateDiaryEntryResponse)
 
 
+main : Program (Maybe (List Int)) Model Msg
 main =
     Browser.application
-        { init = init
+        { init = Maybe.andThen convertBytes >> init
         , onUrlChange = UrlChanged
         , onUrlRequest = LinkClicked
         , view = view
@@ -78,28 +112,74 @@ main =
         }
 
 
-init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
-init flags url key =
+init : Maybe { state : String, codeVerifier : OAuth.CodeVerifier } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init mflags origin navigationKey =
     let
         route =
-            Route.parse url
+            Route.parse origin
+
+        redirectUri =
+            { origin | path = "/auth/callback", query = Nothing, fragment = Nothing }
+
+        clearUrl =
+            Browser.Navigation.replaceUrl navigationKey (Url.toString redirectUri)
+
+        emptyModel =
+            { navigationKey = navigationKey
+            , url = origin
+            , route = route
+            , zone = Time.utc
+            , entries = []
+            , recentEntries = []
+            , activeLoggableItemIds = Set.empty
+            , activeLoggableServingsById = Dict.empty
+            , redirectUri = redirectUri
+            , authFlow = Idle
+            }
+
+        initCmds =
+            Cmd.batch [ getNewTimeZone, cmdForRoute route ]
     in
-    ( { navigationKey = key
-      , url = url
-      , route = route
-      , zone = Time.utc
-      , entries = []
-      , recentEntries = []
-      , activeLoggableItemIds = Set.empty
-      , activeLoggableServingsById = Dict.empty
-      }
-    , Cmd.batch [ getNewTimeZone, cmdForRoute route ]
-    )
+    case OAuth.parseCode origin of
+        OAuth.Empty ->
+            ( emptyModel, Cmd.none )
+
+        OAuth.Success { code, state } ->
+            case mflags of
+                Nothing ->
+                    ( { emptyModel | authFlow = Errored ErrStateMismatch }, clearUrl )
+
+                Just flags ->
+                    if state /= Just flags.state then
+                        ( { emptyModel | authFlow = Errored ErrStateMismatch }, clearUrl )
+
+                    else
+                        ( { emptyModel | authFlow = Authorized code flags.codeVerifier }, Cmd.batch [ getAccessToken OAuthConfiguration.configuration redirectUri code flags.codeVerifier, clearUrl ] )
+
+        OAuth.Error error ->
+            ( { emptyModel | authFlow = Errored <| ErrAuthorization error, redirectUri = redirectUri }
+            , clearUrl
+            )
 
 
-subscriptions : Model -> Sub msg
-subscriptions _ =
-    Sub.none
+getAccessToken : Configuration -> Url -> OAuth.AuthorizationCode -> OAuth.CodeVerifier -> Cmd Msg
+getAccessToken { clientId, tokenEndpoint } redirectUri code codeVerifier =
+    Http.request <|
+        OAuth.makeTokenRequest GotAccessToken
+            { credentials =
+                { clientId = clientId
+                , secret = Nothing
+                }
+            , code = code
+            , codeVerifier = codeVerifier
+            , url = tokenEndpoint
+            , redirectUri = redirectUri
+            }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions =
+    always <| randomBytes GotRandomBytes
 
 
 cmdForRoute : Route -> Cmd Msg
@@ -210,10 +290,141 @@ update msg model =
                 Ok id ->
                     ( model, Cmd.none )
 
+        SignInRequested ->
+            signInRequested model
+
+        GotRandomBytes bytes ->
+            case model.authFlow of
+                Idle ->
+                    gotRandomBytes model bytes
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotAccessToken res ->
+            case model.authFlow of
+                Authorized _ _ ->
+                    gotAccessToken model res
+
+                _ ->
+                    ( model, Cmd.none )
+
+        UserInfoRequested ->
+            case model.authFlow of
+                Authenticated token ->
+                    userInfoRequested model token
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotUserInfo res ->
+            case model.authFlow of
+                Authenticated _ ->
+                    gotUserInfo model res
+
+                _ ->
+                    ( model, Cmd.none )
+
+
+signInRequested : Model -> ( Model, Cmd Msg )
+signInRequested model =
+    ( { model | authFlow = Idle }
+      -- We generate random bytes for both the state and the code verifier. First bytes are
+      -- for the 'state', and remaining ones are used for the code verifier.
+    , genRandomBytes (cSTATE_SIZE + cCODE_VERIFIER_SIZE)
+    )
+
+
+gotRandomBytes : Model -> List Int -> ( Model, Cmd Msg )
+gotRandomBytes model bytes =
+    case convertBytes bytes of
+        Nothing ->
+            ( { model | authFlow = Errored ErrFailedToConvertBytes }
+            , Cmd.none
+            )
+
+        Just { state, codeVerifier } ->
+            let
+                authorization =
+                    { clientId = OAuthConfiguration.configuration.clientId
+                    , redirectUri = model.redirectUri
+                    , scope = OAuthConfiguration.configuration.scope
+                    , state = Just state
+                    , codeChallenge = OAuth.mkCodeChallenge codeVerifier
+                    , url = OAuthConfiguration.configuration.authorizationEndpoint
+                    }
+            in
+            ( { model | authFlow = Idle }
+            , authorization
+                |> OAuth.makeAuthorizationUrl
+                |> Url.toString
+                |> Browser.Navigation.load
+            )
+
+
+gotUserInfo : Model -> Result Http.Error UserInfo -> ( Model, Cmd Msg )
+gotUserInfo model userInfoResponse =
+    case userInfoResponse of
+        Err _ ->
+            ( { model | authFlow = Errored ErrHTTPGetUserInfo }
+            , Cmd.none
+            )
+
+        Ok userInfo ->
+            ( { model | authFlow = Done userInfo }
+            , Browser.Navigation.pushUrl model.navigationKey "/"
+            )
+
+
+userInfoRequested : Model -> OAuth.Token -> ( Model, Cmd Msg )
+userInfoRequested model token =
+    ( { model | authFlow = Authenticated token }
+    , getUserInfo OAuthConfiguration.configuration token
+    )
+
+
+getUserInfo : Configuration -> OAuth.Token -> Cmd Msg
+getUserInfo { userInfoDecoder, userInfoEndpoint } token =
+    Http.request
+        { method = "GET"
+        , body = Http.emptyBody
+        , headers = OAuth.useToken token []
+        , url = Url.toString userInfoEndpoint
+        , expect = Http.expectJson GotUserInfo userInfoDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+gotAccessToken : Model -> Result Http.Error OAuth.AuthenticationSuccess -> ( Model, Cmd Msg )
+gotAccessToken model authenticationResponse =
+    case authenticationResponse of
+        Err (Http.BadBody body) ->
+            case D.decodeString OAuth.defaultAuthenticationErrorDecoder body of
+                Ok error ->
+                    ( { model | authFlow = Errored <| ErrAuthentication error }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | authFlow = Errored ErrHTTPGetAccessToken }
+                    , Cmd.none
+                    )
+
+        Err _ ->
+            ( { model | authFlow = Errored ErrHTTPGetAccessToken }
+            , Cmd.none
+            )
+
+        Ok { token } ->
+            ( { model | authFlow = Authenticated token }
+            , Task.perform (always UserInfoRequested) (Task.succeed 0)
+            )
+
 
 view : Model -> Document Msg
 view model =
-    { title = "Food Diary", body = body model }
+    { title = "Food Diary", body = bodyView model }
 
 
 flippedComparison a b =
@@ -237,25 +448,39 @@ orderDays =
     sortByWith Tuple.first flippedComparison
 
 
-body : Model -> List (Html Msg)
-body model =
+layoutView : List (Html Msg) -> List (Html Msg)
+layoutView children =
     [ div [ class "font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-20" ]
-        [ globalHeader
-        , globalNavigation
-        , case model.route of
-            Route.DiaryEntryList ->
-                diaryEntries model
-
-            Route.DiaryEntryCreate ->
-                diaryEntryCreate model
-
-            Route.NotFound ->
-                div [] [ text "Oops! Something went wrong." ]
-
-            _ ->
-                div [] [ text "TODO" ]
-        ]
+        ([ globalHeader ] ++ children)
     ]
+
+
+bodyView : Model -> List (Html Msg)
+bodyView model =
+    let
+        routeView =
+            case model.route of
+                Route.DiaryEntryList ->
+                    diaryEntries model
+
+                Route.DiaryEntryCreate ->
+                    diaryEntryCreate model
+
+                Route.NotFound ->
+                    div [] [ text "Oops! Something went wrong." ]
+
+                _ ->
+                    div [] [ text "TODO" ]
+    in
+    case model.authFlow of
+        Done _ ->
+            layoutView [ globalNavigation, routeView ]
+
+        Authenticated _ ->
+            layoutView [ globalNavigation, routeView ]
+
+        _ ->
+            layoutView [ btn SignInRequested "Log In" ]
 
 
 diaryEntries model =
