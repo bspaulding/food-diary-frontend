@@ -294,3 +294,21 @@ mutation CreateDiaryEntry($entry: food_diary_diary_entry_insert_input!) {
 decodeEntryCreatedResponse : String -> Result D.Error Int
 decodeEntryCreatedResponse =
     D.decodeString (at [ "data", "insert_food_diary_diary_entry_one", "id" ] int)
+
+
+deleteDiaryEntryMutation : DiaryEntry -> GraphQLRequest
+deleteDiaryEntryMutation entry =
+    { query = """
+mutation DeleteEntry($id: Int!) {
+  delete_food_diary_diary_entry_by_pk(id: $id) {
+    id
+  }
+}
+    """
+    , variables = E.object [ ( "id", E.int entry.id ) ]
+    }
+
+
+decodeEntryDeletedResponse : String -> Result D.Error Int
+decodeEntryDeletedResponse =
+    D.decodeString (at [ "data", "delete_food_diary_diary_entry_by_pk", "id" ] int)

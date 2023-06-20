@@ -9,6 +9,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class, href, property, src, step, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
+import HttpExtra as Http
 import Json.Decode as D
 import Json.Encode as E
 import LoggableItem exposing (LoggableItem(..))
@@ -62,6 +63,8 @@ type Msg
     | GotAccessToken (Result Http.Error OAuth.AuthenticationSuccess)
     | UserInfoRequested
     | GotUserInfo (Result Http.Error UserInfo)
+    | DeleteDiaryEntryRequested DiaryEntry
+    | DeleteDiaryEntryResponse (Result Http.Error String)
 
 
 type OAuthFlow
@@ -99,6 +102,11 @@ fetchRecentItems token =
 createDiaryEntry : OAuth.Token -> DiaryEntry.CreateDiaryEntryInput -> Cmd Msg
 createDiaryEntry token input =
     GraphQLRequest.make (DiaryEntry.createDiaryEntryMutation input) token (Http.expectString CreateDiaryEntryResponse)
+
+
+deleteDiaryEntry : OAuth.Token -> DiaryEntry -> Cmd Msg
+deleteDiaryEntry token entry =
+    GraphQLRequest.make (DiaryEntry.deleteDiaryEntryMutation entry) token (Http.expectString DeleteDiaryEntryResponse)
 
 
 main : Program (Maybe (List Int)) Model Msg
@@ -286,8 +294,8 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        CreateDiaryEntryResponse (Err res) ->
-            ( model, Cmd.none )
+        CreateDiaryEntryResponse (Err err) ->
+            Debug.log (Http.errorToString err) ( model, Cmd.none )
 
         CreateDiaryEntryResponse (Ok res) ->
             case DiaryEntry.decodeEntryCreatedResponse res of
@@ -296,6 +304,25 @@ update msg model =
 
                 Ok id ->
                     ( model, Cmd.none )
+
+        DeleteDiaryEntryRequested entry ->
+            case model.accessToken of
+                Just token ->
+                    ( model, deleteDiaryEntry token entry )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        DeleteDiaryEntryResponse (Err err) ->
+            Debug.log (Http.errorToString err) ( model, Cmd.none )
+
+        DeleteDiaryEntryResponse (Ok res) ->
+            case DiaryEntry.decodeEntryDeletedResponse res of
+                Err err ->
+                    Debug.log (D.errorToString err) ( model, Cmd.none )
+
+                Ok id ->
+                    ( { model | entries = List.filter (\e -> e.id /= id) model.entries }, Cmd.none )
 
         SignInRequested ->
             signInRequested model
@@ -571,7 +598,7 @@ entryItem zone entry =
     li [ class "mb-4" ]
         ([ p [ class "font-semibold" ] [ text (String.fromFloat entry.calories ++ " kcal, " ++ String.fromFloat (DiaryEntry.proteinGrams entry) ++ "g protein") ]
          , p [] [ a [ href ("/nutrition_item/" ++ String.fromInt entry.id) ] [ text (DiaryEntry.title entry) ] ]
-         , p [ class "flex justify-between text-sm" ] [ text (String.fromFloat entry.servings ++ " " ++ pluralize entry.servings "serving" "servings" ++ " at " ++ timeOfDay zone entry.consumed_at), button [] [ text "Delete" ] ]
+         , p [ class "flex justify-between text-sm" ] [ text (String.fromFloat entry.servings ++ " " ++ pluralize entry.servings "serving" "servings" ++ " at " ++ timeOfDay zone entry.consumed_at), button [ onClick (DeleteDiaryEntryRequested entry) ] [ text "Delete" ] ]
          ]
             ++ recipeTag
         )
