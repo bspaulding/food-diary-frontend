@@ -26,6 +26,8 @@ type alias Configuration =
 type alias UserInfo =
     { name : String
     , picture : String
+    , nickname : Maybe String
+    , email : String
     }
 
 
@@ -38,9 +40,11 @@ configuration =
     , userInfoEndpoint =
         { defaultHttpsUrl | host = host, path = "/userinfo" }
     , userInfoDecoder =
-        D.map2 UserInfo
+        D.map4 UserInfo
             (D.field "name" D.string)
             (D.field "picture" D.string)
+            (D.field "nickname" (D.nullable D.string))
+            (D.field "email" D.string)
     , clientId =
         "NAk5igfLGjmTOsHjWPGDTens9FWbstN9"
     , scope =

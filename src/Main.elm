@@ -593,10 +593,10 @@ orderDays =
     sortByWith Tuple.first flippedComparison
 
 
-layoutView : List (Html Msg) -> List (Html Msg)
-layoutView children =
+layoutView : Maybe UserInfo -> List (Html Msg) -> List (Html Msg)
+layoutView muserInfo children =
     [ div [ class "font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-20" ]
-        ([ globalHeader ] ++ children)
+        ([ globalHeader muserInfo ] ++ children)
     ]
 
 
@@ -604,28 +604,52 @@ bodyView : Model -> List (Html Msg)
 bodyView model =
     let
         routeView =
-            case model.route of
-                Route.DiaryEntryList ->
+            case ( model.authFlow, model.route ) of
+                ( Done _, Route.DiaryEntryList ) ->
                     diaryEntries model
 
-                Route.DiaryEntryCreate tab ->
+                ( Done _, Route.DiaryEntryCreate tab ) ->
                     diaryEntryCreate model tab
 
-                Route.NotFound ->
+                ( Done userInfo, Route.Profile ) ->
+                    profileView userInfo
+
+                ( _, Route.NotFound ) ->
                     div [] [ text "Oops! Something went wrong." ]
 
                 _ ->
                     div [] [ text "TODO" ]
     in
     case model.authFlow of
-        Done _ ->
-            layoutView [ globalNavigation, routeView ]
+        Done userInfo ->
+            layoutView (Just userInfo) [ globalNavigation, routeView ]
 
         Authenticated _ ->
-            layoutView [ globalNavigation, routeView ]
+            layoutView Nothing [ globalNavigation, routeView ]
 
         _ ->
-            layoutView [ btn SignInRequested "Log In" ]
+            layoutView Nothing [ btn SignInRequested "Log In" ]
+
+
+profileView : UserInfo -> Html Msg
+profileView userInfo =
+    div [ class "flex flex-col items-center" ]
+        (div [ class "mb-4 max-w-xs" ] [ avatarView userInfo ]
+            :: (case userInfo.nickname of
+                    Nothing ->
+                        []
+
+                    Just nickname ->
+                        [ p [ class "font-semibold text-lg" ] [ text nickname ] ]
+               )
+            ++ [ p [ class "text-lg" ] [ text userInfo.email ]
+               , div [ class "mt-4 flex flex-col items-center" ]
+                    [ a [ class "ml-3", href "/diary_entry/import" ] [ text "Import Entries" ]
+                    , button [] [ text "Export Entries As CSV" ]
+                    ]
+               , button [ class "text-red-600 mt-4" ] [ text "Logout" ]
+               ]
+        )
 
 
 diaryEntries model =
@@ -648,13 +672,23 @@ globalNavigation =
         ]
 
 
-globalHeader =
+avatarView : UserInfo -> Html Msg
+avatarView userInfo =
+    img [ class "border border-slate-800 rounded-full", src userInfo.picture ] []
+
+
+globalHeader : Maybe UserInfo -> Html Msg
+globalHeader muserInfo =
     header [ class "fixed top-0 left-0 right-0 h-16 flex px-4 justify-start items-center bg-slate-50" ]
         [ a [ href "/" ] [ h1 [ class "text-2xl font-bold" ] [ text "Food Diary" ] ]
         , div [ class "absolute right-2 w-12 h-12 " ]
-            [ a [ href "/profile" ]
-                [ img [ class "border border-slate-800 rounded-full", src "https://s.gravatar.com/avatar/49572474dbacea8cd772100342004113?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fbr.png" ] [] ]
-            ]
+            (case muserInfo of
+                Nothing ->
+                    []
+
+                Just userInfo ->
+                    [ a [ href "/profile" ] [ avatarView userInfo ] ]
+            )
         ]
 
 
