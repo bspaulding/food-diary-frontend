@@ -6,11 +6,11 @@ import DiaryEntry exposing (CreateDiaryEntryInput(..), DiaryEntry, RecentEntry(.
 import Dict exposing (Dict)
 import GraphQLRequest exposing (GraphQLRequest)
 import Html exposing (..)
-import Html.Attributes exposing (class, href, property, src, step, style, type_, value)
+import Html.Attributes exposing (class, href, name, placeholder, property, src, step, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import HttpExtra as Http
-import Json.Decode as D
+import Json.Decode as D exposing (at, field, int, list, oneOf, string)
 import Json.Encode as E
 import LoggableItem exposing (LoggableItem(..))
 import Month
@@ -18,6 +18,7 @@ import NutritionItem exposing (NutritionItem)
 import OAuth exposing (ResponseType(..))
 import OAuth.AuthorizationCode.PKCE as OAuth
 import OAuthConfiguration exposing (Configuration, UserInfo, cCODE_VERIFIER_SIZE, cSTATE_SIZE, convertBytes)
+import Process
 import Recipe exposing (Recipe)
 import Route exposing (DiaryEntryCreateTab(..), Route)
 import Set exposing (Set)
@@ -44,6 +45,9 @@ type alias Model =
     , redirectUri : Url.Url
     , authFlow : OAuthFlow
     , accessToken : Maybe OAuth.Token
+    , entrySearchDebouncer : Debouncer String String
+    , searchResults : List LoggableItem
+    , loggableSearchQuery : String
     }
 
 
@@ -65,6 +69,9 @@ type Msg
     | GotUserInfo (Result Http.Error UserInfo)
     | DeleteDiaryEntryRequested DiaryEntry
     | DeleteDiaryEntryResponse (Result Http.Error String)
+    | DebouncerTimeout Int
+    | SearchItemsAndRecipesResponse (Result Http.Error String)
+    | ItemAndRecipeSearchUpdated String
 
 
 type OAuthFlow
@@ -82,6 +89,22 @@ type OAuthError
     | ErrAuthentication OAuth.AuthenticationError
     | ErrHTTPGetAccessToken
     | ErrHTTPGetUserInfo
+
+
+type alias Debouncer a b =
+    { function : a -> b
+    , parameter : a
+    , timeout : Float
+    , tag : Int
+    }
+
+
+call : a -> Debouncer a b -> ( Debouncer a b, Cmd Msg )
+call parameter debouncer =
+    ( { debouncer | parameter = parameter, tag = debouncer.tag + 1 }
+    , Process.sleep debouncer.timeout
+        |> Task.perform (\_ -> DebouncerTimeout (debouncer.tag + 1))
+    )
 
 
 getNewTimeZone : Cmd Msg
@@ -107,6 +130,50 @@ createDiaryEntry token input =
 deleteDiaryEntry : OAuth.Token -> DiaryEntry -> Cmd Msg
 deleteDiaryEntry token entry =
     GraphQLRequest.make (DiaryEntry.deleteDiaryEntryMutation entry) token (Http.expectString DeleteDiaryEntryResponse)
+
+
+searchItemsAndRecipesQuery : String -> GraphQLRequest
+searchItemsAndRecipesQuery search =
+    { query =
+        """
+query SearchItemsAndRecipes($search: String!) {
+  food_diary_search_nutrition_items(args: { search: $search }) {
+    id,
+    description
+  }
+
+  food_diary_search_recipes(args: { search: $search }) {
+    id,
+    name
+  }
+}
+        """
+    , variables = E.object [ ( "search", E.string search ) ]
+    }
+
+
+searchResultDecoder : (Int -> String -> LoggableItem) -> D.Decoder LoggableItem
+searchResultDecoder constructor =
+    D.map2 constructor
+        (field "id" int)
+        (oneOf [ field "name" string, field "description" string ])
+
+
+decodeSearchItemsAndRecipesResponseDecoder : D.Decoder (List LoggableItem)
+decodeSearchItemsAndRecipesResponseDecoder =
+    D.map2 (++)
+        (at [ "data", "food_diary_search_nutrition_items" ] (list (searchResultDecoder (\id title -> LoggableItem { id = id, title = title }))))
+        (at [ "data", "food_diary_search_recipes" ] (list (searchResultDecoder (\id title -> LoggableRecipe { id = id, title = title }))))
+
+
+decodeSearchItemsAndRecipesResponse : String -> Result D.Error (List LoggableItem)
+decodeSearchItemsAndRecipesResponse s =
+    D.decodeString decodeSearchItemsAndRecipesResponseDecoder s
+
+
+searchItemsAndRecipes : OAuth.Token -> String -> Cmd Msg
+searchItemsAndRecipes token query =
+    GraphQLRequest.make (searchItemsAndRecipesQuery query) token (Http.expectString SearchItemsAndRecipesResponse)
 
 
 main : Program (Maybe (List Int)) Model Msg
@@ -145,6 +212,9 @@ init mflags origin navigationKey =
             , redirectUri = redirectUri
             , authFlow = Idle
             , accessToken = Nothing
+            , entrySearchDebouncer = { function = identity, parameter = "", timeout = 300.0, tag = 0 }
+            , searchResults = []
+            , loggableSearchQuery = ""
             }
     in
     case OAuth.parseCode origin of
@@ -358,6 +428,47 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        DebouncerTimeout tag ->
+            case ( model.accessToken, tag == model.entrySearchDebouncer.tag ) of
+                ( Just token, True ) ->
+                    ( model, searchItemsAndRecipes token model.loggableSearchQuery )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        SearchItemsAndRecipesResponse (Err err) ->
+            Debug.log (Http.errorToString err) ( model, Cmd.none )
+
+        SearchItemsAndRecipesResponse (Ok res) ->
+            case decodeSearchItemsAndRecipesResponse res of
+                Err err ->
+                    Debug.log (D.errorToString err) ( model, Cmd.none )
+
+                Ok results ->
+                    ( { model | searchResults = results }, Cmd.none )
+
+        ItemAndRecipeSearchUpdated str ->
+            let
+                ( debouncer, cmd ) =
+                    call str model.entrySearchDebouncer
+            in
+            ( { model
+                | loggableSearchQuery = str
+                , entrySearchDebouncer = debouncer
+                , searchResults =
+                    if String.length str == 0 then
+                        []
+
+                    else
+                        model.searchResults
+              }
+            , if String.length str == 0 then
+                Cmd.none
+
+              else
+                cmd
+            )
 
 
 signInRequested : Model -> ( Model, Cmd Msg )
@@ -671,13 +782,45 @@ diaryEntryCreateSuggestions model =
             List.map makeLoggable model.recentEntries
     in
     [ h2 [ class "text-lg font-semibold" ] [ text "Suggested Items" ]
-    , ul [] (List.map (\( c, i ) -> loggableItem c i (Set.member (LoggableItem.id i) model.activeLoggableItemIds) (Maybe.withDefault 1 (Dict.get (LoggableItem.id i) model.activeLoggableServingsById))) loggables)
+    , loggableList model loggables
     ]
+
+
+loggableList : Model -> List ( List (Html Msg), LoggableItem ) -> Html Msg
+loggableList model loggables =
+    ul [] (List.map (\( c, i ) -> loggableItem c i (Set.member (LoggableItem.id i) model.activeLoggableItemIds) (Maybe.withDefault 1 (Dict.get (LoggableItem.id i) model.activeLoggableServingsById))) loggables)
 
 
 diaryEntryCreateSearch : Model -> List (Html Msg)
 diaryEntryCreateSearch model =
-    [ text "TODO Search" ]
+    [ section [ class "flex flex-col mt-5" ]
+        [ input [ class "border rounded px-2 text-lg", type_ "search", placeholder "Search Items and Recipes", name "entry-item-search", onInput ItemAndRecipeSearchUpdated, value model.loggableSearchQuery ] []
+        , div [ class "px-1" ]
+            (if List.length model.searchResults == 0 then
+                [ p [ class "text-center mt-4 text-slate-400" ] [ text "Search for an item or recipe you've previously added." ] ]
+
+             else
+                [ p [ class "text-center mt-4 text-slate-400" ] [ text (String.fromInt (List.length model.searchResults) ++ pluralize (List.length model.searchResults) " item" " items") ]
+                , loggableList model (List.map (\l -> ( [ loggableTagView l ], l )) model.searchResults)
+                ]
+            )
+        ]
+    ]
+
+
+loggableTagView : LoggableItem -> Html Msg
+loggableTagView loggable =
+    case loggable of
+        LoggableItem _ ->
+            tagView "ITEM"
+
+        LoggableRecipe _ ->
+            tagView "RECIPE"
+
+
+tagView : String -> Html Msg
+tagView label =
+    span [ class "bg-slate-400 text-slate-50 px-2 py-1 rounded text-xs ml-8" ] [ text label ]
 
 
 timeOfDay : Time.Zone -> Time.Posix -> String
