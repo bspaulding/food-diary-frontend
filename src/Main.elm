@@ -4,6 +4,7 @@ import Browser exposing (Document)
 import Browser.Navigation
 import DiaryEntry exposing (CreateDiaryEntryInput(..), DiaryEntry, RecentEntry(..))
 import Dict exposing (Dict)
+import Form
 import GraphQLRequest exposing (GraphQLRequest)
 import Html exposing (..)
 import Html.Attributes exposing (class, for, href, name, placeholder, property, src, step, style, type_, value)
@@ -14,7 +15,9 @@ import Json.Decode as D exposing (at, field, int, list, oneOf, string)
 import Json.Encode as E
 import LoggableItem exposing (LoggableItem(..))
 import Month
+import Msg exposing (Msg(..))
 import NutritionItem exposing (NutritionItem)
+import NutritionItemForm exposing (NutritionItemForm, nutritionItemForm)
 import OAuth exposing (ResponseType(..))
 import OAuth.AuthorizationCode.PKCE as OAuth
 import OAuthConfiguration exposing (Configuration, UserInfo, cCODE_VERIFIER_SIZE, cSTATE_SIZE, convertBytes)
@@ -48,30 +51,9 @@ type alias Model =
     , entrySearchDebouncer : Debouncer String String
     , searchResults : List LoggableItem
     , loggableSearchQuery : String
+    , nutritionItemCreateForm : Form.Model
+    , nutritionItemCreateFormSubmitting : Bool
     }
-
-
-type Msg
-    = EntriesReceived (Result Http.Error String)
-    | RecentItemsReceived (Result Http.Error String)
-    | CreateDiaryEntryResponse (Result Http.Error String)
-    | BeginLoggingItem LoggableItem
-    | SubmitLoggingItem LoggableItem
-    | CancelLoggingItem LoggableItem
-    | UpdateLoggableServings LoggableItem String
-    | NewTimeZone Time.Zone
-    | LinkClicked Browser.UrlRequest
-    | UrlChanged Url.Url
-    | SignInRequested
-    | GotRandomBytes (List Int)
-    | GotAccessToken (Result Http.Error OAuth.AuthenticationSuccess)
-    | UserInfoRequested
-    | GotUserInfo (Result Http.Error UserInfo)
-    | DeleteDiaryEntryRequested DiaryEntry
-    | DeleteDiaryEntryResponse (Result Http.Error String)
-    | DebouncerTimeout Int
-    | SearchItemsAndRecipesResponse (Result Http.Error String)
-    | ItemAndRecipeSearchUpdated String
 
 
 type OAuthFlow
@@ -176,6 +158,11 @@ searchItemsAndRecipes token query =
     GraphQLRequest.make (searchItemsAndRecipesQuery query) token (Http.expectString SearchItemsAndRecipesResponse)
 
 
+createNutritionItem : OAuth.Token -> NutritionItemForm -> Cmd Msg
+createNutritionItem token form =
+    GraphQLRequest.make (NutritionItemForm.createNutritionItemQuery form) token (Http.expectString NutritionItemCreateResponse)
+
+
 main : Program (Maybe (List Int)) Model Msg
 main =
     Browser.application
@@ -215,6 +202,8 @@ init mflags origin navigationKey =
             , entrySearchDebouncer = { function = identity, parameter = "", timeout = 300.0, tag = 0 }
             , searchResults = []
             , loggableSearchQuery = ""
+            , nutritionItemCreateForm = Form.init
+            , nutritionItemCreateFormSubmitting = False
             }
     in
     case OAuth.parseCode origin of
@@ -470,6 +459,35 @@ update msg model =
                 cmd
             )
 
+        FormMsg formMsg ->
+            let
+                ( updatedFormModel, cmd ) =
+                    Form.update formMsg model.nutritionItemCreateForm
+            in
+            ( { model | nutritionItemCreateForm = updatedFormModel }, cmd )
+
+        OnSubmitNutritionItemCreateForm (Form.Invalid _ _) ->
+            ( model, Cmd.none )
+
+        OnSubmitNutritionItemCreateForm (Form.Valid data) ->
+            case model.accessToken of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just token ->
+                    ( { model | nutritionItemCreateFormSubmitting = True }, createNutritionItem token data )
+
+        NutritionItemCreateResponse (Err err) ->
+            Debug.log (Http.errorToString err) ( model, Cmd.none )
+
+        NutritionItemCreateResponse (Ok res) ->
+            case NutritionItemForm.decodeNutritionItemCreateResponse res of
+                Err err ->
+                    Debug.log (D.errorToString err) ( model, Cmd.none )
+
+                Ok id ->
+                    ( model, Browser.Navigation.pushUrl model.navigationKey ("/nutrition_item/" ++ String.fromInt id) )
+
 
 signInRequested : Model -> ( Model, Cmd Msg )
 signInRequested model =
@@ -615,7 +633,16 @@ bodyView model =
                     profileView userInfo
 
                 ( Done _, Route.NutritionItemCreate ) ->
-                    nutritionItemCreate model
+                    nutritionItemForm
+                        |> Form.renderHtml
+                            { submitting = model.nutritionItemCreateFormSubmitting
+                            , state = model.nutritionItemCreateForm
+                            , toMsg = FormMsg
+                            }
+                            (Form.options "nutritionItemCreateForm"
+                                |> Form.withOnSubmit (\{ parsed } -> OnSubmitNutritionItemCreateForm parsed)
+                            )
+                            []
 
                 ( _, Route.NotFound ) ->
                     div [] [ text "Oops! Something went wrong." ]
@@ -632,47 +659,6 @@ bodyView model =
 
         _ ->
             layoutView Nothing [ btn SignInRequested "Log In" ]
-
-
-nutritionItemCreate : Model -> Html Msg
-nutritionItemCreate model =
-    form []
-        [ fieldset [ class "flex flex-col" ]
-            [ label [ for "description" ] [ text "Description" ]
-            , input [ type_ "text", name "description" ] []
-            ]
-        , fieldset [ class "flex flex-col my-4" ]
-            [ legend [ class "font-semibold" ] [ text "Nutrition Facts" ]
-            , label [ for "calories" ] [ text "Calories" ]
-            , input [ type_ "number", step "0.1", name "calories" ] []
-            , label [ for "total-fat-grams" ] [ text "Total Fat (g)" ]
-            , input [ type_ "number", step "0.1", name "total-fat-grams" ] []
-            , label [ for "saturated-fat-grams" ] [ text "Saturated Fat (g)" ]
-            , input [ type_ "number", step "0.1", name "saturated-fat-grams" ] []
-            , label [ for "trans-fat-grams" ] [ text "Trans Fat (g)" ]
-            , input [ type_ "number", step "0.1", name "trans-fat-grams" ] []
-            , label [ for "polyunsaturated-fat-grams" ] [ text "Polyunsaturated Fat (g)" ]
-            , input [ type_ "number", step "0.1", name "polyunsaturated-fat-grams" ] []
-            , label [ for "monounsaturated-fat-grams" ] [ text "Monounsaturated Fat (g)" ]
-            , input [ type_ "number", step "0.1", name "monounsaturated-fat-grams" ] []
-            , label [ for "cholesterol-milligrams" ] [ text "Cholesterol (mg)" ]
-            , input [ type_ "number", step "0.1", name "cholesterol-milligrams" ] []
-            , label [ for "sodium-milligrams" ] [ text "Sodium (mg)" ]
-            , input [ type_ "number", step "0.1", name "sodium-milligrams" ] []
-            , label [ for "total-carbohydrate-grams" ] [ text "Total Carbohydrate (g)" ]
-            , input [ type_ "number", step "0.1", name "total-carbohydrate-grams" ] []
-            , label [ for "dietary-fiber-grams" ] [ text "Dietary Fiber (g)" ]
-            , input [ type_ "number", step "0.1", name "dietary-fiber-grams" ] []
-            , label [ for "total-sugars-grams" ] [ text "Total Sugars (g)" ]
-            , input [ type_ "number", step "0.1", name "total-sugars-grams" ] []
-            , label [ for "added-sugars-grams" ] [ text "Added Sugars (g)" ]
-            , input [ type_ "number", step "0.1", name "added-sugars-grams" ] []
-            , label [ for "protein-grams" ] [ text "Protein (g)" ]
-            , input [ type_ "number", step "0.1", name "protein-grams" ] []
-            ]
-        , fieldset [ class "mb-4" ]
-            [ button [ class "bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold" ] [ text "Save" ] ]
-        ]
 
 
 profileView : UserInfo -> Html Msg
