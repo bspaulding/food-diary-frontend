@@ -6,7 +6,7 @@ import DiaryEntry exposing (CreateDiaryEntryInput(..), DiaryEntry, RecentEntry(.
 import Dict exposing (Dict)
 import GraphQLRequest exposing (GraphQLRequest)
 import Html exposing (..)
-import Html.Attributes exposing (class, href, name, placeholder, property, src, step, style, type_, value)
+import Html.Attributes exposing (class, for, href, name, placeholder, property, src, step, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import HttpExtra as Http
@@ -614,6 +614,9 @@ bodyView model =
                 ( Done userInfo, Route.Profile ) ->
                     profileView userInfo
 
+                ( Done _, Route.NutritionItemCreate ) ->
+                    nutritionItemCreate model
+
                 ( _, Route.NotFound ) ->
                     div [] [ text "Oops! Something went wrong." ]
 
@@ -629,6 +632,47 @@ bodyView model =
 
         _ ->
             layoutView Nothing [ btn SignInRequested "Log In" ]
+
+
+nutritionItemCreate : Model -> Html Msg
+nutritionItemCreate model =
+    form []
+        [ fieldset [ class "flex flex-col" ]
+            [ label [ for "description" ] [ text "Description" ]
+            , input [ type_ "text", name "description" ] []
+            ]
+        , fieldset [ class "flex flex-col my-4" ]
+            [ legend [ class "font-semibold" ] [ text "Nutrition Facts" ]
+            , label [ for "calories" ] [ text "Calories" ]
+            , input [ type_ "number", step "0.1", name "calories" ] []
+            , label [ for "total-fat-grams" ] [ text "Total Fat (g)" ]
+            , input [ type_ "number", step "0.1", name "total-fat-grams" ] []
+            , label [ for "saturated-fat-grams" ] [ text "Saturated Fat (g)" ]
+            , input [ type_ "number", step "0.1", name "saturated-fat-grams" ] []
+            , label [ for "trans-fat-grams" ] [ text "Trans Fat (g)" ]
+            , input [ type_ "number", step "0.1", name "trans-fat-grams" ] []
+            , label [ for "polyunsaturated-fat-grams" ] [ text "Polyunsaturated Fat (g)" ]
+            , input [ type_ "number", step "0.1", name "polyunsaturated-fat-grams" ] []
+            , label [ for "monounsaturated-fat-grams" ] [ text "Monounsaturated Fat (g)" ]
+            , input [ type_ "number", step "0.1", name "monounsaturated-fat-grams" ] []
+            , label [ for "cholesterol-milligrams" ] [ text "Cholesterol (mg)" ]
+            , input [ type_ "number", step "0.1", name "cholesterol-milligrams" ] []
+            , label [ for "sodium-milligrams" ] [ text "Sodium (mg)" ]
+            , input [ type_ "number", step "0.1", name "sodium-milligrams" ] []
+            , label [ for "total-carbohydrate-grams" ] [ text "Total Carbohydrate (g)" ]
+            , input [ type_ "number", step "0.1", name "total-carbohydrate-grams" ] []
+            , label [ for "dietary-fiber-grams" ] [ text "Dietary Fiber (g)" ]
+            , input [ type_ "number", step "0.1", name "dietary-fiber-grams" ] []
+            , label [ for "total-sugars-grams" ] [ text "Total Sugars (g)" ]
+            , input [ type_ "number", step "0.1", name "total-sugars-grams" ] []
+            , label [ for "added-sugars-grams" ] [ text "Added Sugars (g)" ]
+            , input [ type_ "number", step "0.1", name "added-sugars-grams" ] []
+            , label [ for "protein-grams" ] [ text "Protein (g)" ]
+            , input [ type_ "number", step "0.1", name "protein-grams" ] []
+            ]
+        , fieldset [ class "mb-4" ]
+            [ button [ class "bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold" ] [ text "Save" ] ]
+        ]
 
 
 profileView : UserInfo -> Html Msg
