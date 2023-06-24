@@ -28,6 +28,8 @@ import Set exposing (Set)
 import Task
 import Time
 import Url exposing (Url)
+import Url.Parser as P exposing ((</>), (<?>))
+import Url.Parser.Query as Q
 
 
 port genRandomBytes : Int -> Cmd msg
@@ -182,10 +184,18 @@ init mflags origin navigationKey =
             Route.parse origin
 
         redirectUri =
-            { origin | path = "/auth/callback", query = Nothing, fragment = Nothing }
+            { origin | path = "/auth/callback?path=" ++ origin.path, query = Nothing, fragment = Nothing }
+
+        restorePath =
+            P.parse (P.s "auth" </> P.s "callback" <?> Q.string "path") origin
 
         clearUrl =
-            Browser.Navigation.replaceUrl navigationKey (Url.toString redirectUri)
+            case restorePath of
+                Just (Just path) ->
+                    Browser.Navigation.replaceUrl navigationKey path
+
+                _ ->
+                    Browser.Navigation.replaceUrl navigationKey (Url.toString redirectUri)
 
         emptyModel =
             { navigationKey = navigationKey
@@ -535,7 +545,7 @@ gotUserInfo model userInfoResponse =
 
         Ok userInfo ->
             ( { model | authFlow = Done userInfo }
-            , Browser.Navigation.pushUrl model.navigationKey "/"
+            , Cmd.none
             )
 
 
