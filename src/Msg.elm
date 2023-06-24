@@ -15,7 +15,7 @@ import Url
 type Msg
     = EntriesReceived (Result Http.Error String)
     | RecentItemsReceived (Result Http.Error String)
-    | CreateDiaryEntryResponse (Result Http.Error String)
+    | CreateDiaryEntryResponse LoggableItem (Result Http.Error String)
     | BeginLoggingItem LoggableItem
     | SubmitLoggingItem LoggableItem
     | CancelLoggingItem LoggableItem
@@ -36,3 +36,4 @@ type Msg
     | FormMsg (Form.Msg Msg)
     | OnSubmitNutritionItemCreateForm (Form.Validated String NutritionItemForm)
     | NutritionItemCreateResponse (Result Http.Error String)
+    | NutritionItemResponse (Result Http.Error String)

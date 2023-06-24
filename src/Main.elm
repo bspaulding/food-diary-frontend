@@ -55,6 +55,7 @@ type alias Model =
     , loggableSearchQuery : String
     , nutritionItemCreateForm : Form.Model
     , nutritionItemCreateFormSubmitting : Bool
+    , nutritionItemsById : Dict Int NutritionItem
     }
 
 
@@ -106,9 +107,9 @@ fetchRecentItems token =
     GraphQLRequest.make DiaryEntry.recentlyLoggedItemsQuery token (Http.expectString RecentItemsReceived)
 
 
-createDiaryEntry : OAuth.Token -> DiaryEntry.CreateDiaryEntryInput -> Cmd Msg
-createDiaryEntry token input =
-    GraphQLRequest.make (DiaryEntry.createDiaryEntryMutation input) token (Http.expectString CreateDiaryEntryResponse)
+createDiaryEntry : OAuth.Token -> DiaryEntry.CreateDiaryEntryInput -> LoggableItem -> Cmd Msg
+createDiaryEntry token input loggable =
+    GraphQLRequest.make (DiaryEntry.createDiaryEntryMutation input) token (Http.expectString (CreateDiaryEntryResponse loggable))
 
 
 deleteDiaryEntry : OAuth.Token -> DiaryEntry -> Cmd Msg
@@ -165,6 +166,11 @@ createNutritionItem token form =
     GraphQLRequest.make (NutritionItemForm.createNutritionItemQuery form) token (Http.expectString NutritionItemCreateResponse)
 
 
+fetchNutritionItem : OAuth.Token -> Int -> Cmd Msg
+fetchNutritionItem token id =
+    GraphQLRequest.make (NutritionItem.fetchNutritionItemQuery id) token (Http.expectString NutritionItemResponse)
+
+
 main : Program (Maybe (List Int)) Model Msg
 main =
     Browser.application
@@ -214,6 +220,7 @@ init mflags origin navigationKey =
             , loggableSearchQuery = ""
             , nutritionItemCreateForm = Form.init
             , nutritionItemCreateFormSubmitting = False
+            , nutritionItemsById = Dict.empty
             }
     in
     case OAuth.parseCode origin of
@@ -269,6 +276,9 @@ cmdForRoute model route =
 
         ( Just token, Route.DiaryEntryCreate Suggestions ) ->
             Cmd.batch [ getNewTimeZone, fetchRecentItems token ]
+
+        ( Just token, Route.NutritionItem id ) ->
+            fetchNutritionItem token id
 
         _ ->
             Cmd.none
@@ -339,7 +349,7 @@ update msg model =
                                         LoggableRecipe recipe ->
                                             CreateDiaryEntryRecipeInput recipe.id servings
                             in
-                            ( model, createDiaryEntry token input )
+                            ( model, createDiaryEntry token input loggable )
 
                         Nothing ->
                             ( model, Cmd.none )
@@ -363,16 +373,21 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        CreateDiaryEntryResponse (Err err) ->
+        CreateDiaryEntryResponse _ (Err err) ->
             Debug.log (Http.errorToString err) ( model, Cmd.none )
 
-        CreateDiaryEntryResponse (Ok res) ->
+        CreateDiaryEntryResponse loggable (Ok res) ->
             case DiaryEntry.decodeEntryCreatedResponse res of
                 Err err ->
                     Debug.log (D.errorToString err) ( model, Cmd.none )
 
                 Ok id ->
-                    ( model, Cmd.none )
+                    ( { model
+                        | activeLoggableItemIds = Set.remove (LoggableItem.id loggable) model.activeLoggableItemIds
+                        , activeLoggableServingsById = Dict.remove (LoggableItem.id loggable) model.activeLoggableServingsById
+                      }
+                    , Cmd.none
+                    )
 
         DeleteDiaryEntryRequested entry ->
             case model.accessToken of
@@ -498,6 +513,17 @@ update msg model =
                 Ok id ->
                     ( model, Browser.Navigation.pushUrl model.navigationKey ("/nutrition_item/" ++ String.fromInt id) )
 
+        NutritionItemResponse (Err err) ->
+            Debug.log (Http.errorToString err) ( model, Cmd.none )
+
+        NutritionItemResponse (Ok res) ->
+            case NutritionItem.decodeNutritionItemResponse res of
+                Err err ->
+                    Debug.log (D.errorToString err) ( model, Cmd.none )
+
+                Ok nutritionItem ->
+                    ( { model | nutritionItemsById = Dict.insert nutritionItem.id nutritionItem model.nutritionItemsById }, Cmd.none )
+
 
 signInRequested : Model -> ( Model, Cmd Msg )
 signInRequested model =
@@ -590,8 +616,12 @@ gotAccessToken model authenticationResponse =
             )
 
         Ok { token } ->
-            ( { model | authFlow = Authenticated token, accessToken = Just token }
-            , Task.perform (always UserInfoRequested) (Task.succeed 0)
+            let
+                newModel =
+                    { model | authFlow = Authenticated token, accessToken = Just token }
+            in
+            ( newModel
+            , Cmd.batch [ Task.perform (always UserInfoRequested) (Task.succeed 0), cmdForRoute newModel newModel.route ]
             )
 
 
@@ -654,6 +684,9 @@ bodyView model =
                             )
                             []
 
+                ( Done _, Route.NutritionItem id ) ->
+                    nutritionItemShow model id
+
                 ( _, Route.NotFound ) ->
                     div [] [ text "Oops! Something went wrong." ]
 
@@ -669,6 +702,88 @@ bodyView model =
 
         _ ->
             layoutView Nothing [ btn SignInRequested "Log In" ]
+
+
+nutritionItemShow : Model -> Int -> Html Msg
+nutritionItemShow model id =
+    case Dict.get id model.nutritionItemsById of
+        Nothing ->
+            div [] [ text "Loading..." ]
+
+        Just item ->
+            nutritionItemView model item
+
+
+nutritionItemView : Model -> NutritionItem -> Html Msg
+nutritionItemView model item =
+    let
+        loggable =
+            LoggableItem { id = item.id, title = "Log It" }
+
+        logging =
+            Set.member (LoggableItem.id loggable) model.activeLoggableItemIds
+
+        servings =
+            Maybe.withDefault 1 (Dict.get (LoggableItem.id loggable) model.activeLoggableServingsById)
+    in
+    div []
+        [ h1 [ class "font-semibold text-2xl" ] [ text item.description ]
+        , ul [] [ loggableItem [] loggable logging servings ]
+        , div [ class "text-lg" ]
+            [ p [ class "flex justify-between" ]
+                [ span [ class "font-semibold" ] [ text "Calories" ]
+                , span [] [ text (String.fromFloat item.calories) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "font-semibold" ] [ text "Total Fat (g)" ]
+                , span [] [ text (String.fromFloat item.total_fat_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "ml-4" ] [ text "Saturated Fat (g)" ]
+                , span [] [ text (String.fromFloat item.saturated_fat_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "ml-4" ] [ text "Trans Fat (g)" ]
+                , span [] [ text (String.fromFloat item.trans_fat_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "ml-4" ] [ text "Polyunsaturated Fat (g)" ]
+                , span [] [ text (String.fromFloat item.polyunsaturated_fat_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "ml-4" ] [ text "Monounsaturated Fat (g)" ]
+                , span [] [ text (String.fromFloat item.monounsaturated_fat_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "font-semibold" ] [ text "Cholesterol (mg)" ]
+                , span [] [ text (String.fromFloat item.cholesterol_milligrams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "font-semibold" ] [ text "Sodium (mg)" ]
+                , span [] [ text (String.fromFloat item.sodium_milligrams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "font-semibold" ] [ text "Total Carbohydrate (g)" ]
+                , span [] [ text (String.fromFloat item.total_carbohydrate_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "ml-4" ] [ text "Dietary Fiber (g)" ]
+                , span [] [ text (String.fromFloat item.dietary_fiber_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "ml-4" ] [ text "Total Sugars (g)" ]
+                , span [] [ text (String.fromFloat item.total_sugars_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "ml-4" ] [ text "Added Sugars (g)" ]
+                , span [] [ text (String.fromFloat item.added_sugars_grams) ]
+                ]
+            , p [ class "flex justify-between" ]
+                [ span [ class "font-semibold" ] [ text "Protein (g)" ]
+                , span [] [ text (String.fromFloat item.protein_grams) ]
+                ]
+            ]
+        ]
 
 
 profileView : UserInfo -> Html Msg
@@ -971,7 +1086,7 @@ loggableItem children loggable isActive servings =
                         )
                     ]
                     [ text "⊕" ]
-                , p [] [ text (LoggableItem.title loggable) ]
+                , p [] [ a [ href ("/nutrition_item/" ++ String.fromInt (LoggableItem.id loggable)) ] [ text (LoggableItem.title loggable) ] ]
                 ]
              ]
                 ++ (if isActive then
