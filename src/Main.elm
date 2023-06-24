@@ -35,6 +35,17 @@ import Url.Parser.Query as Q
 port genRandomBytes : Int -> Cmd msg
 
 
+type alias StoredCredentialsRequest =
+    { expiresIn : Maybe Int, token : String, userInfo : UserInfo }
+
+
+type alias StoredCredentials =
+    { token : String, userInfo : UserInfo }
+
+
+port storeUserCredentials : StoredCredentialsRequest -> Cmd msg
+
+
 port randomBytes : (List Int -> msg) -> Sub msg
 
 
@@ -50,6 +61,7 @@ type alias Model =
     , redirectUri : Url.Url
     , authFlow : OAuthFlow
     , accessToken : Maybe OAuth.Token
+    , expiresIn : Maybe Int
     , entrySearchDebouncer : Debouncer String String
     , searchResults : List LoggableItem
     , loggableSearchQuery : String
@@ -171,10 +183,10 @@ fetchNutritionItem token id =
     GraphQLRequest.make (NutritionItem.fetchNutritionItemQuery id) token (Http.expectString NutritionItemResponse)
 
 
-main : Program (Maybe (List Int)) Model Msg
+main : Program { credentials : Maybe StoredCredentials, bytes : Maybe (List Int) } Model Msg
 main =
     Browser.application
-        { init = Maybe.andThen convertBytes >> init
+        { init = convertFlags >> init
         , onUrlChange = UrlChanged
         , onUrlRequest = LinkClicked
         , view = view
@@ -183,8 +195,12 @@ main =
         }
 
 
-init : Maybe { state : String, codeVerifier : OAuth.CodeVerifier } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
-init mflags origin navigationKey =
+convertFlags { credentials, bytes } =
+    { credentials = credentials, stateAndVerifier = Maybe.andThen convertBytes bytes }
+
+
+init : { credentials : Maybe StoredCredentials, stateAndVerifier : Maybe { state : String, codeVerifier : OAuth.CodeVerifier } } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init flags origin navigationKey =
     let
         route =
             Route.parse origin
@@ -215,6 +231,7 @@ init mflags origin navigationKey =
             , redirectUri = redirectUri
             , authFlow = Idle
             , accessToken = Nothing
+            , expiresIn = Nothing
             , entrySearchDebouncer = { function = identity, parameter = "", timeout = 300.0, tag = 0 }
             , searchResults = []
             , loggableSearchQuery = ""
@@ -225,19 +242,24 @@ init mflags origin navigationKey =
     in
     case OAuth.parseCode origin of
         OAuth.Empty ->
-            ( emptyModel, Cmd.none )
+            case flags.credentials of
+                Nothing ->
+                    ( emptyModel, Cmd.none )
+
+                Just { token, userInfo } ->
+                    ( { emptyModel | accessToken = OAuth.tokenFromString token, authFlow = Done userInfo }, Cmd.none )
 
         OAuth.Success { code, state } ->
-            case mflags of
+            case flags.stateAndVerifier of
                 Nothing ->
                     ( { emptyModel | authFlow = Errored ErrStateMismatch }, clearUrl )
 
-                Just flags ->
-                    if state /= Just flags.state then
+                Just stateAndVerifier ->
+                    if state /= Just stateAndVerifier.state then
                         ( { emptyModel | authFlow = Errored ErrStateMismatch }, clearUrl )
 
                     else
-                        ( { emptyModel | authFlow = Authorized code flags.codeVerifier }, Cmd.batch [ getAccessToken OAuthConfiguration.configuration redirectUri code flags.codeVerifier, clearUrl ] )
+                        ( { emptyModel | authFlow = Authorized code stateAndVerifier.codeVerifier }, Cmd.batch [ getAccessToken OAuthConfiguration.configuration redirectUri code stateAndVerifier.codeVerifier, clearUrl ] )
 
         OAuth.Error error ->
             ( { emptyModel | authFlow = Errored <| ErrAuthorization error, redirectUri = redirectUri }
@@ -571,7 +593,12 @@ gotUserInfo model userInfoResponse =
 
         Ok userInfo ->
             ( { model | authFlow = Done userInfo }
-            , Cmd.none
+            , case model.accessToken of
+                Nothing ->
+                    Cmd.none
+
+                Just token ->
+                    storeUserCredentials { token = OAuth.tokenToString token, expiresIn = model.expiresIn, userInfo = userInfo }
             )
 
 
@@ -615,10 +642,10 @@ gotAccessToken model authenticationResponse =
             , Cmd.none
             )
 
-        Ok { token } ->
+        Ok { token, expiresIn } ->
             let
                 newModel =
-                    { model | authFlow = Authenticated token, accessToken = Just token }
+                    { model | authFlow = Authenticated token, accessToken = Just token, expiresIn = expiresIn }
             in
             ( newModel
             , Cmd.batch [ Task.perform (always UserInfoRequested) (Task.succeed 0), cmdForRoute newModel newModel.route ]
