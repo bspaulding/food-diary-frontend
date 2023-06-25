@@ -924,7 +924,7 @@ entryItem zone entry =
     in
     li [ class "mb-4" ]
         ([ p [ class "font-semibold" ] [ text (String.fromFloat entry.calories ++ " kcal, " ++ String.fromFloat (DiaryEntry.proteinGrams entry) ++ "g protein") ]
-         , p [] [ a [ href ("/nutrition_item/" ++ String.fromInt entry.id) ] [ text (DiaryEntry.title entry) ] ]
+         , p [] [ a [ href (DiaryEntry.itemUrl entry) ] [ text (DiaryEntry.title entry) ] ]
          , p [ class "flex justify-between text-sm" ] [ text (String.fromFloat entry.servings ++ " " ++ pluralize entry.servings "serving" "servings" ++ " at " ++ timeOfDay zone entry.consumed_at), button [ onClick (DeleteDiaryEntryRequested entry) ] [ text "Delete" ] ]
          ]
             ++ recipeTag

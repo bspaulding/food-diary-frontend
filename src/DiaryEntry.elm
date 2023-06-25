@@ -312,3 +312,20 @@ mutation DeleteEntry($id: Int!) {
 decodeEntryDeletedResponse : String -> Result D.Error Int
 decodeEntryDeletedResponse =
     D.decodeString (at [ "data", "delete_food_diary_diary_entry_by_pk", "id" ] int)
+
+
+
+-- Returns a url to either the nutrition_item or the recipe that was logged
+
+
+itemUrl : DiaryEntry -> String
+itemUrl entry =
+    case ( entry.nutrition_item, entry.recipe ) of
+        ( Just item, _ ) ->
+            "/nutrition_item/" ++ String.fromInt item.id
+
+        ( _, Just recipe ) ->
+            "/recipe/" ++ String.fromInt recipe.id
+
+        _ ->
+            ""
