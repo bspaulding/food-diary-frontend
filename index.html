@@ -51,7 +51,6 @@
       }
 
       app.ports.storeUserCredentials.subscribe((x) => {
-        console.log(`[storeUserCredentials] x = `, x);
         const { expiresIn, ...rest } = x;
         const expiresAt = new Date().getTime() + expiresIn;
         localStorage.setItem(
