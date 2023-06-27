@@ -42,7 +42,8 @@
         if (creds) {
           const parsed = JSON.parse(creds);
           // five minute buffer to expiresAt
-          if (parsed.expiresAt < new Date().getTime() - 1000 * 60 * 5) {
+          const now = new Date().getTime() - 1000 * 60 * 5;
+          if (parsed.expiresAt > now) {
             return parsed;
           }
         }
