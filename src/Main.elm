@@ -13,7 +13,7 @@ import Http
 import HttpExtra as Http
 import Json.Decode as D exposing (at, field, int, list, oneOf, string)
 import Json.Encode as E
-import LoggableItem exposing (LoggableItem(..))
+import LoggableItem exposing (LoggableItem(..), loggableItemSearch, loggableList)
 import Month
 import Msg exposing (Msg(..))
 import NutritionItem exposing (NutritionItem)
@@ -22,14 +22,17 @@ import OAuth exposing (ResponseType(..))
 import OAuth.AuthorizationCode.PKCE as OAuth
 import OAuthConfiguration exposing (Configuration, UserInfo, cCODE_VERIFIER_SIZE, cSTATE_SIZE, convertBytes)
 import Process
-import Recipe exposing (Recipe)
+import Recipe exposing (Recipe, RecipeItem)
+import RecipeForm exposing (RecipeForm, RecipeFormRecipeItem, recipeForm)
 import Route exposing (DiaryEntryCreateTab(..), Route)
 import Set exposing (Set)
+import StringExtra exposing (pluralize)
 import Task
 import Time
 import Url exposing (Url)
 import Url.Parser as P exposing ((</>), (<?>))
 import Url.Parser.Query as Q
+import ViewHelpers exposing (btn)
 
 
 port genRandomBytes : Int -> Cmd msg
@@ -65,9 +68,12 @@ type alias Model =
     , entrySearchDebouncer : Debouncer String String
     , searchResults : List LoggableItem
     , loggableSearchQuery : String
-    , nutritionItemCreateForm : Form.Model
+    , form : Form.Model
     , nutritionItemCreateFormSubmitting : Bool
     , nutritionItemsById : Dict Int NutritionItem
+    , recipeCreateFormSubmitting : Bool
+    , newRecipeItems : List RecipeFormRecipeItem
+    , recipesById : Dict Int Recipe
     }
 
 
@@ -178,9 +184,19 @@ createNutritionItem token form =
     GraphQLRequest.make (NutritionItemForm.createNutritionItemQuery form) token (Http.expectString NutritionItemCreateResponse)
 
 
+createRecipe : OAuth.Token -> RecipeForm -> Cmd Msg
+createRecipe token form =
+    GraphQLRequest.make (RecipeForm.createRecipeQuery form) token (Http.expectString RecipeCreateResponse)
+
+
 fetchNutritionItem : OAuth.Token -> Int -> Cmd Msg
 fetchNutritionItem token id =
     GraphQLRequest.make (NutritionItem.fetchNutritionItemQuery id) token (Http.expectString NutritionItemResponse)
+
+
+fetchRecipe : OAuth.Token -> Int -> Cmd Msg
+fetchRecipe token id =
+    GraphQLRequest.make (Recipe.fetchRecipeQuery id) token (Http.expectString RecipeResponse)
 
 
 main : Program { credentials : Maybe StoredCredentials, bytes : Maybe (List Int) } Model Msg
@@ -235,9 +251,12 @@ init flags origin navigationKey =
             , entrySearchDebouncer = { function = identity, parameter = "", timeout = 300.0, tag = 0 }
             , searchResults = []
             , loggableSearchQuery = ""
-            , nutritionItemCreateForm = Form.init
+            , form = Form.init
             , nutritionItemCreateFormSubmitting = False
             , nutritionItemsById = Dict.empty
+            , recipeCreateFormSubmitting = False
+            , newRecipeItems = []
+            , recipesById = Dict.empty
             }
     in
     case OAuth.parseCode origin of
@@ -247,7 +266,11 @@ init flags origin navigationKey =
                     ( emptyModel, Cmd.none )
 
                 Just { token, userInfo } ->
-                    ( { emptyModel | accessToken = OAuth.tokenFromString token, authFlow = Done userInfo }, Cmd.none )
+                    let
+                        newModel =
+                            { emptyModel | accessToken = OAuth.tokenFromString token, authFlow = Done userInfo }
+                    in
+                    ( newModel, cmdForRoute newModel route )
 
         OAuth.Success { code, state } ->
             case flags.stateAndVerifier of
@@ -301,6 +324,9 @@ cmdForRoute model route =
 
         ( Just token, Route.NutritionItem id ) ->
             fetchNutritionItem token id
+
+        ( Just token, Route.Recipe id ) ->
+            fetchRecipe token id
 
         _ ->
             Cmd.none
@@ -509,9 +535,9 @@ update msg model =
         FormMsg formMsg ->
             let
                 ( updatedFormModel, cmd ) =
-                    Form.update formMsg model.nutritionItemCreateForm
+                    Form.update formMsg model.form
             in
-            ( { model | nutritionItemCreateForm = updatedFormModel }, cmd )
+            ( { model | form = updatedFormModel }, cmd )
 
         OnSubmitNutritionItemCreateForm (Form.Invalid _ _) ->
             ( model, Cmd.none )
@@ -545,6 +571,42 @@ update msg model =
 
                 Ok nutritionItem ->
                     ( { model | nutritionItemsById = Dict.insert nutritionItem.id nutritionItem model.nutritionItemsById }, Cmd.none )
+
+        OnSubmitRecipeCreateForm (Form.Invalid _ _) ->
+            ( model, Cmd.none )
+
+        OnSubmitRecipeCreateForm (Form.Valid data) ->
+            case model.accessToken of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just token ->
+                    ( { model | recipeCreateFormSubmitting = True }, createRecipe token data )
+
+        RecipeCreateResponse (Err err) ->
+            Debug.log (Http.errorToString err) ( model, Cmd.none )
+
+        RecipeCreateResponse (Ok res) ->
+            case RecipeForm.decodeRecipeCreateResponse res of
+                Err err ->
+                    Debug.log (D.errorToString err) ( model, Cmd.none )
+
+                Ok id ->
+                    ( model, Browser.Navigation.pushUrl model.navigationKey ("/recipe/" ++ String.fromInt id) )
+
+        AddItemToRecipe loggable ->
+            ( { model | newRecipeItems = model.newRecipeItems ++ [ { servings = 1.0, item = loggable } ] }, Cmd.none )
+
+        RecipeResponse (Err err) ->
+            Debug.log (Http.errorToString err) ( model, Cmd.none )
+
+        RecipeResponse (Ok res) ->
+            case Recipe.decodeRecipeResponse res of
+                Err err ->
+                    Debug.log (D.errorToString err) ( model, Cmd.none )
+
+                Ok recipe ->
+                    ( { model | recipesById = Dict.insert recipe.id recipe model.recipesById }, Cmd.none )
 
 
 signInRequested : Model -> ( Model, Cmd Msg )
@@ -703,7 +765,7 @@ bodyView model =
                     nutritionItemForm
                         |> Form.renderHtml
                             { submitting = model.nutritionItemCreateFormSubmitting
-                            , state = model.nutritionItemCreateForm
+                            , state = model.form
                             , toMsg = FormMsg
                             }
                             (Form.options "nutritionItemCreateForm"
@@ -713,6 +775,21 @@ bodyView model =
 
                 ( Done _, Route.NutritionItem id ) ->
                     nutritionItemShow model id
+
+                ( Done _, Route.Recipe id ) ->
+                    recipeShow model id
+
+                ( Done _, Route.RecipeCreate ) ->
+                    recipeForm (loggableModel model) loggableMsgsRecipeForm model.newRecipeItems
+                        |> Form.renderHtml
+                            { submitting = model.recipeCreateFormSubmitting
+                            , state = model.form
+                            , toMsg = FormMsg
+                            }
+                            (Form.options "recipeCreateForm"
+                                |> Form.withOnSubmit (\{ parsed } -> OnSubmitRecipeCreateForm parsed)
+                            )
+                            []
 
                 ( _, Route.NotFound ) ->
                     div [] [ text "Oops! Something went wrong." ]
@@ -731,6 +808,35 @@ bodyView model =
             layoutView Nothing [ btn SignInRequested "Log In" ]
 
 
+recipeShow : Model -> Int -> Html Msg
+recipeShow model id =
+    case Dict.get id model.recipesById of
+        Nothing ->
+            div [] [ text "Loading..." ]
+
+        Just recipe ->
+            recipeView model recipe
+
+
+recipeView : Model -> Recipe -> Html Msg
+recipeView model recipe =
+    div []
+        [ h1 [ class "my-1 text-lg font-semibold" ] [ text recipe.name ]
+        , a [ href ("/recipe/" ++ String.fromInt recipe.id ++ "/edit") ] [ text "Edit Recipe" ]
+        , p [] [ text (String.fromFloat recipe.total_servings ++ " Total Servings") ]
+        , ul []
+            (List.map
+                (\recipeItem ->
+                    li [ class "list-none my-1" ]
+                        [ a [ href ("/nutrition_item/" ++ String.fromInt recipeItem.nutrition_item.id) ] [ text recipeItem.nutrition_item.description ]
+                        , p [ class "text-sm" ] [ text (String.fromFloat (Maybe.withDefault 1.0 recipeItem.servings) ++ " servings") ]
+                        ]
+                )
+                recipe.items
+            )
+        ]
+
+
 nutritionItemShow : Model -> Int -> Html Msg
 nutritionItemShow model id =
     case Dict.get id model.nutritionItemsById of
@@ -741,21 +847,40 @@ nutritionItemShow model id =
             nutritionItemView model item
 
 
+loggableModel model =
+    { activeLoggableItemIds = model.activeLoggableItemIds
+    , activeLoggableServingsById = model.activeLoggableServingsById
+    , loggableSearchQuery = model.loggableSearchQuery
+    , searchResults = model.searchResults
+    }
+
+
+loggableMsgs =
+    { begin = BeginLoggingItem
+    , cancel = CancelLoggingItem
+    , submit = SubmitLoggingItem
+    , updateServings = UpdateLoggableServings
+    , queryChanged = ItemAndRecipeSearchUpdated
+    }
+
+
+loggableMsgsRecipeForm =
+    { begin = AddItemToRecipe
+    , cancel = CancelLoggingItem
+    , submit = SubmitLoggingItem
+    , updateServings = UpdateLoggableServings
+    , queryChanged = ItemAndRecipeSearchUpdated
+    }
+
+
 nutritionItemView : Model -> NutritionItem -> Html Msg
 nutritionItemView model item =
-    let
-        loggable =
-            LoggableItem { id = item.id, title = "Log It" }
-
-        logging =
-            Set.member (LoggableItem.id loggable) model.activeLoggableItemIds
-
-        servings =
-            Maybe.withDefault 1 (Dict.get (LoggableItem.id loggable) model.activeLoggableServingsById)
-    in
     div []
         [ h1 [ class "font-semibold text-2xl" ] [ text item.description ]
-        , ul [] [ loggableItem [] loggable logging servings ]
+        , loggableList
+            (loggableModel model)
+            loggableMsgs
+            [ ( [], LoggableItem { id = item.id, title = "Log It" } ) ]
         , div [ class "text-lg" ]
             [ p [ class "flex justify-between" ]
                 [ span [ class "font-semibold" ] [ text "Calories" ]
@@ -840,10 +965,6 @@ diaryEntries model =
 
 linkBtn url label =
     a [ href url, class "bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md" ] [ text label ]
-
-
-btn f label =
-    button [ onClick f, class "ml-2 bg-indigo-600 text-slate-50 py-1 px-3 text-lg rounded-md" ] [ text label ]
 
 
 globalNavigation =
@@ -931,15 +1052,6 @@ entryItem zone entry =
         )
 
 
-pluralize : number -> String -> String -> String
-pluralize x singular plural =
-    if x == 1 then
-        singular
-
-    else
-        plural
-
-
 diaryEntryCreate : Model -> DiaryEntryCreateTab -> Html Msg
 diaryEntryCreate model tab =
     let
@@ -998,45 +1110,13 @@ diaryEntryCreateSuggestions model =
             List.map makeLoggable model.recentEntries
     in
     [ h2 [ class "text-lg font-semibold" ] [ text "Suggested Items" ]
-    , loggableList model loggables
+    , loggableList (loggableModel model) loggableMsgs loggables
     ]
-
-
-loggableList : Model -> List ( List (Html Msg), LoggableItem ) -> Html Msg
-loggableList model loggables =
-    ul [] (List.map (\( c, i ) -> loggableItem c i (Set.member (LoggableItem.id i) model.activeLoggableItemIds) (Maybe.withDefault 1 (Dict.get (LoggableItem.id i) model.activeLoggableServingsById))) loggables)
 
 
 diaryEntryCreateSearch : Model -> List (Html Msg)
 diaryEntryCreateSearch model =
-    [ section [ class "flex flex-col mt-5" ]
-        [ input [ class "border rounded px-2 text-lg", type_ "search", placeholder "Search Items and Recipes", name "entry-item-search", onInput ItemAndRecipeSearchUpdated, value model.loggableSearchQuery ] []
-        , div [ class "px-1" ]
-            (if List.length model.searchResults == 0 then
-                [ p [ class "text-center mt-4 text-slate-400" ] [ text "Search for an item or recipe you've previously added." ] ]
-
-             else
-                [ p [ class "text-center mt-4 text-slate-400" ] [ text (String.fromInt (List.length model.searchResults) ++ pluralize (List.length model.searchResults) " item" " items") ]
-                , loggableList model (List.map (\l -> ( [ loggableTagView l ], l )) model.searchResults)
-                ]
-            )
-        ]
-    ]
-
-
-loggableTagView : LoggableItem -> Html Msg
-loggableTagView loggable =
-    case loggable of
-        LoggableItem _ ->
-            tagView "ITEM"
-
-        LoggableRecipe _ ->
-            tagView "RECIPE"
-
-
-tagView : String -> Html Msg
-tagView label =
-    span [ class "bg-slate-400 text-slate-50 px-2 py-1 rounded text-xs ml-8" ] [ text label ]
+    loggableItemSearch (loggableModel model) loggableMsgs
 
 
 timeOfDay : Time.Zone -> Time.Posix -> String
@@ -1090,47 +1170,3 @@ loggedAtView zone entry =
                     t
     in
     p [ class "text-xs ml-8 mb-2" ] [ text ("Logged at " ++ timeOfDay zone consumed_at ++ " on " ++ longDate zone consumed_at) ]
-
-
-loggableItem : List (Html Msg) -> LoggableItem -> Bool -> Float -> Html Msg
-loggableItem children loggable isActive servings =
-    li []
-        ([ div [ class "ml-7" ]
-            ([ div [ class "flex items-center -ml-7" ]
-                [ button
-                    [ class "mr-1 text-3xl text-indigo-600 transition-transform"
-                    , if isActive then
-                        class "rotate-45"
-
-                      else
-                        class ""
-                    , onClick
-                        (if isActive then
-                            CancelLoggingItem loggable
-
-                         else
-                            BeginLoggingItem loggable
-                        )
-                    ]
-                    [ text "⊕" ]
-                , p [] [ a [ href ("/nutrition_item/" ++ String.fromInt (LoggableItem.id loggable)) ] [ text (LoggableItem.title loggable) ] ]
-                ]
-             ]
-                ++ (if isActive then
-                        [ loggableInput loggable servings ]
-
-                    else
-                        []
-                   )
-            )
-         ]
-            ++ children
-        )
-
-
-loggableInput : LoggableItem -> Float -> Html Msg
-loggableInput loggable servings =
-    div [ class "ml-2 flex" ]
-        [ input [ type_ "number", property "inputmode" (E.string "decimal"), step "0.1", style "min-width" "50px", value (String.fromFloat servings), onInput (UpdateLoggableServings loggable) ] []
-        , btn (SubmitLoggingItem loggable) "Save"
-        ]

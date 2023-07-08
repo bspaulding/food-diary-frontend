@@ -8,6 +8,7 @@ import LoggableItem exposing (LoggableItem)
 import NutritionItemForm exposing (NutritionItemForm)
 import OAuth.AuthorizationCode.PKCE as OAuth
 import OAuthConfiguration exposing (UserInfo)
+import RecipeForm exposing (RecipeForm)
 import Time
 import Url
 
@@ -20,6 +21,7 @@ type Msg
     | SubmitLoggingItem LoggableItem
     | CancelLoggingItem LoggableItem
     | UpdateLoggableServings LoggableItem String
+    | AddItemToRecipe LoggableItem
     | NewTimeZone Time.Zone
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
@@ -37,3 +39,6 @@ type Msg
     | OnSubmitNutritionItemCreateForm (Form.Validated String NutritionItemForm)
     | NutritionItemCreateResponse (Result Http.Error String)
     | NutritionItemResponse (Result Http.Error String)
+    | OnSubmitRecipeCreateForm (Form.Validated String RecipeForm)
+    | RecipeCreateResponse (Result Http.Error String)
+    | RecipeResponse (Result Http.Error String)
