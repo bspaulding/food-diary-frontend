@@ -5,6 +5,7 @@ import DiaryEntry exposing (DiaryEntry)
 import Form
 import Http
 import LoggableItem exposing (LoggableItem)
+import NutritionItem exposing (NutritionItem)
 import NutritionItemForm exposing (NutritionItemForm)
 import OAuth.AuthorizationCode.PKCE as OAuth
 import OAuthConfiguration exposing (UserInfo)
@@ -37,7 +38,9 @@ type Msg
     | ItemAndRecipeSearchUpdated String
     | FormMsg (Form.Msg Msg)
     | OnSubmitNutritionItemCreateForm (Form.Validated String NutritionItemForm)
+    | OnSubmitNutritionItemEditForm NutritionItem (Form.Validated String NutritionItemForm)
     | NutritionItemCreateResponse (Result Http.Error String)
+    | NutritionItemUpdateResponse (Result Http.Error String)
     | NutritionItemResponse (Result Http.Error String)
     | OnSubmitRecipeCreateForm (Form.Validated String RecipeForm)
     | RecipeCreateResponse (Result Http.Error String)

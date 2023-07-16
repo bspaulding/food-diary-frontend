@@ -190,6 +190,11 @@ createNutritionItem token form =
     GraphQLRequest.make (NutritionItemForm.createNutritionItemQuery form) token (Http.expectString NutritionItemCreateResponse)
 
 
+updateNutritionItem : OAuth.Token -> NutritionItem -> NutritionItemForm -> Cmd Msg
+updateNutritionItem token item form =
+    GraphQLRequest.make (NutritionItemForm.updateNutritionItemQuery item form) token (Http.expectString NutritionItemUpdateResponse)
+
+
 createRecipe : OAuth.Token -> RecipeForm -> Cmd Msg
 createRecipe token form =
     GraphQLRequest.make (RecipeForm.createRecipeQuery form) token (Http.expectString RecipeCreateResponse)
@@ -557,11 +562,33 @@ update msg model =
                 Just token ->
                     ( { model | nutritionItemCreateFormSubmitting = True }, createNutritionItem token data )
 
+        OnSubmitNutritionItemEditForm _ (Form.Invalid _ _) ->
+            ( model, Cmd.none )
+
+        OnSubmitNutritionItemEditForm nutritionItem (Form.Valid data) ->
+            case model.accessToken of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just token ->
+                    ( { model | nutritionItemCreateFormSubmitting = True }, updateNutritionItem token nutritionItem data )
+
         NutritionItemCreateResponse (Err err) ->
             ( { model | error = Just (HttpError err) }, Cmd.none )
 
         NutritionItemCreateResponse (Ok res) ->
             case NutritionItemForm.decodeNutritionItemCreateResponse res of
+                Err err ->
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
+
+                Ok id ->
+                    ( model, Browser.Navigation.pushUrl model.navigationKey ("/nutrition_item/" ++ String.fromInt id) )
+
+        NutritionItemUpdateResponse (Err err) ->
+            ( { model | error = Just (HttpError err) }, Cmd.none )
+
+        NutritionItemUpdateResponse (Ok res) ->
+            case NutritionItemForm.decodeNutritionItemUpdateResponse res of
                 Err err ->
                     ( { model | error = Just (DecodeError err) }, Cmd.none )
 
@@ -787,7 +814,7 @@ bodyView model =
                     profileView userInfo
 
                 ( Done _, Route.NutritionItemCreate ) ->
-                    nutritionItemForm
+                    nutritionItemForm Nothing
                         |> Form.renderHtml
                             { submitting = model.nutritionItemCreateFormSubmitting
                             , state = model.form
@@ -800,6 +827,9 @@ bodyView model =
 
                 ( Done _, Route.NutritionItem id ) ->
                     nutritionItemShow model id
+
+                ( Done _, Route.NutritionItemEdit id ) ->
+                    nutritionItemEdit model id
 
                 ( Done _, Route.Recipe id ) ->
                     recipeShow model id
@@ -831,6 +861,25 @@ bodyView model =
 
         _ ->
             layoutView ( Nothing, model.error ) [ btn SignInRequested "Log In" ]
+
+
+nutritionItemEdit : Model -> Int -> Html Msg
+nutritionItemEdit model id =
+    case Dict.get id model.nutritionItemsById of
+        Nothing ->
+            div [] [ text "Loading..." ]
+
+        Just nutritionItem ->
+            nutritionItemForm (Just nutritionItem)
+                |> Form.renderHtml
+                    { submitting = model.nutritionItemCreateFormSubmitting
+                    , state = model.form
+                    , toMsg = FormMsg
+                    }
+                    (Form.options "nutritionItemEditForm"
+                        |> Form.withOnSubmit (\{ parsed } -> OnSubmitNutritionItemEditForm nutritionItem parsed)
+                    )
+                    []
 
 
 recipeShow : Model -> Int -> Html Msg
@@ -902,6 +951,7 @@ nutritionItemView : Model -> NutritionItem -> Html Msg
 nutritionItemView model item =
     div []
         [ h1 [ class "font-semibold text-2xl" ] [ text item.description ]
+        , a [ href ("/nutrition_item/" ++ String.fromInt item.id ++ "/edit") ] [ text "Edit Item" ]
         , loggableList
             (loggableModel model)
             loggableMsgs

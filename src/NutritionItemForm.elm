@@ -9,6 +9,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Json.Decode as D
 import Json.Encode as E
+import NutritionItem exposing (NutritionItem)
 
 
 type alias NutritionItemForm =
@@ -57,23 +58,23 @@ floatInvalid =
     { invalid = \str -> "'" ++ str ++ "' is not a number" }
 
 
-nutritionItemForm : Form.HtmlForm FormError NutritionItemForm () msg
-nutritionItemForm =
+nutritionItemForm : Maybe NutritionItem -> Form.HtmlForm FormError NutritionItemForm () msg
+nutritionItemForm mitem =
     Form.form nutritionItemFormCombineAndView
-        |> Form.field "description" (Field.text |> Field.required "Required")
-        |> Form.field "calories" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "totalFatGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "saturatedFatGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "transFatGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "polyunsaturatedFatGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "monounsaturatedFatGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "cholesterolMilligrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "sodiumMilligrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "totalCarbohydrateGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "dietaryFiberGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "totalSugarsGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "addedSugarsGrams" (Field.float floatInvalid |> Field.required "Required")
-        |> Form.field "proteinGrams" (Field.float floatInvalid |> Field.required "Required")
+        |> Form.field "description" (Field.text |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault "" (Maybe.map .description mitem)))
+        |> Form.field "calories" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .calories mitem)))
+        |> Form.field "totalFatGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .total_fat_grams mitem)))
+        |> Form.field "saturatedFatGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .saturated_fat_grams mitem)))
+        |> Form.field "transFatGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .trans_fat_grams mitem)))
+        |> Form.field "polyunsaturatedFatGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .polyunsaturated_fat_grams mitem)))
+        |> Form.field "monounsaturatedFatGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .monounsaturated_fat_grams mitem)))
+        |> Form.field "cholesterolMilligrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .cholesterol_milligrams mitem)))
+        |> Form.field "sodiumMilligrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .sodium_milligrams mitem)))
+        |> Form.field "totalCarbohydrateGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .total_carbohydrate_grams mitem)))
+        |> Form.field "dietaryFiberGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .dietary_fiber_grams mitem)))
+        |> Form.field "totalSugarsGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .total_sugars_grams mitem)))
+        |> Form.field "addedSugarsGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .added_sugars_grams mitem)))
+        |> Form.field "proteinGrams" (Field.float floatInvalid |> Field.required "Required" |> Field.withInitialValue (always <| Maybe.withDefault 0 (Maybe.map .protein_grams mitem)))
 
 
 fieldView ctx name_ label_ attrs field =
@@ -162,3 +163,25 @@ mutation CreateNutritionItem($nutritionItem: food_diary_nutrition_item_insert_in
 decodeNutritionItemCreateResponse : String -> Result D.Error Int
 decodeNutritionItemCreateResponse =
     D.decodeString (D.at [ "data", "insert_food_diary_nutrition_item_one", "id" ] D.int)
+
+
+updateNutritionItemQuery : NutritionItem -> NutritionItemForm -> GraphQLRequest
+updateNutritionItemQuery item form =
+    { query = """
+mutation UpdateItem($id: Int!, $attrs: food_diary_nutrition_item_set_input!) {
+  update_food_diary_nutrition_item_by_pk(pk_columns: {id: $id }, _set: $attrs) {
+    id
+  }
+}
+    """
+    , variables =
+        E.object
+            [ ( "id", E.int item.id )
+            , ( "attrs", encodeNutritionItem form )
+            ]
+    }
+
+
+decodeNutritionItemUpdateResponse : String -> Result D.Error Int
+decodeNutritionItemUpdateResponse =
+    D.decodeString (D.at [ "data", "update_food_diary_nutrition_item_by_pk", "id" ] D.int)
