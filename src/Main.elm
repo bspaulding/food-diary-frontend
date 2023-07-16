@@ -52,11 +52,17 @@ port storeUserCredentials : StoredCredentialsRequest -> Cmd msg
 port randomBytes : (List Int -> msg) -> Sub msg
 
 
+type AppError
+    = HttpError Http.Error
+    | DecodeError D.Error
+
+
 type alias Model =
     { navigationKey : Browser.Navigation.Key
     , url : Url.Url
     , route : Route
     , zone : Time.Zone
+    , error : Maybe AppError
     , entries : List DiaryEntry
     , recentEntries : List RecentEntry
     , activeLoggableItemIds : Set Int
@@ -240,6 +246,7 @@ init flags origin navigationKey =
             , url = origin
             , route = route
             , zone = Time.utc
+            , error = Nothing
             , entries = []
             , recentEntries = []
             , activeLoggableItemIds = Set.empty
@@ -359,7 +366,7 @@ update msg model =
         EntriesReceived (Ok res) ->
             case DiaryEntry.decodeEntriesResponse res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just <| DecodeError err }, Cmd.none )
 
                 Ok entries ->
                     ( { model | entries = entries }, Cmd.none )
@@ -370,7 +377,7 @@ update msg model =
         RecentItemsReceived (Ok res) ->
             case DiaryEntry.decodeRecentEntries res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
 
                 Ok entries ->
                     ( { model | recentEntries = entries }, Cmd.none )
@@ -422,12 +429,12 @@ update msg model =
                     ( model, Cmd.none )
 
         CreateDiaryEntryResponse _ (Err err) ->
-            Debug.log (Http.errorToString err) ( model, Cmd.none )
+            ( { model | error = Just (HttpError err) }, Cmd.none )
 
         CreateDiaryEntryResponse loggable (Ok res) ->
             case DiaryEntry.decodeEntryCreatedResponse res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
 
                 Ok id ->
                     ( { model
@@ -446,12 +453,12 @@ update msg model =
                     ( model, Cmd.none )
 
         DeleteDiaryEntryResponse (Err err) ->
-            Debug.log (Http.errorToString err) ( model, Cmd.none )
+            ( { model | error = Just (HttpError err) }, Cmd.none )
 
         DeleteDiaryEntryResponse (Ok res) ->
             case DiaryEntry.decodeEntryDeletedResponse res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
 
                 Ok id ->
                     ( { model | entries = List.filter (\e -> e.id /= id) model.entries }, Cmd.none )
@@ -500,12 +507,12 @@ update msg model =
                     ( model, Cmd.none )
 
         SearchItemsAndRecipesResponse (Err err) ->
-            Debug.log (Http.errorToString err) ( model, Cmd.none )
+            ( { model | error = Just (HttpError err) }, Cmd.none )
 
         SearchItemsAndRecipesResponse (Ok res) ->
             case decodeSearchItemsAndRecipesResponse res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
 
                 Ok results ->
                     ( { model | searchResults = results }, Cmd.none )
@@ -551,23 +558,23 @@ update msg model =
                     ( { model | nutritionItemCreateFormSubmitting = True }, createNutritionItem token data )
 
         NutritionItemCreateResponse (Err err) ->
-            Debug.log (Http.errorToString err) ( model, Cmd.none )
+            ( { model | error = Just (HttpError err) }, Cmd.none )
 
         NutritionItemCreateResponse (Ok res) ->
             case NutritionItemForm.decodeNutritionItemCreateResponse res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
 
                 Ok id ->
                     ( model, Browser.Navigation.pushUrl model.navigationKey ("/nutrition_item/" ++ String.fromInt id) )
 
         NutritionItemResponse (Err err) ->
-            Debug.log (Http.errorToString err) ( model, Cmd.none )
+            ( { model | error = Just (HttpError err) }, Cmd.none )
 
         NutritionItemResponse (Ok res) ->
             case NutritionItem.decodeNutritionItemResponse res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
 
                 Ok nutritionItem ->
                     ( { model | nutritionItemsById = Dict.insert nutritionItem.id nutritionItem model.nutritionItemsById }, Cmd.none )
@@ -584,12 +591,12 @@ update msg model =
                     ( { model | recipeCreateFormSubmitting = True }, createRecipe token data )
 
         RecipeCreateResponse (Err err) ->
-            Debug.log (Http.errorToString err) ( model, Cmd.none )
+            ( { model | error = Just (HttpError err) }, Cmd.none )
 
         RecipeCreateResponse (Ok res) ->
             case RecipeForm.decodeRecipeCreateResponse res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
 
                 Ok id ->
                     ( model, Browser.Navigation.pushUrl model.navigationKey ("/recipe/" ++ String.fromInt id) )
@@ -598,12 +605,12 @@ update msg model =
             ( { model | newRecipeItems = model.newRecipeItems ++ [ { servings = 1.0, item = loggable } ] }, Cmd.none )
 
         RecipeResponse (Err err) ->
-            Debug.log (Http.errorToString err) ( model, Cmd.none )
+            ( { model | error = Just (HttpError err) }, Cmd.none )
 
         RecipeResponse (Ok res) ->
             case Recipe.decodeRecipeResponse res of
                 Err err ->
-                    Debug.log (D.errorToString err) ( model, Cmd.none )
+                    ( { model | error = Just (DecodeError err) }, Cmd.none )
 
                 Ok recipe ->
                     ( { model | recipesById = Dict.insert recipe.id recipe model.recipesById }, Cmd.none )
@@ -740,11 +747,29 @@ orderDays =
     sortByWith Tuple.first flippedComparison
 
 
-layoutView : Maybe UserInfo -> List (Html Msg) -> List (Html Msg)
-layoutView muserInfo children =
+layoutView : ( Maybe UserInfo, Maybe AppError ) -> List (Html Msg) -> List (Html Msg)
+layoutView ( muserInfo, mapperror ) children =
     [ div [ class "font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-20" ]
-        ([ globalHeader muserInfo ] ++ children)
+        ([ globalHeader muserInfo ] ++ errorView mapperror ++ children)
     ]
+
+
+errorView : Maybe AppError -> List (Html Msg)
+errorView mapperror =
+    case mapperror of
+        Nothing ->
+            []
+
+        Just err ->
+            [ div [ style "border" "1px solid red" ]
+                [ case err of
+                    DecodeError decodeError ->
+                        text (D.errorToString decodeError)
+
+                    HttpError httpError ->
+                        text (Http.errorToString httpError)
+                ]
+            ]
 
 
 bodyView : Model -> List (Html Msg)
@@ -799,13 +824,13 @@ bodyView model =
     in
     case model.authFlow of
         Done userInfo ->
-            layoutView (Just userInfo) [ globalNavigation, routeView ]
+            layoutView ( Just userInfo, model.error ) [ globalNavigation, routeView ]
 
         Authenticated _ ->
-            layoutView Nothing [ globalNavigation, routeView ]
+            layoutView ( Nothing, model.error ) [ globalNavigation, routeView ]
 
         _ ->
-            layoutView Nothing [ btn SignInRequested "Log In" ]
+            layoutView ( Nothing, model.error ) [ btn SignInRequested "Log In" ]
 
 
 recipeShow : Model -> Int -> Html Msg
