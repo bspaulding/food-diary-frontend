@@ -4,6 +4,7 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 
 export default defineConfig({
   plugins: [solidPlugin(), basicSsl()],
+  publicDir: "src/assets/public",
   server: {
     port: 3000,
     proxy: {
