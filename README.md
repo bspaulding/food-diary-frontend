@@ -19,6 +19,14 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 The page will reload if you make edits.<br>
 
+### Using a local backend
+
+If you are using the local backend, change the api route rewrite in `vite.config.js`:
+
+```
+ target: "http://localhost:8080/",
+```
+
 ### `npm run build`
 
 Builds the app for production to the `dist` folder.<br>
