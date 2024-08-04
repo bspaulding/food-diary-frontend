@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [solidPlugin(), basicSsl()],
   publicDir: "src/assets/public",
   server: {
+    host: "0.0.0.0",
     port: 3000,
     proxy: {
       "/api": {
