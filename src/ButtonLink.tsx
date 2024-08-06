@@ -1,5 +1,4 @@
 import type { Component } from "solid-js";
-import { Link } from "@solidjs/router";
 
 type Props = {
   children: string;
@@ -8,12 +7,12 @@ type Props = {
 };
 
 const ButtonLink: Component<Props> = (props) => (
-  <Link
+  <a
     class={`bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md ${props["class"]}`}
     href={props.href}
   >
     {props.children}
-  </Link>
+  </a>
 );
 
 export default ButtonLink;

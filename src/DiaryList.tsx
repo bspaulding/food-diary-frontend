@@ -1,6 +1,5 @@
 import type { Accessor, Component, Setter } from "solid-js";
 import { Index, Show } from "solid-js";
-import { Link } from "@solidjs/router";
 import type { DiaryEntry, GetEntriesQueryResponse } from "./Api";
 import { fetchEntries, deleteDiaryEntry } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
@@ -141,7 +140,7 @@ const DiaryList: Component = () => {
                         {entryTotalMacro("protein_grams", entry())}g protein
                       </p>
                       <p>
-                        <Link
+                        <a
                           href={
                             entry().recipe?.id
                               ? `/recipe/${entry().recipe?.id}`
@@ -150,7 +149,7 @@ const DiaryList: Component = () => {
                         >
                           {entry().nutrition_item?.description ||
                             entry().recipe?.name}
-                        </Link>
+                        </a>
                       </p>
                       <p class="flex justify-between text-sm">
                         {pluralize(entry().servings, "serving", "servings")} at{" "}

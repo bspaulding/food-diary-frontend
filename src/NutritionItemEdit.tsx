@@ -1,6 +1,6 @@
 import type { Component } from "solid-js";
 import { Show } from "solid-js";
-import { useParams, Link } from "@solidjs/router";
+import { useParams } from "@solidjs/router";
 import { fetchNutritionItem } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import NewNutritionItemForm from "./NewNutritionItemForm";

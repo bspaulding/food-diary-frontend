@@ -1,6 +1,5 @@
 import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
-import { Link } from "@solidjs/router";
 import { fetchRecentEntries, createDiaryEntry } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";

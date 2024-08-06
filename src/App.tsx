@@ -1,18 +1,9 @@
 import type { Component } from "solid-js";
-import { Link, Routes, Route } from "@solidjs/router";
-import DiaryList from "./DiaryList";
-import NewNutritionItemForm from "./NewNutritionItemForm";
-import NutritionItemShow from "./NutritionItemShow";
-import NutritionItemEdit from "./NutritionItemEdit";
-import NewDiaryEntryForm from "./NewDiaryEntryForm";
-import NewRecipeForm from "./NewRecipeForm";
-import RecipeShow from "./RecipeShow";
-import RecipeEdit from "./RecipeEdit";
-import ImportDiaryEntries from "./ImportDiaryEntries";
-import UserProfile from "./UserProfile";
+import { Show } from "solid-js";
+import { Router, Route } from "@solidjs/router";
 import { useAuth } from "./Auth0";
 
-const App: Component = () => {
+const App: Component = (props) => {
   const [{ user, isAuthenticated, auth0 }] = useAuth();
 
   return (
@@ -21,34 +12,24 @@ const App: Component = () => {
         <h1 class="text-2xl font-bold">Food Diary</h1>
         <Show when={user()}>
           <div class="absolute right-2 w-12 h-12 ">
-            <Link href="/profile">
+            <a href="/profile">
               <img
                 src={user().picture}
                 class="border border-slate-800 rounded-full"
               />
-            </Link>
+            </a>
           </div>
         </Show>
       </header>
-      {isAuthenticated() ? (
-        <Routes>
-          <Route path="/" component={DiaryList} />
-          <Route path="/profile" component={UserProfile} />
-          <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
-          <Route path="/diary_entry/import" component={ImportDiaryEntries} />
-          <Route path="/nutrition_item/new" component={NewNutritionItemForm} />
-          <Route path="/nutrition_item/:id" component={NutritionItemShow} />
-          <Route
-            path="/nutrition_item/:id/edit"
-            component={NutritionItemEdit}
-          />
-          <Route path="/recipe/new" component={NewRecipeForm} />
-          <Route path="/recipe/:id" component={RecipeShow} />
-          <Route path="/recipe/:id/edit" component={RecipeEdit} />
-        </Routes>
-      ) : (
-        <button onClick={() => auth0()?.loginWithRedirect()}>Log In</button>
-      )}
+      <Show
+        when={isAuthenticated()}
+        keyed
+        fallback={
+          <button onClick={() => auth0()?.loginWithRedirect()}>Log In</button>
+        }
+      >
+        {props.children}
+      </Show>
     </div>
   );
 };
