@@ -18,6 +18,8 @@ import UserProfile from "./UserProfile";
 render(
   () => (
     <Router root={App}>
+      <Route path="/auth/callback" />
+      <Route path="/auth/logout" />
       <Route path="/" component={DiaryList} />
       <Route path="/profile" component={UserProfile} />
       <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
