@@ -45,7 +45,8 @@ jobs:
 
       - name: Retag image
         id: retag
-        run: docker tag ${{ inputs.sourceRegistry }}/${{ inputs.sourceRepo }}:${{ inputs.targetRegistry }}/${{ inputs.sourceTag }} ${{ inputs.targetRepo }}:${{ inputs.targetTag }}
+        run: docker tag ${{ inputs.sourceRegistry }}/${{ inputs.sourceRepo }}:${{ inputs.sourceTag }} ${{ inputs.targetRegistry }}/${{ inputs.targetRepo }}:${{ inputs.targetTag }}
+
       - name: Push image
         id: push
         run: docker push ${{ inputs.targetRegistry }}/${{ inputs.targetRepo }}:${{ inputs.targetTag }}
