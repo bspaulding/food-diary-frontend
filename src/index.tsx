@@ -14,6 +14,7 @@ import RecipeShow from "./RecipeShow";
 import RecipeEdit from "./RecipeEdit";
 import ImportDiaryEntries from "./ImportDiaryEntries";
 import UserProfile from "./UserProfile";
+import DiaryEntryEditForm from "./DiaryEntryEditForm";
 
 render(
   () => (
@@ -23,6 +24,7 @@ render(
       <Route path="/" component={DiaryList} />
       <Route path="/profile" component={UserProfile} />
       <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
+      <Route path="/diary_entry/:id/edit" component={DiaryEntryEditForm} />
       <Route path="/diary_entry/import" component={ImportDiaryEntries} />
       <Route path="/nutrition_item/new" component={NewNutritionItemForm} />
       <Route path="/nutrition_item/:id" component={NutritionItemShow} />

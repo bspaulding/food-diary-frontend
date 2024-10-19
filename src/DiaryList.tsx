@@ -25,7 +25,6 @@ function compareEntriesByConsumedAt(a, b) {
 }
 
 function recipeTotalForKey(key, recipe) {
-  recipe && console.log("recipeTotalForKey", recipe);
   return (recipe?.recipe_items || []).reduce(
     (acc, recipe_item) =>
       acc + recipe_item.servings * recipe_item.nutrition_item[key],
@@ -154,18 +153,22 @@ const DiaryList: Component = () => {
                       <p class="flex justify-between text-sm">
                         {pluralize(entry().servings, "serving", "servings")} at{" "}
                         {parseAndFormatTime(entry().consumed_at)}
-                        <button
-                          onClick={() =>
-                            deleteEntry(
-                              accessToken,
-                              entry(),
-                              getEntriesQuery(),
-                              mutate
-                            )
-                          }
-                        >
-                          Delete
-                        </button>
+                        <span>
+                          <a href={`/diary_entry/${entry().id}/edit`}>Edit</a>
+                          <button
+                            class="ml-2"
+                            onClick={() =>
+                              deleteEntry(
+                                accessToken,
+                                entry(),
+                                getEntriesQuery(),
+                                mutate
+                              )
+                            }
+                          >
+                            Delete
+                          </button>
+                        </span>
                       </p>
                       <Show when={entry().recipe?.id}>
                         <p>

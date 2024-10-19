@@ -435,3 +435,43 @@ query ExportEntries {
 export async function fetchExportEntries(accessToken: string) {
   return (await fetchQuery(accessToken, exportEntriesQuery)).json();
 }
+
+const getDiaryEntryQuery = `
+  fragment Macros on food_diary_nutrition_item {
+    total_fat_grams
+    added_sugars_grams
+    protein_grams
+  }
+
+  query GetDiaryEntry($id: Int!) {
+    food_diary_diary_entry_by_pk(id: $id) {
+      id
+      consumed_at
+      calories
+      servings
+      nutrition_item { id, description, calories, ...Macros }
+      recipe { id, name, calories, recipe_items { servings, nutrition_item { ...Macros } } }
+    }
+  }
+`;
+export async function getDiaryEntry(accessToken: string, id: number | string) {
+  return (await fetchQuery(accessToken, getDiaryEntryQuery, { id })).json();
+}
+
+const updateDiaryEntryMutation = `
+mutation UpdateDiaryEntry($id: Int!, $attrs: food_diary_diary_entry_set_input!) {
+  update_food_diary_diary_entry_by_pk(pk_columns: {id: $id }, _set: $attrs) {
+    id
+  }
+}
+`;
+
+export async function updateDiaryEntry(
+  accessToken: string,
+  entry: { id: number; servings: number; consumedAt: string }
+) {
+  return fetchQuery(accessToken, updateDiaryEntryMutation, {
+    id: entry.id,
+    attrs: objectToSnakeCaseKeys(entry),
+  }).then((res) => res.json());
+}
