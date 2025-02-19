@@ -1,9 +1,10 @@
 import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import basicSsl from "@vitejs/plugin-basic-ssl";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [solidPlugin(), basicSsl()],
+  plugins: [tailwindcss(), solidPlugin(), basicSsl()],
   publicDir: "src/assets/public",
   server: {
     host: "0.0.0.0",

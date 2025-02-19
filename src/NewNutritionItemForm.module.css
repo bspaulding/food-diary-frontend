@@ -1,7 +1,6 @@
 .form {
   --vertical-spacing: 8px;
-  padding: var(--vertical-spacing);
-  margin: auto;
+  padding: var(--vertical-spacing) 0px;
 }
 
 .form input {
@@ -11,13 +10,17 @@
 
 .form fieldset {
   margin: 0 0 var(--vertical-spacing);
-  border: 1px solid #3e4a49;
 
   display: flex;
   flex-direction: column;
 }
 
 .form fieldset label {
+  margin-bottom: var(--vertical-spacing);
+}
+
+.form fieldset input {
+  border: 1px solid #3e4a49;
   margin-bottom: var(--vertical-spacing);
 }
 

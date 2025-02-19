@@ -6,6 +6,7 @@ import type { NutritionItem } from "./Api";
 import { createNutritionItem, updateNutritionItem } from "./Api";
 import { useAuth } from "./Auth0";
 import { accessorsToObject } from "./Util";
+import styles from "./NewNutritionItemForm.module.css";
 
 const fromTextInput = (setter: Setter<string>) => (event) => {
   setter(event.target.value || "");
@@ -90,7 +91,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
     });
 
   return (
-    <form>
+    <form className={styles.form}>
       <fieldset class="flex flex-col">
         <label for="description">Description</label>
         <input
