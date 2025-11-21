@@ -1,0 +1,10 @@
+# .cursorrules
+
+When making changes to purescript files, or purescript FFI modules, always:
+1. Run the compiler for warnings and errors: `spago build`
+2. Run the tests: `spago test`
+
+Before committing changes, verify:
+- No compiler warnings, treat warnings like errors
+- No compiler errors
+- All tests pass
