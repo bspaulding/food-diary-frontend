@@ -1,0 +1,33 @@
+{ name = "food-diary-frontend"
+, dependencies =
+  [ "aff"
+  , "affjax"
+  , "argonaut"
+  , "argonaut-core"
+  , "arrays"
+  , "console"
+  , "datetime"
+  , "effect"
+  , "either"
+  , "exceptions"
+  , "foreign"
+  , "foreign-object"
+  , "integers"
+  , "maybe"
+  , "numbers"
+  , "prelude"
+  , "react-basic"
+  , "react-basic-dom"
+  , "react-basic-hooks"
+  , "routing"
+  , "routing-duplex"
+  , "spec"
+  , "spec-node"
+  , "strings"
+  , "tuples"
+  , "web-dom"
+  , "web-html"
+  ]
+, packages = ./packages.dhall
+, sources = [ "src/purescript/**/*.purs" ]
+}
