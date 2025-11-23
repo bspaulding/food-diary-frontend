@@ -4,7 +4,10 @@ import Prelude
 import Effect (Effect)
 import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
-import CSVImportTest (spec)
+import CSVImportTest as CSVImportTest
+import CSVExportTest as CSVExportTest
 
 main :: Effect Unit
-main = runSpecAndExitProcess [consoleReporter] spec
+main = runSpecAndExitProcess [consoleReporter] do
+    CSVImportTest.spec
+    CSVExportTest.spec

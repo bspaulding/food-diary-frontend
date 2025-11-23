@@ -17,6 +17,7 @@
   , "foreign-object"
   , "integers"
   , "maybe"
+  , "nullable"
   , "numbers"
   , "prelude"
   , "react-basic"
