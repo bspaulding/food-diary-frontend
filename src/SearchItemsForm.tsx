@@ -55,12 +55,12 @@ const SearchItemsForm: Component = ({ children, queryType }: Props) => {
             </Show>
           </p>
           <ul>
-            <Index each={nutritionItems()}>
-              {(item) => children({ clear, nutritionItem: item() })}
-            </Index>
-            <Index each={recipes()}>
-              {(recipe) => children({ clear, recipe: recipe() })}
-            </Index>
+            <For each={nutritionItems()}>
+              {(nutritionItem) => children({ clear, nutritionItem })}
+            </For>
+            <For each={recipes()}>
+              {(recipe) => children({ clear, recipe })}
+            </For>
           </ul>
         </Show>
       </div>
