@@ -10,8 +10,11 @@ type Props = {
 };
 
 // Helper to get a numeric value from API response, supporting both camelCase and snake_case keys
-const getNumericValue = (data: Record<string, unknown>, camelKey: string, snakeKey: string): number => {
-  const value = data[camelKey] ?? data[snakeKey];
+const getNumericValue = (
+  data: Record<string, unknown>,
+  key: string
+): number => {
+  const value = data[key];
   return typeof value === "number" ? value : 0;
 };
 
@@ -34,12 +37,24 @@ const CameraModal: Component<Props> = (props) => {
     } catch (err) {
       let errorMessage = "Unable to access camera.";
       if (err instanceof DOMException) {
-        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-          errorMessage = "Camera permission was denied. Please allow camera access to scan nutrition labels.";
-        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-          errorMessage = "No camera found. Please ensure your device has a camera.";
-        } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
-          errorMessage = "Camera is in use by another application. Please close other apps using the camera.";
+        if (
+          err.name === "NotAllowedError" ||
+          err.name === "PermissionDeniedError"
+        ) {
+          errorMessage =
+            "Camera permission was denied. Please allow camera access to scan nutrition labels.";
+        } else if (
+          err.name === "NotFoundError" ||
+          err.name === "DevicesNotFoundError"
+        ) {
+          errorMessage =
+            "No camera found. Please ensure your device has a camera.";
+        } else if (
+          err.name === "NotReadableError" ||
+          err.name === "TrackStartError"
+        ) {
+          errorMessage =
+            "Camera is in use by another application. Please close other apps using the camera.";
         }
       }
       setError(errorMessage);
@@ -86,20 +101,24 @@ const CameraModal: Component<Props> = (props) => {
 
       // Convert canvas to blob
       const blob = await new Promise<Blob>((resolve, reject) => {
-        canvasRef!.toBlob((blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error("Failed to create image blob"));
-          }
-        }, "image/jpeg", 0.95);
+        canvasRef!.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Failed to create image blob"));
+            }
+          },
+          "image/jpeg",
+          0.95
+        );
       });
 
       // Create form data and upload
       const formData = new FormData();
       formData.append("image", blob, "capture.jpg");
 
-      const response = await fetch("/api/labeller/upload", {
+      const response = await fetch("/labeller/upload", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${props.accessToken}`,
@@ -115,20 +134,17 @@ const CameraModal: Component<Props> = (props) => {
 
       // Map the response to nutrition item attributes
       const nutritionData: Partial<NutritionItemAttrs> = {
-        description: typeof data.description === "string" ? data.description : "",
-        calories: getNumericValue(data, "calories", "calories"),
-        totalFatGrams: getNumericValue(data, "totalFatGrams", "total_fat_grams"),
-        saturatedFatGrams: getNumericValue(data, "saturatedFatGrams", "saturated_fat_grams"),
-        transFatGrams: getNumericValue(data, "transFatGrams", "trans_fat_grams"),
-        polyunsaturatedFatGrams: getNumericValue(data, "polyunsaturatedFatGrams", "polyunsaturated_fat_grams"),
-        monounsaturatedFatGrams: getNumericValue(data, "monounsaturatedFatGrams", "monounsaturated_fat_grams"),
-        cholesterolMilligrams: getNumericValue(data, "cholesterolMilligrams", "cholesterol_milligrams"),
-        sodiumMilligrams: getNumericValue(data, "sodiumMilligrams", "sodium_milligrams"),
-        totalCarbohydrateGrams: getNumericValue(data, "totalCarbohydrateGrams", "total_carbohydrate_grams"),
-        dietaryFiberGrams: getNumericValue(data, "dietaryFiberGrams", "dietary_fiber_grams"),
-        totalSugarsGrams: getNumericValue(data, "totalSugarsGrams", "total_sugars_grams"),
-        addedSugarsGrams: getNumericValue(data, "addedSugarsGrams", "added_sugars_grams"),
-        proteinGrams: getNumericValue(data, "proteinGrams", "protein_grams"),
+        description:
+          typeof data.description === "string" ? data.description : "",
+        calories: getNumericValue(data, "calories"),
+        totalFatGrams: getNumericValue(data, "total_fat_grams"),
+        cholesterolMilligrams: getNumericValue(data, "cholesterol_mg"),
+        sodiumMilligrams: getNumericValue(data, "sodium_mg"),
+        totalCarbohydrateGrams: getNumericValue(data, "total_carbohydrates_g"),
+        dietaryFiberGrams: getNumericValue(data, "dietary_fiber_g"),
+        totalSugarsGrams: getNumericValue(data, "total_sugars_g"),
+        addedSugarsGrams: getNumericValue(data, "added_sugars_g"),
+        proteinGrams: getNumericValue(data, "protein_g"),
       };
 
       props.onImport(nutritionData);

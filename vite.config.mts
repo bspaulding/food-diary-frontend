@@ -15,6 +15,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
+      "/labeller": {
+        target: "https://food-diary.motingo.com/labeller/",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/labeller/, ""),
+      },
     },
   },
   build: {
