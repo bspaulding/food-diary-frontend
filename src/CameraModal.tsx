@@ -121,17 +121,40 @@ const CameraModal: Component<Props> = (props) => {
       const formData = new FormData();
       formData.append("image", blob, "capture.jpg");
 
-      const response = await fetch("/labeller/upload", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${props.accessToken}`,
-        },
-        body: formData,
-      });
+      async function retry(times: number, fn: () => Promise<any>) {
+        let i = 0;
+        let result;
+        while (i < times) {
+          try {
+            result = await fn();
+            return result;
+          } catch (e) {
+            result = e;
+          }
+          i++;
+        }
+        if (i >= times) {
+          throw new Error(`Too many retries. Last result was ${result}.`);
+        }
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        return result;
       }
+
+      const response = await retry(3, async () => {
+        const response = await fetch("/labeller/upload", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${props.accessToken}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.statusText}`);
+        }
+
+        return response;
+      });
 
       const { image: data } = await response.json();
 
