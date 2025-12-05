@@ -111,7 +111,7 @@ const CameraModal: Component<Props> = (props) => {
         throw new Error(`Upload failed: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const { image: data } = await response.json();
 
       // Map the response to nutrition item attributes
       const nutritionData: Partial<NutritionItemAttrs> = {
