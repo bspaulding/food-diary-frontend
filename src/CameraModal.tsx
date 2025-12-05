@@ -1,5 +1,5 @@
 import type { Component } from "solid-js";
-import { createSignal, onMount, onCleanup } from "solid-js";
+import { createSignal, createEffect, onCleanup } from "solid-js";
 import type { NutritionItemAttrs } from "./Api";
 
 type Props = {
@@ -7,6 +7,12 @@ type Props = {
   onClose: () => void;
   onImport: (nutritionData: Partial<NutritionItemAttrs>) => void;
   accessToken: string;
+};
+
+// Helper to get a numeric value from API response, supporting both camelCase and snake_case keys
+const getNumericValue = (data: Record<string, unknown>, camelKey: string, snakeKey: string): number => {
+  const value = data[camelKey] ?? data[snakeKey];
+  return typeof value === "number" ? value : 0;
 };
 
 const CameraModal: Component<Props> = (props) => {
@@ -26,7 +32,17 @@ const CameraModal: Component<Props> = (props) => {
         videoRef.srcObject = stream;
       }
     } catch (err) {
-      setError("Unable to access camera. Please ensure camera permissions are granted.");
+      let errorMessage = "Unable to access camera.";
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          errorMessage = "Camera permission was denied. Please allow camera access to scan nutrition labels.";
+        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+          errorMessage = "No camera found. Please ensure your device has a camera.";
+        } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+          errorMessage = "Camera is in use by another application. Please close other apps using the camera.";
+        }
+      }
+      setError(errorMessage);
       console.error("Error accessing camera:", err);
     }
   };
@@ -38,9 +54,12 @@ const CameraModal: Component<Props> = (props) => {
     }
   };
 
-  onMount(() => {
+  // Use createEffect to watch for isOpen changes
+  createEffect(() => {
     if (props.isOpen) {
       startCamera();
+    } else {
+      stopCamera();
     }
   });
 
@@ -96,20 +115,20 @@ const CameraModal: Component<Props> = (props) => {
 
       // Map the response to nutrition item attributes
       const nutritionData: Partial<NutritionItemAttrs> = {
-        description: data.description || "",
-        calories: data.calories || 0,
-        totalFatGrams: data.totalFatGrams || data.total_fat_grams || 0,
-        saturatedFatGrams: data.saturatedFatGrams || data.saturated_fat_grams || 0,
-        transFatGrams: data.transFatGrams || data.trans_fat_grams || 0,
-        polyunsaturatedFatGrams: data.polyunsaturatedFatGrams || data.polyunsaturated_fat_grams || 0,
-        monounsaturatedFatGrams: data.monounsaturatedFatGrams || data.monounsaturated_fat_grams || 0,
-        cholesterolMilligrams: data.cholesterolMilligrams || data.cholesterol_milligrams || 0,
-        sodiumMilligrams: data.sodiumMilligrams || data.sodium_milligrams || 0,
-        totalCarbohydrateGrams: data.totalCarbohydrateGrams || data.total_carbohydrate_grams || 0,
-        dietaryFiberGrams: data.dietaryFiberGrams || data.dietary_fiber_grams || 0,
-        totalSugarsGrams: data.totalSugarsGrams || data.total_sugars_grams || 0,
-        addedSugarsGrams: data.addedSugarsGrams || data.added_sugars_grams || 0,
-        proteinGrams: data.proteinGrams || data.protein_grams || 0,
+        description: typeof data.description === "string" ? data.description : "",
+        calories: getNumericValue(data, "calories", "calories"),
+        totalFatGrams: getNumericValue(data, "totalFatGrams", "total_fat_grams"),
+        saturatedFatGrams: getNumericValue(data, "saturatedFatGrams", "saturated_fat_grams"),
+        transFatGrams: getNumericValue(data, "transFatGrams", "trans_fat_grams"),
+        polyunsaturatedFatGrams: getNumericValue(data, "polyunsaturatedFatGrams", "polyunsaturated_fat_grams"),
+        monounsaturatedFatGrams: getNumericValue(data, "monounsaturatedFatGrams", "monounsaturated_fat_grams"),
+        cholesterolMilligrams: getNumericValue(data, "cholesterolMilligrams", "cholesterol_milligrams"),
+        sodiumMilligrams: getNumericValue(data, "sodiumMilligrams", "sodium_milligrams"),
+        totalCarbohydrateGrams: getNumericValue(data, "totalCarbohydrateGrams", "total_carbohydrate_grams"),
+        dietaryFiberGrams: getNumericValue(data, "dietaryFiberGrams", "dietary_fiber_grams"),
+        totalSugarsGrams: getNumericValue(data, "totalSugarsGrams", "total_sugars_grams"),
+        addedSugarsGrams: getNumericValue(data, "addedSugarsGrams", "added_sugars_grams"),
+        proteinGrams: getNumericValue(data, "proteinGrams", "protein_grams"),
       };
 
       props.onImport(nutritionData);
