@@ -1,12 +1,13 @@
 import type { Component, Accessor, Setter } from "solid-js";
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
-import type { NutritionItem } from "./Api";
+import type { NutritionItem, NutritionItemAttrs } from "./Api";
 import { createNutritionItem, updateNutritionItem } from "./Api";
 import { useAuth } from "./Auth0";
 import { accessorsToObject } from "./Util";
 import styles from "./NewNutritionItemForm.module.css";
+import CameraModal from "./CameraModal";
 
 const fromTextInput = (setter: Setter<string>) => (event) => {
   setter(event.target.value || "");
@@ -27,6 +28,7 @@ type Props = {
 const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
   const [{ accessToken }] = useAuth();
   const [disabled, setDisabled] = createSignal(false);
+  const [showCameraModal, setShowCameraModal] = createSignal(false);
   const navigate = useNavigate();
 
   const [id, _setId] = createSignal(initialItem?.id);
@@ -90,18 +92,66 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
       proteinGrams,
     });
 
+  const handleImport = (nutritionData: Partial<NutritionItemAttrs>) => {
+    if (nutritionData.description !== undefined) setDescription(nutritionData.description);
+    if (nutritionData.calories !== undefined) setCalories(nutritionData.calories);
+    if (nutritionData.totalFatGrams !== undefined) setTotalFatGrams(nutritionData.totalFatGrams);
+    if (nutritionData.saturatedFatGrams !== undefined) setSaturatedFatGrams(nutritionData.saturatedFatGrams);
+    if (nutritionData.transFatGrams !== undefined) setTransFatGrams(nutritionData.transFatGrams);
+    if (nutritionData.polyunsaturatedFatGrams !== undefined) setPolyunsaturatedFatGrams(nutritionData.polyunsaturatedFatGrams);
+    if (nutritionData.monounsaturatedFatGrams !== undefined) setMonounsaturatedFatGrams(nutritionData.monounsaturatedFatGrams);
+    if (nutritionData.cholesterolMilligrams !== undefined) setCholesterolMilligrams(nutritionData.cholesterolMilligrams);
+    if (nutritionData.sodiumMilligrams !== undefined) setSodiumMilligrams(nutritionData.sodiumMilligrams);
+    if (nutritionData.totalCarbohydrateGrams !== undefined) setTotalCarbohydrateGrams(nutritionData.totalCarbohydrateGrams);
+    if (nutritionData.dietaryFiberGrams !== undefined) setDietaryFiberGrams(nutritionData.dietaryFiberGrams);
+    if (nutritionData.totalSugarsGrams !== undefined) setTotalSugarsGrams(nutritionData.totalSugarsGrams);
+    if (nutritionData.addedSugarsGrams !== undefined) setAddedSugarsGrams(nutritionData.addedSugarsGrams);
+    if (nutritionData.proteinGrams !== undefined) setProteinGrams(nutritionData.proteinGrams);
+  };
+
   return (
-    <form className={styles.form}>
-      <fieldset class="flex flex-col">
-        <label for="description">Description</label>
-        <input
-          type="text"
-          name="description"
-          disabled={disabled()}
-          value={description()}
-          onInput={fromTextInput(setDescription)}
+    <>
+      <Show when={showCameraModal()}>
+        <CameraModal
+          isOpen={showCameraModal()}
+          onClose={() => setShowCameraModal(false)}
+          onImport={handleImport}
+          accessToken={accessToken()}
         />
-      </fieldset>
+      </Show>
+      <div class="flex justify-end mb-2">
+        <button
+          type="button"
+          class="bg-indigo-600 text-slate-50 py-2 px-4 rounded-md flex items-center gap-2"
+          onClick={() => setShowCameraModal(true)}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="w-5 h-5"
+          >
+            <path d="M12 9a3.75 3.75 0 1 0 0 7.5A3.75 3.75 0 0 0 12 9Z" />
+            <path
+              fill-rule="evenodd"
+              d="M9.344 3.071a49.52 49.52 0 0 1 5.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 0 1-3 3H4.5a3 3 0 0 1-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 0 0 1.11-.71l.822-1.315a2.942 2.942 0 0 1 2.332-1.39ZM6.75 12.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Zm12-1.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Scan
+        </button>
+      </div>
+      <form className={styles.form}>
+        <fieldset class="flex flex-col">
+          <label for="description">Description</label>
+          <input
+            type="text"
+            name="description"
+            disabled={disabled()}
+            value={description()}
+            onInput={fromTextInput(setDescription)}
+          />
+        </fieldset>
       <fieldset class="flex flex-col my-4">
         <legend class="font-semibold">Nutrition Facts</legend>
 
@@ -250,6 +300,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
         </button>
       </fieldset>
     </form>
+    </>
   );
 };
 
