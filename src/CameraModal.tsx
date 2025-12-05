@@ -22,6 +22,7 @@ const CameraModal: Component<Props> = (props) => {
   let videoRef: HTMLVideoElement | undefined;
   let canvasRef: HTMLCanvasElement | undefined;
   let streamRef: MediaStream | null = null;
+  const [capturedImage, setCapturedImage] = createSignal<Blob | null>(null);
   const [isUploading, setIsUploading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
@@ -114,6 +115,8 @@ const CameraModal: Component<Props> = (props) => {
         );
       });
 
+      setCapturedImage(blob);
+
       // Create form data and upload
       const formData = new FormData();
       formData.append("image", blob, "capture.jpg");
@@ -186,6 +189,8 @@ const CameraModal: Component<Props> = (props) => {
         <div class="flex-1 flex items-center justify-center overflow-hidden">
           {error() ? (
             <p class="text-red-500 text-center px-4">{error()}</p>
+          ) : capturedImage() ? (
+            <img src={window.URL.createObjectURL(capturedImage())} />
           ) : (
             <video
               ref={videoRef}
