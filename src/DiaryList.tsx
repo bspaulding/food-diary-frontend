@@ -2,7 +2,6 @@ import type { Accessor, Component, Setter } from "solid-js";
 import { Index, Show, createSignal, createEffect, onMount, onCleanup } from "solid-js";
 import type { DiaryEntry, GetEntriesQueryResponse } from "./Api";
 import { fetchEntries, deleteDiaryEntry } from "./Api";
-import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
 import DateBadge from "./DateBadge";
@@ -134,8 +133,8 @@ const DiaryList: Component = () => {
     if (!sentinelRef || !initialLoadComplete()) return;
 
     const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore() && !isLoading()) {
+      (observerEntries) => {
+        if (observerEntries[0].isIntersecting && hasMore() && !isLoading()) {
           loadMoreEntries();
         }
       },
