@@ -73,19 +73,19 @@ const DiaryEntryEditForm: Component = () => {
               disabled={disabled()}
               onClick={async () => {
                 setErrors([]);
-                if (!consumedAt() && !servings()) {
+                if (consumedAt() === undefined && servings() === undefined) {
                   navigate("/");
                   return; // nothing changed, nothing to do
                 }
                 setDisabled(true);
                 
                 // Use the changed consumed_at if provided, otherwise keep original
-                const newConsumedAt = consumedAt()
+                const newConsumedAt = consumedAt() !== undefined
                   ? formatISO(parse(consumedAt(), "yyyy-MM-dd'T'HH:mm", new Date()))
                   : diaryEntry().consumed_at;
                 
                 // Use the changed servings if provided, otherwise keep original
-                const newServings = servings() || diaryEntry().servings;
+                const newServings = servings() !== undefined ? servings() : diaryEntry().servings;
                 
                 try {
                   const response = await updateDiaryEntry(accessToken(), {

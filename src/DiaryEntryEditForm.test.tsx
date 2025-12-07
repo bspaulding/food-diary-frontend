@@ -145,4 +145,33 @@ describe("DiaryEntryEditForm - API Integration", () => {
     expect(capturedRequest.variables.attrs.servings).toBe(5);
     expect(capturedRequest.variables.attrs.consumed_at).toBe(originalConsumedAt);
   });
+
+  it("should handle updating servings to 0", async () => {
+    let capturedRequest: any = null;
+
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = await request.json();
+        capturedRequest = body;
+        
+        return HttpResponse.json({
+          data: {
+            update_food_diary_diary_entry_by_pk: {
+              id: 1,
+            },
+          },
+        });
+      })
+    );
+
+    // User changes servings to 0 (edge case with falsy value)
+    await updateDiaryEntry("test-token", {
+      id: 1,
+      servings: 0,
+      consumedAt: "2022-08-28T14:30:00Z",
+    });
+
+    // Verify the request includes servings as 0, not the original value
+    expect(capturedRequest.variables.attrs.servings).toBe(0);
+  });
 });
