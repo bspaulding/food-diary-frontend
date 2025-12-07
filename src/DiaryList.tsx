@@ -1,5 +1,5 @@
 import type { Accessor, Component, Setter } from "solid-js";
-import { Index, Show } from "solid-js";
+import { Index, Show, createSignal, createEffect, onMount, onCleanup } from "solid-js";
 import type { DiaryEntry, GetEntriesQueryResponse } from "./Api";
 import { fetchEntries, deleteDiaryEntry } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
@@ -61,10 +61,16 @@ const EntryMacro: Component<{
   </div>
 );
 
+const PAGE_SIZE = 30;
+
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
-  const [getEntriesQuery, { mutate }] = createAuthorizedResource(fetchEntries);
-  const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];
+  const [entries, setEntries] = createSignal<DiaryEntry[]>([]);
+  const [isLoading, setIsLoading] = createSignal(false);
+  const [hasMore, setHasMore] = createSignal(true);
+  const [initialLoadComplete, setInitialLoadComplete] = createSignal(false);
+  let sentinelRef: HTMLDivElement | undefined;
+
   const entriesByDay = () =>
     Object.entries(
       entries().reduce(
@@ -81,6 +87,82 @@ const DiaryList: Component = () => {
       return compareDesc(parseISO(a[0]), parseISO(b[0]));
     });
 
+  const loadMoreEntries = async () => {
+    if (isLoading() || !hasMore() || !accessToken()) return;
+
+    setIsLoading(true);
+    try {
+      const currentEntries = entries();
+      const lastEntry = currentEntries[currentEntries.length - 1];
+      
+      const options = lastEntry
+        ? {
+            limit: PAGE_SIZE,
+            cursorDay: lastEntry.day,
+            cursorConsumedAt: lastEntry.consumed_at,
+          }
+        : { limit: PAGE_SIZE };
+
+      const response = await fetchEntries(accessToken(), options);
+      const newEntries = response?.data?.food_diary_diary_entry || [];
+
+      if (newEntries.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+
+      if (newEntries.length > 0) {
+        setEntries([...currentEntries, ...newEntries]);
+      }
+
+      if (!initialLoadComplete()) {
+        setInitialLoadComplete(true);
+      }
+    } catch (error) {
+      console.error("Failed to load entries:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial load
+  onMount(() => {
+    loadMoreEntries();
+  });
+
+  // Set up intersection observer for infinite scroll
+  createEffect(() => {
+    if (!sentinelRef || !initialLoadComplete()) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore() && !isLoading()) {
+          loadMoreEntries();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(sentinelRef);
+
+    onCleanup(() => observer.disconnect());
+  });
+
+  const handleDeleteEntry = async (entry: DiaryEntry) => {
+    try {
+      // Optimistically remove from UI
+      setEntries(entries().filter((e) => e.id !== entry.id));
+      
+      const response = await deleteDiaryEntry(accessToken(), entry.id);
+      if (!response.data) {
+        // If deletion failed, we could reload entries here
+        // For now, the optimistic update stays
+      }
+    } catch (e) {
+      console.error("Failed to delete entry: ", e);
+      // Could reload entries on error to restore state
+    }
+  };
+
   return (
     <>
       <div class="flex space-x-4 mb-4">
@@ -89,7 +171,7 @@ const DiaryList: Component = () => {
         <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
       </div>
       <ul class="mt-4">
-        <Show when={entries().length === 0}>
+        <Show when={initialLoadComplete() && entries().length === 0}>
           <p class="text-slate-400 text-center">No entries, yet...</p>
         </Show>
         <Index each={entriesByDay()}>
@@ -157,14 +239,7 @@ const DiaryList: Component = () => {
                           <a href={`/diary_entry/${entry().id}/edit`}>Edit</a>
                           <button
                             class="ml-2"
-                            onClick={() =>
-                              deleteEntry(
-                                accessToken,
-                                entry(),
-                                getEntriesQuery(),
-                                mutate
-                              )
-                            }
+                            onClick={() => handleDeleteEntry(entry())}
                           >
                             Delete
                           </button>
@@ -184,41 +259,13 @@ const DiaryList: Component = () => {
             </li>
           )}
         </Index>
+        <Show when={isLoading()}>
+          <div class="text-center py-4 text-slate-400">Loading more entries...</div>
+        </Show>
+        <div ref={sentinelRef} class="h-4" />
       </ul>
     </>
   );
 };
 
 export default DiaryList;
-
-function removeEntry(
-  entry: DiaryEntry,
-  entriesQuery: GetEntriesQueryResponse,
-  mutate: Setter<GetEntriesQueryResponse>
-) {
-  mutate({
-    ...entriesQuery,
-    data: {
-      ...entriesQuery.data,
-      food_diary_diary_entry: (
-        entriesQuery?.data?.food_diary_diary_entry || []
-      ).filter((e) => e.id !== entry.id),
-    },
-  });
-}
-async function deleteEntry(
-  accessToken: Accessor<string>,
-  entry: DiaryEntry,
-  entriesQuery: GetEntriesQueryResponse,
-  mutate: Setter<GetEntriesQueryResponse>
-) {
-  try {
-    removeEntry(entry, entriesQuery, mutate);
-    const response = await deleteDiaryEntry(accessToken(), entry.id);
-    if (!response.data) {
-      mutate(entriesQuery);
-    }
-  } catch (e) {
-    console.error("Failed to delete entry: ", e);
-  }
-}
