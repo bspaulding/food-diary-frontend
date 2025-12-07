@@ -78,17 +78,20 @@ const DiaryEntryEditForm: Component = () => {
                   return; // nothing changed, nothing to do
                 }
                 setDisabled(true);
-                const parsed = parse(
-                  consumedAt(),
-                  "yyyy-MM-dd'T'HH:mm",
-                  new Date()
-                );
-                console.log({ parsed });
+                
+                // Use the changed consumed_at if provided, otherwise keep original
+                const newConsumedAt = consumedAt()
+                  ? formatISO(parse(consumedAt(), "yyyy-MM-dd'T'HH:mm", new Date()))
+                  : diaryEntry().consumed_at;
+                
+                // Use the changed servings if provided, otherwise keep original
+                const newServings = servings() || diaryEntry().servings;
+                
                 try {
                   const response = await updateDiaryEntry(accessToken(), {
                     id: diaryEntry().id,
-                    consumedAt: formatISO(parsed),
-                    servings: servings() || diaryEntry().servings,
+                    consumedAt: newConsumedAt,
+                    servings: newServings,
                   });
                   console.log(response.errors);
                   if (response.errors) {
