@@ -148,18 +148,21 @@ const DiaryList: Component = () => {
   });
 
   const handleDeleteEntry = async (entry: DiaryEntry) => {
+    const originalEntries = entries();
     try {
       // Optimistically remove from UI
-      setEntries(entries().filter((e) => e.id !== entry.id));
+      setEntries(originalEntries.filter((e) => e.id !== entry.id));
       
       const response = await deleteDiaryEntry(accessToken(), entry.id);
       if (!response.data) {
-        // If deletion failed, we could reload entries here
-        // For now, the optimistic update stays
+        // Revert optimistic update if deletion failed
+        setEntries(originalEntries);
+        console.error("Failed to delete entry: no data in response");
       }
     } catch (e) {
+      // Revert optimistic update on error
+      setEntries(originalEntries);
       console.error("Failed to delete entry: ", e);
-      // Could reload entries on error to restore state
     }
   };
 

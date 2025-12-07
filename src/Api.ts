@@ -55,12 +55,22 @@ export type FetchEntriesOptions = {
   cursorConsumedAt?: string;
 };
 
+type GetEntriesVariables = {
+  limit?: number;
+  where?: {
+    _or: Array<
+      | { day: { _lt: string } }
+      | { _and: Array<{ day: { _eq: string } } | { consumed_at: { _lt: string } }> }
+    >;
+  };
+};
+
 export async function fetchEntries(
   accessToken: string,
   options: FetchEntriesOptions = {}
 ): Promise<GetEntriesQueryResponse> {
   const { limit, cursorDay, cursorConsumedAt } = options;
-  const variables: any = {};
+  const variables: GetEntriesVariables = {};
   
   if (limit) {
     variables.limit = limit;
