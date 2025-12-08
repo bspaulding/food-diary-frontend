@@ -2,9 +2,15 @@ import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import tailwindcss from "@tailwindcss/vite";
+import Terminal from "vite-plugin-terminal";
 
-export default defineConfig({
-  plugins: [tailwindcss(), solidPlugin(), basicSsl()],
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    tailwindcss(),
+    solidPlugin(),
+    basicSsl(),
+    ...(mode === "development" ? [Terminal({ console: "terminal" })] : []),
+  ],
   publicDir: "src/assets/public",
   server: {
     host: "0.0.0.0",
@@ -35,4 +41,4 @@ export default defineConfig({
       provider: "playwright",
     },
   },
-});
+}));
