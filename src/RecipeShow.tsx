@@ -16,7 +16,7 @@ type RecipeItem = {
 };
 
 const calculateItemCalories = (item: RecipeItem): number => {
-  return item.servings * (item.nutrition_item?.calories || 0);
+  return item.servings * (item.nutrition_item.calories || 0);
 };
 
 const RecipeShow: Component = () => {
