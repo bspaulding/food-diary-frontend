@@ -6,6 +6,19 @@ import { fetchRecipe } from "./Api";
 import ButtonLink from "./ButtonLink";
 import { LoggableItem } from "./NewDiaryEntryForm";
 
+type RecipeItem = {
+  servings: number;
+  nutrition_item: {
+    id: number;
+    description: string;
+    calories?: number;
+  };
+};
+
+const calculateItemCalories = (item: RecipeItem): number => {
+  return item.servings * (item.nutrition_item.calories || 0);
+};
+
 const RecipeShow: Component = () => {
   const params = useParams();
   const [recipeQuery] = createAuthorizedResource(() => params.id, fetchRecipe);
@@ -14,6 +27,12 @@ const RecipeShow: Component = () => {
   const recipeItems = createMemo(() => recipe().recipe_items);
 
   const itemLoaded = () => !!recipeQuery()?.data;
+
+  const totalCalories = createMemo(() => {
+    return (recipeItems() || []).reduce((acc: number, item: RecipeItem) => {
+      return acc + calculateItemCalories(item);
+    }, 0);
+  });
 
   return (
     <div style={{ margin: "18px" }}>
@@ -25,14 +44,22 @@ const RecipeShow: Component = () => {
       <Show when={itemLoaded()}>
         <LoggableItem recipe={{ id: recipe().id, name: "Log It" }} />
       </Show>
-      <div class="text-lg">
+      <Show when={itemLoaded()}>
+        <p class="text-lg font-semibold mt-4">
+          Total Calories: {Math.round(totalCalories())} kcal
+        </p>
+      </Show>
+      <div class="text-lg mt-4">
+        <h2 class="font-semibold mb-2">Ingredients:</h2>
         <Index each={recipeItems()} fallback="No recipe items.">
           {(item) => (
             <li class="list-none my-1">
               <a href={`/nutrition_item/${item().nutrition_item.id}`}>
                 {item().nutrition_item.description}
               </a>
-              <p class="text-sm">{item().servings} servings</p>
+              <p class="text-sm">
+                {item().servings} servings - {Math.round(calculateItemCalories(item()))} kcal
+              </p>
             </li>
           )}
         </Index>
