@@ -6,6 +6,19 @@ import { fetchRecipe } from "./Api";
 import ButtonLink from "./ButtonLink";
 import { LoggableItem } from "./NewDiaryEntryForm";
 
+type RecipeItem = {
+  servings: number;
+  nutrition_item: {
+    id: number;
+    description: string;
+    calories?: number;
+  };
+};
+
+const calculateItemCalories = (item: RecipeItem): number => {
+  return item.servings * (item.nutrition_item?.calories || 0);
+};
+
 const RecipeShow: Component = () => {
   const params = useParams();
   const [recipeQuery] = createAuthorizedResource(() => params.id, fetchRecipe);
@@ -16,8 +29,8 @@ const RecipeShow: Component = () => {
   const itemLoaded = () => !!recipeQuery()?.data;
 
   const totalCalories = createMemo(() => {
-    return (recipeItems() || []).reduce((acc: number, item: any) => {
-      return acc + (item.servings * (item.nutrition_item?.calories || 0));
+    return (recipeItems() || []).reduce((acc: number, item: RecipeItem) => {
+      return acc + calculateItemCalories(item);
     }, 0);
   });
 
@@ -45,7 +58,7 @@ const RecipeShow: Component = () => {
                 {item().nutrition_item.description}
               </a>
               <p class="text-sm">
-                {item().servings} servings - {Math.round(item().servings * (item().nutrition_item?.calories || 0))} kcal
+                {item().servings} servings - {Math.round(calculateItemCalories(item()))} kcal
               </p>
             </li>
           )}
