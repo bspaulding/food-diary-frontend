@@ -354,7 +354,8 @@ query GetRecipe($id: Int!) {
       servings
       nutrition_item {
         id,
-        description
+        description,
+        calories
       }
     }
   }
