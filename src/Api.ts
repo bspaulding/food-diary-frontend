@@ -7,9 +7,10 @@ fragment Macros on food_diary_nutrition_item {
 	protein_grams
 }
 
-query GetEntries {
-    food_diary_diary_entry(order_by: { day: desc, consumed_at: asc }) {
+query GetEntries($limit: Int, $where: food_diary_diary_entry_bool_exp) {
+    food_diary_diary_entry(order_by: { day: desc, consumed_at: desc }, limit: $limit, where: $where) {
         id
+        day
         consumed_at
         calories
         servings
@@ -48,10 +49,48 @@ export type GetEntriesQueryResponse = {
   };
 };
 
+export type FetchEntriesOptions = {
+  limit?: number;
+  cursorDay?: string;
+  cursorConsumedAt?: string;
+};
+
+type GetEntriesVariables = {
+  limit?: number;
+  where?: {
+    _or: Array<
+      | { day: { _lt: string } }
+      | { _and: Array<{ day: { _eq: string } } | { consumed_at: { _lt: string } }> }
+    >;
+  };
+};
+
 export async function fetchEntries(
-  accessToken: string
+  accessToken: string,
+  options: FetchEntriesOptions = {}
 ): Promise<GetEntriesQueryResponse> {
-  const response = await fetchQuery(accessToken, getEntriesQuery);
+  const { limit, cursorDay, cursorConsumedAt } = options;
+  const variables: GetEntriesVariables = {};
+  
+  if (limit) {
+    variables.limit = limit;
+  }
+  
+  if (cursorDay && cursorConsumedAt) {
+    variables.where = {
+      _or: [
+        { day: { _lt: cursorDay } },
+        {
+          _and: [
+            { day: { _eq: cursorDay } },
+            { consumed_at: { _lt: cursorConsumedAt } }
+          ]
+        }
+      ]
+    };
+  }
+  
+  const response = await fetchQuery(accessToken, getEntriesQuery, variables);
   return response.json();
 }
 
