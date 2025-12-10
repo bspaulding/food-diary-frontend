@@ -24,6 +24,7 @@ const CameraModal: Component<Props> = (props) => {
   let fileInputRef: HTMLInputElement | undefined;
   let streamRef: MediaStream | null = null;
   const [capturedImage, setCapturedImage] = createSignal<Blob | null>(null);
+  const [capturedImageUrl, setCapturedImageUrl] = createSignal<string | null>(null);
   const [isUploading, setIsUploading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const [mode, setMode] = createSignal<"camera" | "upload">("camera");
@@ -83,6 +84,30 @@ const CameraModal: Component<Props> = (props) => {
 
   onCleanup(() => {
     stopCamera();
+    // Clean up object URL to prevent memory leaks
+    const url = capturedImageUrl();
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
+  });
+
+  // Create effect to manage object URL lifecycle
+  createEffect(() => {
+    const image = capturedImage();
+    const prevUrl = capturedImageUrl();
+    
+    // Revoke previous URL if it exists
+    if (prevUrl) {
+      URL.revokeObjectURL(prevUrl);
+    }
+    
+    // Create new URL if there's an image
+    if (image) {
+      const newUrl = URL.createObjectURL(image);
+      setCapturedImageUrl(newUrl);
+    } else {
+      setCapturedImageUrl(null);
+    }
   });
 
   const handleFileSelect = (event: Event) => {
@@ -98,6 +123,9 @@ const CameraModal: Component<Props> = (props) => {
       setCapturedImage(file);
       setError(null);
     }
+    
+    // Reset input to allow selecting the same file again
+    input.value = "";
   };
 
   const uploadImage = async (imageBlob: Blob) => {
@@ -279,8 +307,8 @@ const CameraModal: Component<Props> = (props) => {
         <div class="flex-1 flex items-center justify-center overflow-hidden">
           {error() ? (
             <p class="text-red-500 text-center px-4">{error()}</p>
-          ) : capturedImage() ? (
-            <img src={window.URL.createObjectURL(capturedImage()!)} class="max-w-full max-h-full object-contain" />
+          ) : capturedImageUrl() ? (
+            <img src={capturedImageUrl()!} class="max-w-full max-h-full object-contain" />
           ) : mode() === "camera" ? (
             <video
               ref={videoRef}
