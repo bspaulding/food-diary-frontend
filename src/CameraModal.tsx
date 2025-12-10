@@ -21,10 +21,12 @@ const getNumericValue = (
 const CameraModal: Component<Props> = (props) => {
   let videoRef: HTMLVideoElement | undefined;
   let canvasRef: HTMLCanvasElement | undefined;
+  let fileInputRef: HTMLInputElement | undefined;
   let streamRef: MediaStream | null = null;
   const [capturedImage, setCapturedImage] = createSignal<Blob | null>(null);
   const [isUploading, setIsUploading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
+  const [mode, setMode] = createSignal<"camera" | "upload">("camera");
 
   const startCamera = async () => {
     try {
@@ -72,7 +74,7 @@ const CameraModal: Component<Props> = (props) => {
 
   // Use createEffect to watch for isOpen changes
   createEffect(() => {
-    if (props.isOpen) {
+    if (props.isOpen && mode() === "camera") {
       startCamera();
     } else {
       stopCamera();
@@ -83,43 +85,29 @@ const CameraModal: Component<Props> = (props) => {
     stopCamera();
   });
 
-  const captureAndUpload = async () => {
-    if (!videoRef || !canvasRef) return;
+  const handleFileSelect = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        setError("Please select a valid image file");
+        return;
+      }
+      
+      setCapturedImage(file);
+      setError(null);
+    }
+  };
 
+  const uploadImage = async (imageBlob: Blob) => {
     setIsUploading(true);
     setError(null);
 
     try {
-      // Draw the current video frame to the canvas
-      const context = canvasRef.getContext("2d");
-      if (!context) {
-        throw new Error("Could not get canvas context");
-      }
-
-      canvasRef.width = videoRef.videoWidth;
-      canvasRef.height = videoRef.videoHeight;
-      context.drawImage(videoRef, 0, 0);
-
-      // Convert canvas to blob
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvasRef!.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(new Error("Failed to create image blob"));
-            }
-          },
-          "image/jpeg",
-          0.95
-        );
-      });
-
-      setCapturedImage(blob);
-
       // Create form data and upload
       const formData = new FormData();
-      formData.append("image", blob, "capture.jpg");
+      formData.append("image", imageBlob, "capture.jpg");
 
       async function retry(times: number, fn: () => Promise<any>) {
         let i = 0;
@@ -184,8 +172,54 @@ const CameraModal: Component<Props> = (props) => {
     }
   };
 
+  const captureAndUpload = async () => {
+    if (!videoRef || !canvasRef) return;
+
+    try {
+      // Draw the current video frame to the canvas
+      const context = canvasRef.getContext("2d");
+      if (!context) {
+        throw new Error("Could not get canvas context");
+      }
+
+      canvasRef.width = videoRef.videoWidth;
+      canvasRef.height = videoRef.videoHeight;
+      context.drawImage(videoRef, 0, 0);
+
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvasRef!.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Failed to create image blob"));
+            }
+          },
+          "image/jpeg",
+          0.95
+        );
+      });
+
+      setCapturedImage(blob);
+      await uploadImage(blob);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to capture image");
+      console.error("Error capturing image:", err);
+    }
+  };
+
+  const handleUploadClick = async () => {
+    const image = capturedImage();
+    if (image) {
+      await uploadImage(image);
+    }
+  };
+
   const handleClose = () => {
     stopCamera();
+    setCapturedImage(null);
+    setMode("camera");
     props.onClose();
   };
 
@@ -208,50 +242,142 @@ const CameraModal: Component<Props> = (props) => {
           </button>
         </div>
 
-        {/* Camera View */}
+        {/* Mode Selection Tabs */}
+        <div class="flex bg-slate-700">
+          <button
+            class={`flex-1 py-3 px-4 font-semibold ${
+              mode() === "camera"
+                ? "bg-slate-800 text-white"
+                : "text-slate-300 hover:bg-slate-600"
+            }`}
+            onClick={() => {
+              setMode("camera");
+              setCapturedImage(null);
+              setError(null);
+            }}
+          >
+            Take Picture
+          </button>
+          <button
+            class={`flex-1 py-3 px-4 font-semibold ${
+              mode() === "upload"
+                ? "bg-slate-800 text-white"
+                : "text-slate-300 hover:bg-slate-600"
+            }`}
+            onClick={() => {
+              setMode("upload");
+              stopCamera();
+              setCapturedImage(null);
+              setError(null);
+            }}
+          >
+            Upload Image
+          </button>
+        </div>
+
+        {/* Camera View or File Upload */}
         <div class="flex-1 flex items-center justify-center overflow-hidden">
           {error() ? (
             <p class="text-red-500 text-center px-4">{error()}</p>
           ) : capturedImage() ? (
-            <img src={window.URL.createObjectURL(capturedImage())} />
-          ) : (
+            <img src={window.URL.createObjectURL(capturedImage()!)} class="max-w-full max-h-full object-contain" />
+          ) : mode() === "camera" ? (
             <video
               ref={videoRef}
               autoplay
               playsinline
               class="max-w-full max-h-full object-contain"
             />
+          ) : (
+            <div class="flex flex-col items-center justify-center gap-4 p-8">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="w-24 h-24 text-slate-600"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <p class="text-slate-400 text-center">
+                Choose an image file to scan
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                class="hidden"
+                onChange={handleFileSelect}
+              />
+              <button
+                class="bg-indigo-600 text-white py-2 px-6 rounded-lg font-semibold"
+                onClick={() => fileInputRef?.click()}
+              >
+                Choose File
+              </button>
+            </div>
           )}
           <canvas ref={canvasRef} class="hidden" />
         </div>
 
         {/* Footer with Import Button */}
         <div class="p-4 bg-slate-800 flex justify-center">
-          <button
-            class="bg-indigo-600 text-white py-3 px-6 text-lg font-semibold rounded-lg flex items-center gap-2 disabled:opacity-50"
-            onClick={captureAndUpload}
-            disabled={isUploading() || !!error()}
-          >
-            {isUploading() ? (
-              "Uploading..."
-            ) : (
-              <>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  class="w-6 h-6"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M10.5 3.75a6 6 0 0 0-5.98 6.496A5.25 5.25 0 0 0 6.75 20.25H18a4.5 4.5 0 0 0 2.206-8.423 3.75 3.75 0 0 0-4.133-4.303A6.001 6.001 0 0 0 10.5 3.75Zm2.03 5.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v4.94a.75.75 0 0 0 1.5 0v-4.94l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                Import Label
-              </>
-            )}
-          </button>
+          {mode() === "camera" && !capturedImage() ? (
+            <button
+              class="bg-indigo-600 text-white py-3 px-6 text-lg font-semibold rounded-lg flex items-center gap-2 disabled:opacity-50"
+              onClick={captureAndUpload}
+              disabled={isUploading() || !!error()}
+            >
+              {isUploading() ? (
+                "Uploading..."
+              ) : (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10.5 3.75a6 6 0 0 0-5.98 6.496A5.25 5.25 0 0 0 6.75 20.25H18a4.5 4.5 0 0 0 2.206-8.423 3.75 3.75 0 0 0-4.133-4.303A6.001 6.001 0 0 0 10.5 3.75Zm2.03 5.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v4.94a.75.75 0 0 0 1.5 0v-4.94l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  Capture & Import
+                </>
+              )}
+            </button>
+          ) : capturedImage() ? (
+            <button
+              class="bg-indigo-600 text-white py-3 px-6 text-lg font-semibold rounded-lg flex items-center gap-2 disabled:opacity-50"
+              onClick={handleUploadClick}
+              disabled={isUploading() || !!error()}
+            >
+              {isUploading() ? (
+                "Uploading..."
+              ) : (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10.5 3.75a6 6 0 0 0-5.98 6.496A5.25 5.25 0 0 0 6.75 20.25H18a4.5 4.5 0 0 0 2.206-8.423 3.75 3.75 0 0 0-4.133-4.303A6.001 6.001 0 0 0 10.5 3.75Zm2.03 5.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v4.94a.75.75 0 0 0 1.5 0v-4.94l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  Import Label
+                </>
+              )}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
