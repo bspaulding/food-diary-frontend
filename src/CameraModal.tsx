@@ -279,9 +279,9 @@ const CameraModal: Component<Props> = (props) => {
                 : "text-slate-300 hover:bg-slate-600"
             }`}
             onClick={() => {
-              setMode("camera");
               setCapturedImage(null);
               setError(null);
+              setMode("camera");
             }}
           >
             Take Picture
