@@ -110,22 +110,104 @@ const CameraModal: Component<Props> = (props) => {
     }
   });
 
-  const handleFileSelect = (event: Event) => {
+  const handleFileSelect = async (event: Event) => {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        setError("Please select a valid image file");
-        return;
-      }
-      
-      setCapturedImage(file);
+    if (!file) {
+      return;
+    }
+    
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file");
+      input.value = "";
+      return;
+    }
+    
+    try {
+      // Convert and resize the image
+      const resizedBlob = await resizeImage(file);
+      setCapturedImage(resizedBlob);
       setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to process image");
+      console.error("Error processing image:", err);
     }
     
     // Reset input to allow selecting the same file again
     input.value = "";
+  };
+
+  const resizeImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        
+        // Create an img element with the data URL
+        const img = new Image();
+        
+        img.onload = () => {
+          try {
+            // Calculate dimensions with max 1080 constraint
+            const maxSize = 1080;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxSize || height > maxSize) {
+              if (width > height) {
+                height = (height / width) * maxSize;
+                width = maxSize;
+              } else {
+                width = (width / height) * maxSize;
+                height = maxSize;
+              }
+            }
+            
+            // Create canvas and draw the resized image
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            
+            if (!ctx) {
+              reject(new Error("Failed to get canvas context"));
+              return;
+            }
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Export as JPEG
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error("Failed to create blob from canvas"));
+                }
+              },
+              "image/jpeg",
+              0.95
+            );
+          } catch (err) {
+            reject(err);
+          }
+        };
+        
+        img.onerror = () => {
+          reject(new Error("Failed to load image"));
+        };
+        
+        img.src = dataUrl;
+      };
+      
+      reader.onerror = () => {
+        reject(new Error("Failed to read file"));
+      };
+      
+      reader.readAsDataURL(file);
+    });
   };
 
   const uploadImage = async (imageBlob: Blob) => {
