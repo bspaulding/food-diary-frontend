@@ -18,6 +18,10 @@ const getNumericValue = (
   return typeof value === "number" ? value : 0;
 };
 
+// Image processing constants
+const MAX_IMAGE_SIZE = 1080;
+const JPEG_QUALITY = 0.95;
+
 const CameraModal: Component<Props> = (props) => {
   let videoRef: HTMLVideoElement | undefined;
   let canvasRef: HTMLCanvasElement | undefined;
@@ -150,18 +154,17 @@ const CameraModal: Component<Props> = (props) => {
         
         img.onload = () => {
           try {
-            // Calculate dimensions with max 1080 constraint
-            const maxSize = 1080;
+            // Calculate dimensions with max constraint
             let width = img.width;
             let height = img.height;
             
-            if (width > maxSize || height > maxSize) {
+            if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
               if (width > height) {
-                height = (height / width) * maxSize;
-                width = maxSize;
+                height = (height / width) * MAX_IMAGE_SIZE;
+                width = MAX_IMAGE_SIZE;
               } else {
-                width = (width / height) * maxSize;
-                height = maxSize;
+                width = (width / height) * MAX_IMAGE_SIZE;
+                height = MAX_IMAGE_SIZE;
               }
             }
             
@@ -188,7 +191,7 @@ const CameraModal: Component<Props> = (props) => {
                 }
               },
               "image/jpeg",
-              0.95
+              JPEG_QUALITY
             );
           } catch (err) {
             reject(err);
