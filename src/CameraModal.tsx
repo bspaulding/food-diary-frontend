@@ -1,5 +1,5 @@
 import type { Component } from "solid-js";
-import { createSignal, createEffect, onCleanup } from "solid-js";
+import { createSignal, createEffect, onCleanup, on } from "solid-js";
 import type { NutritionItemAttrs } from "./Api";
 
 type Props = {
@@ -96,11 +96,9 @@ const CameraModal: Component<Props> = (props) => {
   });
 
   // Create effect to manage object URL lifecycle
-  createEffect(() => {
-    const image = capturedImage();
+  createEffect(on(capturedImage, (image, prevImage) => {
+    // Revoke previous URL if it existed
     const prevUrl = capturedImageUrl();
-    
-    // Revoke previous URL if it exists
     if (prevUrl) {
       URL.revokeObjectURL(prevUrl);
     }
@@ -112,7 +110,7 @@ const CameraModal: Component<Props> = (props) => {
     } else {
       setCapturedImageUrl(null);
     }
-  });
+  }));
 
   const handleFileSelect = async (event: Event) => {
     const input = event.target as HTMLInputElement;
