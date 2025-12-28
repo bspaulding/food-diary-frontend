@@ -96,7 +96,7 @@ const CameraModal: Component<Props> = (props) => {
   });
 
   // Create effect to manage object URL lifecycle
-  createEffect(on(capturedImage, (image, prevImage) => {
+  createEffect(on(capturedImage, (image) => {
     // Revoke previous URL if it existed
     const prevUrl = capturedImageUrl();
     if (prevUrl) {
