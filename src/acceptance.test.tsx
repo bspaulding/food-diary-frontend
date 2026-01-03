@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
-import { setupFetchMock } from "./test-setup-browser";
+import { worker } from "./test-setup-browser";
 import App from "./App";
 import DiaryList from "./DiaryList";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
@@ -24,111 +24,8 @@ vi.mock("./Auth0", () => ({
   ],
 }));
 
-// Mock data
-const mockNutritionItems = [
-  {
-    id: 1,
-    description: "Banana",
-    calories: 105,
-    total_fat_grams: 0.4,
-    added_sugars_grams: 0,
-    protein_grams: 1.3,
-  },
-  {
-    id: 2,
-    description: "Apple",
-    calories: 95,
-    total_fat_grams: 0.3,
-    added_sugars_grams: 0,
-    protein_grams: 0.5,
-  },
-];
-
-const mockRecipes = [
-  {
-    id: 1,
-    name: "Fruit Salad",
-    calories: 200,
-    recipe_items: [
-      {
-        servings: 1,
-        nutrition_item: mockNutritionItems[0],
-      },
-      {
-        servings: 1,
-        nutrition_item: mockNutritionItems[1],
-      },
-    ],
-  },
-];
-
-const mockDiaryEntries = [
-  {
-    id: 1,
-    consumed_at: "2024-01-01T12:00:00Z",
-    servings: 1,
-    calories: 105,
-    nutrition_item: mockNutritionItems[0],
-    recipe: null,
-  },
-];
-
-const mockRecentEntries = [
-  {
-    consumed_at: "2024-01-01T12:00:00Z",
-    nutrition_item: mockNutritionItems[0],
-    recipe: null,
-  },
-];
-
 describe("Browser Acceptance Tests", () => {
-  beforeEach(() => {
-    // Setup fetch mocks for all GraphQL queries
-    setupFetchMock({
-      GetEntries: {
-        data: {
-          food_diary_diary_entry: mockDiaryEntries,
-        },
-      },
-      GetRecentEntryItems: {
-        data: {
-          food_diary_diary_entry_recent: mockRecentEntries,
-        },
-      },
-      SearchItemsAndRecipes: {
-        data: {
-          food_diary_search_nutrition_items: mockNutritionItems,
-          food_diary_search_recipes: mockRecipes,
-        },
-      },
-      SearchItems: {
-        data: {
-          food_diary_search_nutrition_items: mockNutritionItems,
-        },
-      },
-      CreateDiaryEntry: {
-        data: {
-          insert_food_diary_diary_entry_one: {
-            id: 100,
-          },
-        },
-      },
-      CreateNutritionItem: {
-        data: {
-          insert_food_diary_nutrition_item_one: {
-            id: 200,
-          },
-        },
-      },
-      CreateRecipe: {
-        data: {
-          insert_food_diary_recipe_one: {
-            id: 300,
-          },
-        },
-      },
-    });
-  });
+
 
   it("should view the diary list page", async () => {
     const user = userEvent.setup();

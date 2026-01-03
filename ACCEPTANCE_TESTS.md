@@ -13,7 +13,7 @@ npm run test:acceptance
 The acceptance tests are located in `src/acceptance.test.tsx` and use:
 - **Vitest Browser Mode**: Tests run in a real Chromium browser via Playwright
 - **@solidjs/testing-library**: For rendering and querying Solid components
-- **Fetch Mocking**: API requests are mocked at the fetch level for browser compatibility
+- **Mock Service Worker (MSW)**: API requests are intercepted using MSW in browser mode
 
 ## Test Coverage
 
@@ -32,7 +32,7 @@ Note: Tests 3 and 4 are simplified due to rendering issues with CSS modules in t
 ## Configuration
 
 - `vitest.acceptance.config.mts` - Separate Vitest config for browser tests
-- `src/test-setup-browser.ts` - Test setup with fetch mocking utilities
+- `src/test-setup-browser.ts` - Test setup with MSW browser worker
 - Browser: Chromium (via Playwright)
 - Headless mode: Enabled
 
@@ -42,9 +42,24 @@ Note: Tests 3 and 4 are simplified due to rendering issues with CSS modules in t
 Auth0 is mocked using `vi.mock()` to return a logged-in user state.
 
 ### API Requests
-Instead of MSW (which has compatibility issues in browser mode), we use a simpler fetch mocking approach:
-- `setupFetchMock()` helper intercepts fetch calls
-- Mock responses are configured per-query type (GetEntries, SearchItems, etc.)
+Mock Service Worker (MSW) is used to intercept all HTTP requests in the browser:
+- MSW worker is configured in `src/test-setup-browser.ts`
+- Handlers are set up in test `beforeEach` blocks using `worker.use()`
+- **Strict mode enabled**: Any unhandled request will cause the test to fail, ensuring mocks stay in sync with the application
+- Mock responses are configured per-query type (GetEntries, SearchItems, CreateDiaryEntry, etc.)
+
+Example handler:
+```typescript
+worker.use(
+  http.post("/api/v1/graphql", async ({ request }) => {
+    const body = await request.json();
+    if (body.query.includes("GetEntries")) {
+      return HttpResponse.json({ data: { food_diary_diary_entry: mockData } });
+    }
+    // Unhandled queries will trigger an error
+  })
+);
+```
 
 ## Known Issues
 
