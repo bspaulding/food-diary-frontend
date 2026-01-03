@@ -18,8 +18,20 @@ afterEach(() => {
 export function setupFetchMock(mockResponses: Record<string, any>) {
   globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = input.toString();
-    const body = init?.body ? JSON.parse(init.body as string) : {};
-    const query = body.query || "";
+    
+    let body: any = {};
+    let query = "";
+    
+    // Safely parse request body if present
+    if (init?.body) {
+      try {
+        body = JSON.parse(init.body as string);
+        query = body.query || "";
+      } catch (error) {
+        // If body is not JSON, continue with empty query
+        console.warn("Failed to parse request body as JSON:", error);
+      }
+    }
 
     // Find matching mock response
     for (const [key, response] of Object.entries(mockResponses)) {
@@ -42,5 +54,5 @@ export function setupFetchMock(mockResponses: Record<string, any>) {
       text: async () => JSON.stringify({ errors: [{ message: "Unknown query" }] }),
       headers: new Headers({ "content-type": "application/json" }),
     } as Response);
-  }) as any;
+  }) as typeof fetch;
 }

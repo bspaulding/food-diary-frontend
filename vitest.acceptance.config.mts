@@ -6,7 +6,6 @@ export default defineConfig({
   plugins: [tailwindcss(), solidPlugin()],
   publicDir: "src/assets/public",
   test: {
-    environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test-setup-browser.ts"],
     include: ["src/acceptance.test.tsx"],
