@@ -51,8 +51,15 @@ const DiaryEntryEditForm: Component = () => {
             <input
               id="servings"
               type="number"
+              inputmode="decimal"
+              step="0.1"
               value={diaryEntry().servings}
-              onChange={(e) => setServings(parseInt(e.target.value, 10))}
+              onInput={(e) => {
+                const parsed = parseFloat(e.target.value);
+                if (!isNaN(parsed)) {
+                  setServings(parsed);
+                }
+              }}
             />
           </fieldset>
           <fieldset class="flex flex-col">
