@@ -244,4 +244,71 @@ describe("DiaryEntryEditForm", () => {
 
     unmount();
   });
+
+  it("should send fractional servings value to the backend", async () => {
+    let capturedRequest: any = null;
+    const user = userEvent.setup();
+
+    // Mock the GraphQL endpoint
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = await request.json();
+        const query = (body as any).query;
+
+        // Handle GetDiaryEntry query
+        if (query.includes("GetDiaryEntry")) {
+          return HttpResponse.json(mockDiaryEntry);
+        }
+
+        // Handle UpdateDiaryEntry mutation
+        if (query.includes("UpdateDiaryEntry")) {
+          capturedRequest = body;
+          return HttpResponse.json({
+            data: {
+              update_food_diary_diary_entry_by_pk: {
+                id: 1,
+              },
+            },
+          });
+        }
+
+        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+      })
+    );
+
+    // Render the component
+    const { unmount } = render(() => <DiaryEntryEditForm />);
+
+    // Wait for the form to load with data
+    await waitFor(
+      () => {
+        const label = screen.queryByLabelText("Servings");
+        expect(label).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
+
+    // Get the servings input and change its value to a fractional number
+    const servingsInput = screen.getByLabelText("Servings") as HTMLInputElement;
+    expect(servingsInput.value).toBe("1");
+
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "2.5");
+
+    // Click the save button
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Wait for the update request to be made
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    }, { timeout: 5000 });
+
+    // Verify the mutation contains the fractional value, not rounded down
+    expect(capturedRequest.variables.id).toBe(1);
+    expect(capturedRequest.variables.attrs.servings).toBe(2.5);
+    expect(capturedRequest.variables.attrs.consumed_at).toBe("2022-08-28T14:30:00Z");
+
+    unmount();
+  });
 });
