@@ -18,3 +18,9 @@ jobs:
       - run: npm test
         env:
           TZ: America/Los_Angeles
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium
+      - name: Run Acceptance Tests
+        run: npm run test:acceptance -- --run
+        env:
+          TZ: America/Los_Angeles

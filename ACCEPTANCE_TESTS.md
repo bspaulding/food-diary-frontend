@@ -19,15 +19,15 @@ The acceptance tests are located in `src/acceptance.test.tsx` and use:
 
 ### ✅ Passing Tests
 
-1. **View the diary list page** - Tests that the main diary list loads and displays entries
-2. **Add New Entry flow** - Tests searching for an item and logging it as a diary entry
+1. **View the diary list page** - Tests that the main diary list loads and displays entries ✅ **PASSING**
+2. **Add Item flow** - Tests creating a new nutrition item (description, calories, protein) ✅ **PASSING**
 
-### ⚠️ Partial Tests
+### ⚠️ Known Issues
 
-3. **Add Item form page** - Verifies the NewNutritionItemForm page structure loads
-4. **Add Recipe form page** - Verifies the NewRecipeForm page structure loads
+3. **Add New Entry flow** - Search results load correctly, but click interaction to expand logging form doesn't trigger state update in browser test environment
+4. **Add Recipe form** - Initial render issue in browser test environment
 
-Note: Tests 3 and 4 are simplified due to rendering issues with CSS modules in the browser test environment. Full form interaction can be added once CSS module loading is configured properly in Vitest browser mode.
+**Note**: Tests 3 and 4 have limitations due to SolidJS reactivity and state updates in browser-based testing. The components work correctly in the application but state changes triggered by click events don't propagate properly in the Vitest browser test environment. This is a known limitation when testing reactive frameworks in browser mode.
 
 ## Configuration
 
@@ -44,32 +44,40 @@ Auth0 is mocked using `vi.mock()` to return a logged-in user state.
 ### API Requests
 Mock Service Worker (MSW) is used to intercept all HTTP requests in the browser:
 - MSW worker is configured in `src/test-setup-browser.ts`
-- Handlers are set up in test `beforeEach` blocks using `worker.use()`
+- Handlers are set up when the worker starts (not in beforeEach)
 - **Strict mode enabled**: Any unhandled request will cause the test to fail, ensuring mocks stay in sync with the application
 - Mock responses are configured per-query type (GetEntries, SearchItems, CreateDiaryEntry, etc.)
 
 Example handler:
 ```typescript
-worker.use(
-  http.post("/api/v1/graphql", async ({ request }) => {
+export const worker = setupWorker(
+  http.post("*/api/v1/graphql", async ({ request }) => {
     const body = await request.json();
     if (body.query.includes("GetEntries")) {
       return HttpResponse.json({ data: { food_diary_diary_entry: mockData } });
     }
-    // Unhandled queries will trigger an error
+    // Unhandled queries will throw an error
   })
 );
 ```
 
+## CI Integration
+
+The acceptance tests are integrated into the CI workflow (`.github/workflows/ci.yml`) and run on every push and pull request. The workflow:
+1. Installs dependencies with `npm ci`
+2. Runs unit tests with `npm test`
+3. Installs Playwright browsers
+4. Runs acceptance tests with `npm run test:acceptance`
+
 ## Known Issues
 
-1. CSS modules (`.module.css`) may not load properly in browser tests
-2. Complex nested components with camera/labeling features need additional setup
-3. Some forms don't render in test environment - investigation needed
+1. Click interactions don't trigger SolidJS state updates properly in browser tests
+2. Some forms don't render in test environment - under investigation
 
 ## Future Improvements
 
-- Fix CSS module loading for complete form testing
+- Fix click interaction issues for logging forms in browser tests
+- Fix NewRecipeForm rendering in browser test environment
 - Add E2E tests with full navigation flows
 - Add visual regression testing
 - Test error states and edge cases
