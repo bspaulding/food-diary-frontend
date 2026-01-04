@@ -1,5 +1,5 @@
 import type { Component } from "solid-js";
-import { createSignal, Index } from "solid-js";
+import { createSignal, Index, Show, For } from "solid-js";
 import { debounce } from "@solid-primitives/scheduled";
 import { searchItemsAndRecipes, searchItemsOnly } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
