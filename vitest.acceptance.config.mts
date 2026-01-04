@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles: ["./src/test-setup-browser.ts"],
-    include: ["src/acceptance.test.tsx"],
+    include: ["src/acceptance.test.tsx", "src/acceptance-add-recipe.test.tsx", "src/acceptance-add-entry.test.tsx"],
     browser: {
       enabled: true,
       name: "chromium",

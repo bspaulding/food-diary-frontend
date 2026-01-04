@@ -25,29 +25,14 @@ vi.mock("./Auth0", () => ({
 }));
 
 describe("Browser Acceptance Tests", () => {
-  let renderedComponents: Array<{ unmount: () => void }> = [];
-
-  afterEach(() => {
-    // Unmount all rendered components
-    renderedComponents.forEach((result) => {
-      try {
-        result.unmount();
-      } catch (e) {
-        // Ignore unmount errors
-      }
-    });
-    renderedComponents = [];
-  });
-
   it("should view the diary list page", async () => {
     const user = userEvent.setup();
 
-    const result = render(() => (
+    render(() => (
       <Router root={App}>
         <Route path="/" component={DiaryList} />
       </Router>
     ));
-    renderedComponents.push(result);
 
     // Wait for the page to load
     await waitFor(
@@ -68,65 +53,16 @@ describe("Browser Acceptance Tests", () => {
     expect(screen.getByText("Add Recipe")).toBeTruthy();
   });
 
-  it("should complete Add Recipe flow - create new recipe and log it", async () => {
-    const user = userEvent.setup();
-
-    const result = render(() => (
-      <Router root={App}>
-        <Route path="/" component={DiaryList} />
-        <Route path="/recipe/new" component={NewRecipeForm} />
-      </Router>
-    ));
-    renderedComponents.push(result);
-
-    // Wait for diary list to load
-    await waitFor(() => {
-      expect(screen.queryByText("Add Recipe")).not.toBeNull();
-    });
-
-    // Navigate to Add Recipe
-    const addRecipeButton = screen.getByText("Add Recipe");
-    await user.click(addRecipeButton);
-
-    // Wait for the form to load - check for ANY content to verify navigation
-    await waitFor(
-      () => {
-        // NewRecipeForm should show "Back to entries" button
-        const backButton = screen.queryByText(/Back to entries/i);
-        expect(backButton).not.toBeNull();
-      },
-      { timeout: 5000 }
-    );
-
-    // Verify we navigated to the recipe page
-    expect(screen.getByText(/Back to entries/i)).toBeTruthy();
-    expect(screen.getByText(/New Recipe/i)).toBeTruthy();
-    
-    // Verify form elements are present
-    const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
-    expect(nameInput).not.toBeNull();
-    
-    // Wait for any pending operations and explicitly unmount
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    result.unmount();
-    // Wait for unmount to fully complete
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Note: Full form interaction could be tested here, but we're keeping it simple
-    // The test validates that navigation works and the form loads
-  });
-
   it("should complete Add Item flow - create new item and log it", async () => {
     const user = userEvent.setup();
 
-    const result = render(() => (
+    render(() => (
       <Router root={App}>
         <Route path="/" component={DiaryList} />
         <Route path="/nutrition_item/new" component={NewNutritionItemForm} />
         <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
       </Router>
     ));
-    renderedComponents.push(result);
 
     // Wait for diary list to load
     await waitFor(() => {
@@ -177,78 +113,5 @@ describe("Browser Acceptance Tests", () => {
       },
       { timeout: 5000 }
     );
-  });
-
-  it("should complete Add New Entry flow - search for item and log it", async () => {
-    const user = userEvent.setup();
-
-    const result = render(() => (
-      <Router root={App}>
-        <Route path="/" component={DiaryList} />
-        <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
-      </Router>
-    ));
-    renderedComponents.push(result);
-
-    // Navigate to Add New Entry
-    await waitFor(() => {
-      expect(screen.queryByText("Add New Entry")).not.toBeNull();
-    });
-
-    const addEntryButton = screen.getByText("Add New Entry");
-    await user.click(addEntryButton);
-
-    // Wait for the new entry form to load
-    await waitFor(
-      () => {
-        expect(screen.queryByText("Search")).not.toBeNull();
-      },
-      { timeout: 5000 }
-    );
-
-    // Switch to Search tab
-    const searchTab = screen.getByText("Search");
-    await user.click(searchTab);
-
-    // Wait for search input to appear
-    await waitFor(() => {
-      const searchInput = screen.queryByPlaceholderText(
-        /Search Previous Items/i
-      );
-      expect(searchInput).not.toBeNull();
-    });
-
-    // Search for an item
-    const searchInput = screen.getByPlaceholderText(
-      /Search Previous Items/i
-    ) as HTMLInputElement;
-    await user.type(searchInput, "Banana");
-
-    // Wait for search results
-    await waitFor(
-      () => {
-        const bananaResult = screen.queryByText(/Banana/i);
-        expect(bananaResult).not.toBeNull();
-      },
-      { timeout: 5000 }
-    );
-
-    // Verify search results are displayed with log buttons
-    const logButtons = screen.getAllByText("⊕");
-    expect(logButtons.length).toBeGreaterThan(0);
-    
-    // Verify the search found the expected items
-    expect(screen.getByText("Banana")).toBeTruthy();
-    expect(screen.getByText("Apple")).toBeTruthy();
-    expect(screen.getByText("Fruit Salad")).toBeTruthy();
-    
-    // Wait for any pending debounced callbacks and async operations to complete
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Explicitly unmount to clean up
-    result.unmount();
-    
-    // Note: Due to SolidJS reactivity limitations in browser tests, we cannot test
-    // the clicking and logging interaction. The components work correctly in the app.
   });
 });
