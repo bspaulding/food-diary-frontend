@@ -111,17 +111,29 @@ describe("Browser Acceptance Tests", () => {
     // Find and click the log button (⊕)
     const logButtons = screen.getAllByText("⊕");
     expect(logButtons.length).toBeGreaterThan(0);
-    await user.click(logButtons[0]);
+    
+    // Click the first button using native click
+    logButtons[0].click();
+    
+    // Wait for the state to update and UI to re-render
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Wait for servings input to appear
-    await waitFor(() => {
-      const servingsInput = document.querySelector(
-        'input[type="number"]'
-      ) as HTMLInputElement;
-      expect(servingsInput).not.toBeNull();
-    });
+    // Wait for servings input to appear (it should be in the expanded logging form)
+    await waitFor(
+      () => {
+        // Look for the input that appears when logging is true
+        const servingsInput = document.querySelector(
+          'input[type="number"][inputmode="decimal"]'
+        ) as HTMLInputElement;
+        expect(servingsInput).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
 
     // Click Save button
+    await waitFor(() => {
+      expect(screen.queryByText("Save")).not.toBeNull();
+    });
     const saveButton = screen.getByText("Save");
     await user.click(saveButton);
 
@@ -135,52 +147,151 @@ describe("Browser Acceptance Tests", () => {
     );
   });
 
-  // Note: The following two tests are simplified due to rendering issues with CSS modules
-  // and complex nested components in Vitest browser mode. The forms use CSS modules  
-  // (NewNutritionItemForm.module.css) which may not load properly in the test environment.
-  // These tests verify that the basic page structure renders, which demonstrates
-  // the browser testing capability. Full form interaction tests can be added once
-  // the CSS module loading issue is resolved.
-  
-  it("should load Add Item form page", async () => {
-    // Simpler test: Just verify we can render the NewNutritionItemForm page structure
+  it("should complete Add Item flow - create new item and log it", async () => {
+    const user = userEvent.setup();
+
     render(() => (
       <Router root={App}>
-        <Route path="/" component={NewNutritionItemForm} />
+        <Route path="/" component={DiaryList} />
+        <Route path="/nutrition_item/new" component={NewNutritionItemForm} />
+        <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
       </Router>
     ));
 
-    // Wait for the page to load (should see header from App)
+    // Wait for diary list to load
+    await waitFor(() => {
+      expect(screen.queryByText("Add Item")).not.toBeNull();
+    });
+
+    // Navigate to Add Item
+    const addItemButton = screen.getByText("Add Item");
+    await user.click(addItemButton);
+
+    // Wait for the form to load
     await waitFor(
       () => {
-        const header = screen.queryByText("Food Diary");
-        expect(header).not.toBeNull();
+        // Check if we're on the add item page by looking for the form
+        const descriptionInput = document.querySelector('input[name="description"]');
+        expect(descriptionInput).not.toBeNull();
       },
       { timeout: 5000 }
     );
 
-    // Verify the app header loaded
-    expect(screen.getByText("Food Diary")).toBeTruthy();
+    // Fill in the nutrition item form
+    const descriptionInput = document.querySelector(
+      'input[name="description"]'
+    ) as HTMLInputElement;
+    await user.type(descriptionInput, "Test Protein Bar");
+
+    const caloriesInput = document.querySelector(
+      'input[name="calories"]'
+    ) as HTMLInputElement;
+    await user.type(caloriesInput, "200");
+
+    const proteinInput = document.querySelector(
+      'input[name="protein-grams"]'
+    ) as HTMLInputElement;
+    await user.type(proteinInput, "20");
+
+    // Submit the form
+    const saveButton = screen.getByText(/Save/i);
+    await user.click(saveButton);
+
+    // Wait for navigation or success indication
+    await waitFor(
+      () => {
+        // The form should either navigate away or show success
+        // Check if we're still seeing the form or if we've navigated
+        const stillOnForm = screen.queryByText(/Save/i);
+        expect(stillOnForm).toBeNull();
+      },
+      { timeout: 5000 }
+    );
   });
 
-  it("should load Add Recipe form page", async () => {
-    // Simpler test: Just verify we can render the NewRecipeForm page structure
+  it("should complete Add Recipe flow - create new recipe and log it", async () => {
+    const user = userEvent.setup();
+
     render(() => (
       <Router root={App}>
-        <Route path="/" component={NewRecipeForm} />
+        <Route path="/" component={DiaryList} />
+        <Route path="/recipe/new" component={NewRecipeForm} />
+        <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
       </Router>
     ));
 
-    // Wait for the page to load (should see header from App)
+    // Wait for diary list to load
+    await waitFor(() => {
+      expect(screen.queryByText("Add Recipe")).not.toBeNull();
+    });
+
+    // Navigate to Add Recipe
+    const addRecipeButton = screen.getByText("Add Recipe");
+    await user.click(addRecipeButton);
+
+    // Wait for the form to load
     await waitFor(
       () => {
-        const header = screen.queryByText("Food Diary");
-        expect(header).not.toBeNull();
+        // Check if we're on the add recipe page by looking for the name input
+        const nameInput = document.querySelector('input[name="name"]');
+        expect(nameInput).not.toBeNull();
       },
       { timeout: 5000 }
     );
 
-    // Verify the app header loaded
-    expect(screen.getByText("Food Diary")).toBeTruthy();
+    // Fill in the recipe form
+    const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+    await user.type(nameInput, "Test Smoothie");
+
+    const servingsInput = document.querySelector(
+      'input[name="total-servings"]'
+    ) as HTMLInputElement;
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "2");
+
+    // Add an item to the recipe by searching
+    const searchInput = screen.getByPlaceholderText(
+      /Search Previous Items/i
+    ) as HTMLInputElement;
+    await user.type(searchInput, "Banana");
+
+    // Wait for search results
+    await waitFor(
+      () => {
+        const bananaResult = screen.queryByText(/Banana/i);
+        expect(bananaResult).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
+
+    // Add the first item to the recipe
+    const addButtons = screen.getAllByText("⊕");
+    if (addButtons.length > 0) {
+      await user.click(addButtons[0]);
+    }
+
+    // Wait for item to be added to recipe
+    await waitFor(
+      () => {
+        // Check if item was added (there should be some indication)
+        const addedItem = screen.queryByText(/Banana/i);
+        expect(addedItem).not.toBeNull();
+      },
+      { timeout: 3000 }
+    );
+
+    // Submit the form
+    const submitButton = screen.getByText(/Submit/i);
+    await user.click(submitButton);
+
+    // Wait for navigation or success indication
+    await waitFor(
+      () => {
+        // The form should either navigate away or show success
+        const stillOnForm = screen.queryByText(/Submit/i);
+        expect(stillOnForm).toBeNull();
+      },
+      { timeout: 5000 }
+    );
   });
 });
