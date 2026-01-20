@@ -39,10 +39,6 @@ function entryTotalMacro(key, entry) {
   return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
 }
 
-function entryTotalCalories(entry: DiaryEntry) {
-  return entry.calories;
-}
-
 function totalMacro(key, entries) {
   return parseInt(
     entries.reduce(
@@ -133,7 +129,7 @@ const DiaryList: Component = () => {
                 <EntryMacro
                   value={String(Math.ceil(
                     dayEntries()[1].reduce(
-                      (acc, entry) => acc + entryTotalCalories(entry),
+                      (acc, entry) => acc + entry.calories,
                       0
                     )
                   ))}
