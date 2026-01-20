@@ -55,6 +55,62 @@ export async function fetchEntries(
   return response.json();
 }
 
+const getWeeklyStatsQuery = `
+query GetWeeklyStats($currentWeekStart: timestamptz!, $fourWeeksAgoStart: timestamptz!) {
+  current_week: food_diary_diary_entry_aggregate(
+    where: { consumed_at: { _gte: $currentWeekStart } }
+  ) {
+    aggregate {
+      sum {
+        calories
+      }
+    }
+  }
+  past_four_weeks: food_diary_diary_entry_aggregate(
+    where: { 
+      consumed_at: { _gte: $fourWeeksAgoStart }
+    }
+  ) {
+    aggregate {
+      sum {
+        calories
+      }
+    }
+  }
+}
+`;
+
+export type WeeklyStatsResponse = {
+  data: {
+    current_week: {
+      aggregate: {
+        sum: {
+          calories: number | null;
+        };
+      };
+    };
+    past_four_weeks: {
+      aggregate: {
+        sum: {
+          calories: number | null;
+        };
+      };
+    };
+  };
+};
+
+export async function fetchWeeklyStats(
+  accessToken: string,
+  currentWeekStart: string,
+  fourWeeksAgoStart: string
+): Promise<WeeklyStatsResponse> {
+  const response = await fetchQuery(accessToken, getWeeklyStatsQuery, {
+    currentWeekStart,
+    fourWeeksAgoStart,
+  });
+  return response.json();
+}
+
 const searchItemsAndRecipesQuery = `
 query SearchItemsAndRecipes($search: String!) {
   food_diary_search_nutrition_items(args: { search: $search }) {
