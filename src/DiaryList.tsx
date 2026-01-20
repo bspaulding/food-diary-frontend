@@ -41,6 +41,10 @@ function entryTotalMacro(key, entry) {
   return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
 }
 
+function entryTotalCalories(entry: DiaryEntry) {
+  return entry.calories;
+}
+
 function totalMacro(key, entries) {
   return parseInt(
     entries.reduce(
@@ -74,7 +78,7 @@ function calculateWeeklyCalories(entries: DiaryEntry[], weekStartDate: Date) {
       const entryDate = parseISO(entry.consumed_at);
       return isWithinInterval(entryDate, { start: weekStart, end: weekEnd });
     })
-    .reduce((acc, entry) => acc + entry.calories, 0);
+    .reduce((acc, entry) => acc + entryTotalCalories(entry), 0);
 }
 
 function calculateFourWeekAverage(entries: DiaryEntry[]) {
@@ -144,12 +148,12 @@ const DiaryList: Component = () => {
                   date={parseISO(dayEntries()[0])}
                 />
                 <EntryMacro
-                  value={Math.ceil(
+                  value={String(Math.ceil(
                     dayEntries()[1].reduce(
-                      (acc, entry) => acc + entry.calories,
+                      (acc, entry) => acc + entryTotalCalories(entry),
                       0
                     )
-                  )}
+                  ))}
                   unit=""
                   label="KCAL"
                 />
