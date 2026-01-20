@@ -68,7 +68,7 @@ query GetWeeklyStats($currentWeekStart: timestamptz!, $fourWeeksAgoStart: timest
   }
   past_four_weeks: food_diary_diary_entry_aggregate(
     where: { 
-      consumed_at: { _gte: $fourWeeksAgoStart }
+      consumed_at: { _gte: $fourWeeksAgoStart, _lt: $currentWeekStart }
     }
   ) {
     aggregate {
