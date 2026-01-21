@@ -1,7 +1,7 @@
 import type { Component } from "solid-js";
 import { createMemo } from "solid-js";
-import type { DiaryEntry } from "./Api";
-import { fetchEntries } from "./Api";
+import type { WeeklyTrendsEntry } from "./Api";
+import { fetchWeeklyTrends } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { parseISO, startOfWeek, format } from "date-fns";
 import ButtonLink from "./ButtonLink";
@@ -13,7 +13,7 @@ type WeeklyStats = {
   avgAddedSugar: number;
 };
 
-function recipeTotalForKey(key: string, recipe: DiaryEntry["recipe"]) {
+function recipeTotalForKey(key: string, recipe: WeeklyTrendsEntry["recipe"]) {
   return (recipe?.recipe_items || []).reduce(
     (acc: number, recipe_item) =>
       acc + recipe_item.servings * recipe_item.nutrition_item[key],
@@ -21,21 +21,21 @@ function recipeTotalForKey(key: string, recipe: DiaryEntry["recipe"]) {
   );
 }
 
-function entryTotalMacro(key: string, entry: DiaryEntry) {
+function entryTotalMacro(key: string, entry: WeeklyTrendsEntry) {
   const itemTotal = entry.nutrition_item?.[key] || 0;
   return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
 }
 
 const Trends: Component = () => {
-  const [getEntriesQuery] = createAuthorizedResource(fetchEntries);
-  const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];
+  const [getTrendsQuery] = createAuthorizedResource(fetchWeeklyTrends);
+  const entries = () => getTrendsQuery()?.data?.food_diary_diary_entry || [];
 
   const weeklyStats = createMemo<WeeklyStats[]>(() => {
     const entriesList = entries();
     if (entriesList.length === 0) return [];
 
     // Group entries by week
-    const weekGroups = new Map<string, DiaryEntry[]>();
+    const weekGroups = new Map<string, WeeklyTrendsEntry[]>();
     entriesList.forEach((entry) => {
       const weekStart = format(
         startOfWeek(parseISO(entry.consumed_at), { weekStartsOn: 0 }),

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
+import { http, HttpResponse } from "msw";
+import { server } from "./test-setup";
 import App from "./App";
 import Trends from "./Trends";
 import DiaryList from "./DiaryList";
@@ -23,6 +25,27 @@ vi.mock("./Auth0", () => ({
 
 describe("Trends", () => {
   it("should display trends page with no data message when there are no entries", async () => {
+    // Set up empty response for trends
+    server.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        if (body.query.includes("GetWeeklyTrends")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_diary_entry: [],
+            },
+          });
+        }
+        if (body.query.includes("GetEntries")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_diary_entry: [],
+            },
+          });
+        }
+      })
+    );
+
     render(() => (
       <Router root={App}>
         <Route path="/" component={Trends} />
@@ -44,7 +67,103 @@ describe("Trends", () => {
     expect(screen.getByText(/Back to Diary/i)).toBeTruthy();
   });
 
+  it("should display trends charts when there is data", async () => {
+    // Mock data with entries from multiple weeks
+    const mockTrendsData = [
+      {
+        consumed_at: "2024-01-01T12:00:00Z",
+        calories: 2000,
+        servings: 1,
+        nutrition_item: {
+          added_sugars_grams: 30,
+          protein_grams: 50,
+        },
+        recipe: null,
+      },
+      {
+        consumed_at: "2024-01-02T12:00:00Z",
+        calories: 1800,
+        servings: 1,
+        nutrition_item: {
+          added_sugars_grams: 25,
+          protein_grams: 45,
+        },
+        recipe: null,
+      },
+      {
+        consumed_at: "2024-01-08T12:00:00Z",
+        calories: 2200,
+        servings: 1,
+        nutrition_item: {
+          added_sugars_grams: 35,
+          protein_grams: 60,
+        },
+        recipe: null,
+      },
+    ];
+
+    server.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const query = body.query || "";
+        
+        if (query.includes("GetWeeklyTrends")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_diary_entry: mockTrendsData,
+            },
+          });
+        }
+        
+        // Fallback for any other queries
+        return HttpResponse.json({
+          data: {
+            food_diary_diary_entry: [],
+          },
+        });
+      })
+    );
+
+    render(() => (
+      <Router root={App}>
+        <Route path="/" component={Trends} />
+      </Router>
+    ));
+
+    // Wait for data to load and charts to render
+    await waitFor(
+      () => {
+        const chartLabel = screen.queryByText(/Average Daily Calories/i);
+        expect(chartLabel).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
+
+    // Verify charts are displayed
+    expect(screen.getByText(/Average Daily Calories/i)).toBeTruthy();
+    expect(screen.getByText(/Average Daily Protein/i)).toBeTruthy();
+    expect(screen.getByText(/Average Daily Added Sugar/i)).toBeTruthy();
+
+    // Verify no empty state message
+    expect(
+      screen.queryByText(/No data available yet/i)
+    ).toBeNull();
+  });
+
   it("should have View Trends button on DiaryList page", async () => {
+    server.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        if (body.query.includes("GetEntries")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_diary_entry: [],
+            },
+          });
+        }
+      })
+    );
+
     render(() => (
       <Router root={App}>
         <Route path="/" component={DiaryList} />
