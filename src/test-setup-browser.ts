@@ -74,6 +74,28 @@ export const worker = setupWorker(
       });
     }
 
+    // Handle GetWeeklyStats query
+    if (query.includes("GetWeeklyStats")) {
+      return HttpResponse.json({
+        data: {
+          current_week: {
+            aggregate: {
+              sum: {
+                calories: 1500,
+              },
+            },
+          },
+          past_four_weeks: {
+            aggregate: {
+              sum: {
+                calories: 8400,
+              },
+            },
+          },
+        },
+      });
+    }
+
     // Handle GetRecentEntryItems query
     if (query.includes("GetRecentEntryItems")) {
       return HttpResponse.json({

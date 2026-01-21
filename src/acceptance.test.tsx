@@ -53,6 +53,42 @@ describe("Browser Acceptance Tests", () => {
     expect(screen.getByText("Add Recipe")).toBeTruthy();
   });
 
+  it("should display weekly calorie summary stats", async () => {
+    render(() => (
+      <Router root={App}>
+        <Route path="/" component={DiaryList} />
+      </Router>
+    ));
+
+    // Wait for the page to load by checking for entries first
+    await waitFor(
+      () => {
+        const banana = screen.queryByText(/Banana/i);
+        expect(banana).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
+
+    // Wait for the weekly stats to be fetched and displayed
+    await waitFor(
+      () => {
+        const thisWeekLabel = screen.queryByText(/THIS WEEK/i);
+        expect(thisWeekLabel).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
+
+    // Verify weekly summary labels are displayed
+    expect(screen.getByText(/THIS WEEK/i)).toBeTruthy();
+    expect(screen.getByText(/4 WEEK AVG/i)).toBeTruthy();
+
+    // Verify the weekly stats values are displayed
+    // Current week: 1500 calories
+    expect(screen.getByText("1500")).toBeTruthy();
+    // 4 week average: 8400 / 4 = 2100 calories
+    expect(screen.getByText("2100")).toBeTruthy();
+  });
+
   it("should complete Add Item flow - create new item and log it", async () => {
     const user = userEvent.setup();
 
