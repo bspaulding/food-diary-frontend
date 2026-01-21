@@ -1,5 +1,6 @@
 import type { Component } from "solid-js";
 import { createMemo } from "solid-js";
+import type { DiaryEntry } from "./Api";
 import { fetchEntries } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { parseISO, startOfWeek, format } from "date-fns";
@@ -12,15 +13,15 @@ type WeeklyStats = {
   avgAddedSugar: number;
 };
 
-function recipeTotalForKey(key: string, recipe: any) {
+function recipeTotalForKey(key: string, recipe: DiaryEntry["recipe"]) {
   return (recipe?.recipe_items || []).reduce(
-    (acc: number, recipe_item: any) =>
+    (acc: number, recipe_item) =>
       acc + recipe_item.servings * recipe_item.nutrition_item[key],
     0
   );
 }
 
-function entryTotalMacro(key: string, entry: any) {
+function entryTotalMacro(key: string, entry: DiaryEntry) {
   const itemTotal = entry.nutrition_item?.[key] || 0;
   return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
 }
@@ -34,7 +35,7 @@ const Trends: Component = () => {
     if (entriesList.length === 0) return [];
 
     // Group entries by week
-    const weekGroups = new Map<string, any[]>();
+    const weekGroups = new Map<string, DiaryEntry[]>();
     entriesList.forEach((entry) => {
       const weekStart = format(
         startOfWeek(parseISO(entry.consumed_at), { weekStartsOn: 0 }),
@@ -101,7 +102,7 @@ const Trends: Component = () => {
 
       return props.data
         .map((value, index) => {
-          const x = padding + (index * (width - 2 * padding)) / (props.data.length - 1 || 1);
+          const x = padding + (index * (width - 2 * padding)) / Math.max(props.data.length - 1, 1);
           const y = height - padding - ((value / props.max) * (height - 2 * padding));
           return `${x},${y}`;
         })
@@ -155,7 +156,7 @@ const Trends: Component = () => {
 
             {/* Data points */}
             {props.data.map((value, index) => {
-              const x = 20 + (index * (width() - 40)) / (props.data.length - 1 || 1);
+              const x = 20 + (index * (width() - 40)) / Math.max(props.data.length - 1, 1);
               const y = 180 - ((value / props.max) * 160);
               return (
                 <g>
@@ -174,20 +175,23 @@ const Trends: Component = () => {
             })}
 
             {/* Week labels */}
-            {weeklyStats().map((stat, index) => {
-              const x = 20 + (index * (width() - 40)) / (weeklyStats().length - 1 || 1);
-              return (
-                <text
-                  x={x}
-                  y="195"
-                  text-anchor="middle"
-                  font-size="10"
-                  fill="#6b7280"
-                >
-                  {format(parseISO(stat.weekStart), "MM/dd")}
-                </text>
-              );
-            })}
+            {(() => {
+              const stats = weeklyStats();
+              return stats.map((stat, index) => {
+                const x = 20 + (index * (width() - 40)) / Math.max(stats.length - 1, 1);
+                return (
+                  <text
+                    x={x}
+                    y="195"
+                    text-anchor="middle"
+                    font-size="10"
+                    fill="#6b7280"
+                  >
+                    {format(parseISO(stat.weekStart), "MM/dd")}
+                  </text>
+                );
+              });
+            })()}
           </svg>
         </div>
       </div>
