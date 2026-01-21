@@ -87,6 +87,7 @@ const DiaryList: Component = () => {
         <ButtonLink href="/diary_entry/new">Add New Entry</ButtonLink>
         <ButtonLink href="/nutrition_item/new">Add Item</ButtonLink>
         <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
+        <ButtonLink href="/trends">View Trends</ButtonLink>
       </div>
       <ul class="mt-4">
         <Show when={entries().length === 0}>
