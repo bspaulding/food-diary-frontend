@@ -4,6 +4,9 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 import tailwindcss from "@tailwindcss/vite";
 import Terminal from "vite-plugin-terminal";
 
+const useLocalHasura = process.env.FOOD_DIARY_USE_LOCAL_HASURA === "true";
+console.log({ useLocalHasura });
+
 export default defineConfig(({ mode }) => ({
   plugins: [
     tailwindcss(),
@@ -17,7 +20,9 @@ export default defineConfig(({ mode }) => ({
     port: 3000,
     proxy: {
       "/api": {
-        target: "https://food-diary.motingo.com/api/",
+        target: useLocalHasura
+          ? "http://localhost:8080/"
+          : "https://food-diary.motingo.com/api/",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
