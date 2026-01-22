@@ -27,8 +27,8 @@ const ImportDiaryEntries: Component = () => {
   const [saved, setSaved] = createSignal(false);
   const [importError, setImportError] = createSignal<string | null>(null);
 
-  const fileChanged = async (event) => {
-    const file = event.target.files[0];
+  const fileChanged = async (event: Event) => {
+    const file = (event.target as HTMLInputElement).files[0];
     setImportError(null);
     try {
       const csv = await readFile(file);
@@ -44,7 +44,7 @@ const ImportDiaryEntries: Component = () => {
     }
   };
 
-  const startImport = async (e) => {
+  const startImport = async (e: Event) => {
     e.preventDefault();
     setSaving(true);
     setImportError(null);
