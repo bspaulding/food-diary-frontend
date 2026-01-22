@@ -56,9 +56,9 @@ export async function fetchEntries(
 }
 
 const getWeeklyStatsQuery = `
-query GetWeeklyStats($currentWeekStart: timestamptz!, $fourWeeksAgoStart: timestamptz!) {
+query GetWeeklyStats($currentWeekStart: timestamptz!, $todayStart: timestamptz!, $fourWeeksAgoStart: timestamptz!) {
   current_week: food_diary_diary_entry_aggregate(
-    where: { consumed_at: { _gte: $currentWeekStart } }
+    where: { consumed_at: { _gte: $currentWeekStart, _lt: $todayStart } }
   ) {
     aggregate {
       sum {
@@ -68,7 +68,7 @@ query GetWeeklyStats($currentWeekStart: timestamptz!, $fourWeeksAgoStart: timest
   }
   past_four_weeks: food_diary_diary_entry_aggregate(
     where: { 
-      consumed_at: { _gte: $fourWeeksAgoStart }
+      consumed_at: { _gte: $fourWeeksAgoStart, _lt: $todayStart }
     }
   ) {
     aggregate {
@@ -102,10 +102,12 @@ export type WeeklyStatsResponse = {
 export async function fetchWeeklyStats(
   accessToken: string,
   currentWeekStart: string,
+  todayStart: string,
   fourWeeksAgoStart: string
 ): Promise<WeeklyStatsResponse> {
   const response = await fetchQuery(accessToken, getWeeklyStatsQuery, {
     currentWeekStart,
+    todayStart,
     fourWeeksAgoStart,
   });
   return response.json();
