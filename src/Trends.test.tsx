@@ -32,7 +32,7 @@ describe("Trends", () => {
         if (body.query.includes("GetWeeklyTrends")) {
           return HttpResponse.json({
             data: {
-              food_diary_diary_entry: [],
+              food_diary_trends_weekly: [],
             },
           });
         }
@@ -68,37 +68,19 @@ describe("Trends", () => {
   });
 
   it("should display trends charts when there is data", async () => {
-    // Mock data with entries from multiple weeks
+    // Mock data with weekly aggregated trends from backend
     const mockTrendsData = [
       {
-        consumed_at: "2024-01-01T12:00:00Z",
-        calories: 2000,
-        servings: 1,
-        nutrition_item: {
-          added_sugars_grams: 30,
-          protein_grams: 50,
-        },
-        recipe: null,
+        week_of_year: "2024-01-01",
+        calories: 1900,
+        protein: 47.5,
+        added_sugar: 27.5,
       },
       {
-        consumed_at: "2024-01-02T12:00:00Z",
-        calories: 1800,
-        servings: 1,
-        nutrition_item: {
-          added_sugars_grams: 25,
-          protein_grams: 45,
-        },
-        recipe: null,
-      },
-      {
-        consumed_at: "2024-01-08T12:00:00Z",
+        week_of_year: "2024-01-08",
         calories: 2200,
-        servings: 1,
-        nutrition_item: {
-          added_sugars_grams: 35,
-          protein_grams: 60,
-        },
-        recipe: null,
+        protein: 60,
+        added_sugar: 35,
       },
     ];
 
@@ -110,7 +92,7 @@ describe("Trends", () => {
         if (query.includes("GetWeeklyTrends")) {
           return HttpResponse.json({
             data: {
-              food_diary_diary_entry: mockTrendsData,
+              food_diary_trends_weekly: mockTrendsData,
             },
           });
         }

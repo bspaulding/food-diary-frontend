@@ -78,7 +78,7 @@ export const worker = setupWorker(
     if (query.includes("GetWeeklyTrends")) {
       return HttpResponse.json({
         data: {
-          food_diary_diary_entry: [],
+          food_diary_trends_weekly: [],
         },
       });
     }

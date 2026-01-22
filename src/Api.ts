@@ -477,53 +477,28 @@ export async function updateDiaryEntry(
   }).then((res) => res.json());
 }
 
-// Weekly trends query - fetch all entries for client-side week grouping
-// Note: Hasura doesn't support native "group by week", so we fetch entries
-// and let the client group them by week
+// Weekly trends query - uses backend view for pre-aggregated data
 const getWeeklyTrendsQuery = `
-fragment Macros on food_diary_nutrition_item {
-  added_sugars_grams
-  protein_grams
-}
-
 query GetWeeklyTrends {
-  food_diary_diary_entry(order_by: { consumed_at: asc }) {
-    consumed_at
+  food_diary_trends_weekly {
+    week_of_year
+    protein
     calories
-    servings
-    nutrition_item { ...Macros }
-    recipe { 
-      recipe_items { 
-        servings
-        nutrition_item { ...Macros } 
-      } 
-    }
+    added_sugar
   }
 }
 `;
 
-export type WeeklyTrendsEntry = {
-  consumed_at: string;
+export type WeeklyTrendsData = {
+  week_of_year: string;
+  protein: number;
   calories: number;
-  servings: number;
-  nutrition_item: {
-    added_sugars_grams: number;
-    protein_grams: number;
-  } | null;
-  recipe: {
-    recipe_items: {
-      servings: number;
-      nutrition_item: {
-        added_sugars_grams: number;
-        protein_grams: number;
-      };
-    }[];
-  } | null;
+  added_sugar: number;
 };
 
 export type GetWeeklyTrendsResponse = {
   data: {
-    food_diary_diary_entry: WeeklyTrendsEntry[];
+    food_diary_trends_weekly: WeeklyTrendsData[];
   };
 };
 

@@ -1,9 +1,9 @@
 import type { Component } from "solid-js";
 import { createMemo } from "solid-js";
-import type { WeeklyTrendsEntry } from "./Api";
+import type { WeeklyTrendsData } from "./Api";
 import { fetchWeeklyTrends } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
-import { parseISO, startOfWeek, format } from "date-fns";
+import { parseISO, format } from "date-fns";
 import ButtonLink from "./ButtonLink";
 
 type WeeklyStats = {
@@ -13,70 +13,21 @@ type WeeklyStats = {
   avgAddedSugar: number;
 };
 
-function recipeTotalForKey(key: string, recipe: WeeklyTrendsEntry["recipe"]) {
-  return (recipe?.recipe_items || []).reduce(
-    (acc: number, recipe_item) =>
-      acc + recipe_item.servings * recipe_item.nutrition_item[key],
-    0
-  );
-}
-
-function entryTotalMacro(key: string, entry: WeeklyTrendsEntry) {
-  const itemTotal = entry.nutrition_item?.[key] || 0;
-  return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
-}
-
 const Trends: Component = () => {
   const [getTrendsQuery] = createAuthorizedResource(fetchWeeklyTrends);
-  const entries = () => getTrendsQuery()?.data?.food_diary_diary_entry || [];
+  const trendsData = () => getTrendsQuery()?.data?.food_diary_trends_weekly || [];
 
   const weeklyStats = createMemo<WeeklyStats[]>(() => {
-    const entriesList = entries();
-    if (entriesList.length === 0) return [];
+    const data = trendsData();
+    if (data.length === 0) return [];
 
-    // Group entries by week
-    const weekGroups = new Map<string, WeeklyTrendsEntry[]>();
-    entriesList.forEach((entry) => {
-      const weekStart = format(
-        startOfWeek(parseISO(entry.consumed_at), { weekStartsOn: 0 }),
-        "yyyy-MM-dd"
-      );
-      if (!weekGroups.has(weekStart)) {
-        weekGroups.set(weekStart, []);
-      }
-      weekGroups.get(weekStart)!.push(entry);
-    });
-
-    // Calculate weekly averages
-    const stats: WeeklyStats[] = [];
-    weekGroups.forEach((weekEntries, weekStart) => {
-      const totalCalories = weekEntries.reduce(
-        (sum, entry) => sum + entry.calories,
-        0
-      );
-      const totalProtein = weekEntries.reduce(
-        (sum, entry) => sum + entryTotalMacro("protein_grams", entry),
-        0
-      );
-      const totalAddedSugar = weekEntries.reduce(
-        (sum, entry) => sum + entryTotalMacro("added_sugars_grams", entry),
-        0
-      );
-
-      const daysInWeek = new Set(
-        weekEntries.map((e) => format(parseISO(e.consumed_at), "yyyy-MM-dd"))
-      ).size;
-
-      stats.push({
-        weekStart,
-        avgCalories: Math.round(totalCalories / daysInWeek),
-        avgProtein: Math.round(totalProtein / daysInWeek),
-        avgAddedSugar: Math.round(totalAddedSugar / daysInWeek),
-      });
-    });
-
-    // Sort by week (oldest first for chart)
-    return stats.sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+    // Map backend data to our chart format
+    return data.map((item: WeeklyTrendsData) => ({
+      weekStart: item.week_of_year,
+      avgCalories: Math.round(item.calories),
+      avgProtein: Math.round(item.protein),
+      avgAddedSugar: Math.round(item.added_sugar),
+    }));
   });
 
   const maxCalories = createMemo(() =>
