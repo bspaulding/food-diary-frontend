@@ -27,9 +27,9 @@ export function calculateDailyAverage(
 }
 
 /**
- * Calculate the number of complete days in the current week (excluding today)
+ * Calculate the number of complete days in the current week (up to but not including today)
  * @param now - The current date/time
- * @returns The number of complete days since Sunday (start of week), excluding today
+ * @returns The number of complete days since Sunday (start of week), up to but not including today
  */
 export function calculateCurrentWeekDays(now: Date): number {
   const todayStart = startOfDay(now);
@@ -38,9 +38,9 @@ export function calculateCurrentWeekDays(now: Date): number {
 }
 
 /**
- * Calculate the number of complete days in the last 4 weeks (excluding today)
+ * Calculate the number of complete days in the last 4 weeks (up to but not including today)
  * @param now - The current date/time
- * @returns The number of complete days in the last 4 weeks, excluding today
+ * @returns The number of complete days in the last 4 weeks, up to but not including today
  */
 export function calculateFourWeeksDays(now: Date): number {
   const todayStart = startOfDay(now);

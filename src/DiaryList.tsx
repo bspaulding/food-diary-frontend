@@ -82,6 +82,10 @@ const DiaryList: Component = () => {
     (token: string) => fetchWeeklyStats(token, currentWeekStart, todayStart, fourWeeksAgoStart)
   );
   
+  // Calculate number of complete days (up to but not including today)
+  const currentWeekDays = calculateCurrentWeekDays(now);
+  const fourWeeksDays = calculateFourWeeksDays(now);
+  
   const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];
   const entriesByDay = () =>
     Object.entries(
@@ -108,12 +112,6 @@ const DiaryList: Component = () => {
       </div>
       <Show when={weeklyStatsQuery()?.data}>
         {() => {
-          const now = new Date();
-          
-          // Calculate number of complete days (excluding today)
-          const currentWeekDays = calculateCurrentWeekDays(now);
-          const fourWeeksDays = calculateFourWeeksDays(now);
-          
           const currentWeekCalories = weeklyStatsQuery()?.data?.current_week?.aggregate?.sum?.calories || 0;
           const fourWeeksCalories = weeklyStatsQuery()?.data?.past_four_weeks?.aggregate?.sum?.calories || 0;
           
