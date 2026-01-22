@@ -79,6 +79,28 @@ export const worker = setupWorker(
       return HttpResponse.json({
         data: {
           food_diary_trends_weekly: [],
+        }
+      });
+    }
+
+    // Handle GetWeeklyStats query
+    if (query.includes("GetWeeklyStats")) {
+      return HttpResponse.json({
+        data: {
+          current_week: {
+            aggregate: {
+              sum: {
+                calories: 1500,
+              },
+            },
+          },
+          past_four_weeks: {
+            aggregate: {
+              sum: {
+                calories: 8400,
+              },
+            },
+          },
         },
       });
     }

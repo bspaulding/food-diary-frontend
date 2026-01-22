@@ -21,6 +21,8 @@ const header = [
   "Protein (g)",
 ];
 
+const DESCRIPTION_COLUMN_INDEX = header.indexOf("Description");
+
 const headerKeyMap = {
   "Consumed At": ["consumed_at"],
   Description: ["nutrition_item", "description"],
@@ -64,28 +66,26 @@ export function entriesToCsv(entries): string {
         ];
       } else {
         return entry.recipe.recipe_items.map((recipe_item) => {
-          return [
-            header.map((key) => {
-              const consumedAt = parseISO(
-                getPath(headerKeyMap["Consumed At"], entry)
-              );
-              switch (key) {
-                case "Date":
-                  return format(consumedAt, "yyyy-MM-dd");
-                case "Time":
-                  return format(consumedAt, "p");
-                case "Consumed At":
-                  return formatISO(consumedAt);
-                case "Servings":
-                  return entry.servings * recipe_item.servings;
-                case "Description":
-                  const itemName = getPath(headerKeyMap[key], recipe_item);
-                  return `${entry.recipe.name} - ${itemName}`;
-                default:
-                  return getPath(headerKeyMap[key], recipe_item);
-              }
-            }),
-          ];
+          return header.map((key) => {
+            const consumedAt = parseISO(
+              getPath(headerKeyMap["Consumed At"], entry)
+            );
+            switch (key) {
+              case "Date":
+                return format(consumedAt, "yyyy-MM-dd");
+              case "Time":
+                return format(consumedAt, "p");
+              case "Consumed At":
+                return formatISO(consumedAt);
+              case "Servings":
+                return entry.servings * recipe_item.servings;
+              case "Description":
+                const itemName = getPath(headerKeyMap[key], recipe_item);
+                return `${entry.recipe.name} - ${itemName}`;
+              default:
+                return getPath(headerKeyMap[key], recipe_item);
+            }
+          });
         });
       }
     }),
@@ -94,10 +94,16 @@ export function entriesToCsv(entries): string {
 
 function stringsToCsv(rows: string[][]): string {
   return rows
-    .map((row) => {
+    .map((row, rowIndex) => {
       return row
-        .map((cell) => {
-          return `${cell}`; // TODO escaping?
+        .map((cell, cellIndex) => {
+          // Quote the Description field in data rows (not in header row)
+          if (rowIndex > 0 && cellIndex === DESCRIPTION_COLUMN_INDEX) {
+            // Escape double quotes by doubling them (CSV RFC 4180)
+            const escapedCell = String(cell).replace(/"/g, '""');
+            return `"${escapedCell}"`;
+          }
+          return `${cell}`;
         })
         .join(",");
     })

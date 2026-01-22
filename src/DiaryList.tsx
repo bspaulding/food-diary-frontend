@@ -1,7 +1,7 @@
 import type { Accessor, Component, Setter } from "solid-js";
 import { Index, Show } from "solid-js";
 import type { DiaryEntry, GetEntriesQueryResponse } from "./Api";
-import { fetchEntries, deleteDiaryEntry } from "./Api";
+import { fetchEntries, deleteDiaryEntry, fetchWeeklyStats } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
@@ -14,6 +14,8 @@ import {
   startOfDay,
   compareAsc,
   compareDesc,
+  startOfWeek,
+  subWeeks,
 } from "date-fns";
 
 function localDay(timestamp: string) {
@@ -64,6 +66,16 @@ const EntryMacro: Component<{
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
   const [getEntriesQuery, { mutate }] = createAuthorizedResource(fetchEntries);
+  
+  // Fetch weekly stats from the backend
+  const now = new Date();
+  const currentWeekStart = formatISO(startOfWeek(now, { weekStartsOn: 0 }));
+  const fourWeeksAgoStart = formatISO(startOfWeek(subWeeks(now, 3), { weekStartsOn: 0 }));
+  
+  const [weeklyStatsQuery] = createAuthorizedResource(
+    (token: string) => fetchWeeklyStats(token, currentWeekStart, fourWeeksAgoStart)
+  );
+  
   const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];
   const entriesByDay = () =>
     Object.entries(
@@ -89,6 +101,20 @@ const DiaryList: Component = () => {
         <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
         <ButtonLink href="/trends">View Trends</ButtonLink>
       </div>
+      <Show when={weeklyStatsQuery()?.data}>
+        <div class="flex justify-around mb-6 border-t border-b border-slate-200 py-2">
+          <EntryMacro
+            value={String(Math.ceil(weeklyStatsQuery()?.data?.current_week?.aggregate?.sum?.calories || 0))}
+            unit=""
+            label="This Week"
+          />
+          <EntryMacro
+            value={String(Math.ceil((weeklyStatsQuery()?.data?.past_four_weeks?.aggregate?.sum?.calories || 0) / 4))}
+            unit=""
+            label="4 Week Avg"
+          />
+        </div>
+      </Show>
       <ul class="mt-4">
         <Show when={entries().length === 0}>
           <p class="text-slate-400 text-center">No entries, yet...</p>
@@ -102,12 +128,12 @@ const DiaryList: Component = () => {
                   date={parseISO(dayEntries()[0])}
                 />
                 <EntryMacro
-                  value={Math.ceil(
+                  value={String(Math.ceil(
                     dayEntries()[1].reduce(
                       (acc, entry) => acc + entry.calories,
                       0
                     )
-                  )}
+                  ))}
                   unit=""
                   label="KCAL"
                 />
