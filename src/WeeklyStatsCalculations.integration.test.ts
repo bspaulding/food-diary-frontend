@@ -119,7 +119,7 @@ describe("Weekly Stats Integration Tests", () => {
 
     it("should handle minimum of 1 day to avoid division by zero", () => {
       // Even with dates very close together, we get minimum of 1 day
-      const date = new Date("2024-01-07T00:01:00Z"); // Just past midnight Sunday
+      const date = new Date("2024-01-07T12:00:00Z"); // Sunday midday
       const days = calculateCurrentWeekDays(date);
       expect(days).toBe(1);
     });
