@@ -3,7 +3,6 @@ import { createMemo } from "solid-js";
 import type { WeeklyTrendsData } from "./Api";
 import { fetchWeeklyTrends } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
-import { parseISO, format } from "date-fns";
 import ButtonLink from "./ButtonLink";
 
 type WeeklyStats = {
@@ -138,7 +137,7 @@ const Trends: Component = () => {
                     font-size="10"
                     fill="#6b7280"
                   >
-                    {format(parseISO(stat.weekStart), "MM/dd")}
+                    {stat.weekStart}
                   </text>
                 );
               });
