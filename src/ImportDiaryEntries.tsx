@@ -28,7 +28,8 @@ const ImportDiaryEntries: Component = () => {
   const [importError, setImportError] = createSignal<string | null>(null);
 
   const fileChanged = async (event: Event) => {
-    const file = (event.target as HTMLInputElement).files[0];
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
     setImportError(null);
     try {
       const csv = await readFile(file);
