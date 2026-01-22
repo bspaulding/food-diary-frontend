@@ -79,7 +79,7 @@ export const worker = setupWorker(
       return HttpResponse.json({
         data: {
           food_diary_trends_weekly: [],
-        }
+        },
       });
     }
 

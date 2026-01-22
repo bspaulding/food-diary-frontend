@@ -78,12 +78,12 @@ describe("Add New Entry Flow Acceptance Test", () => {
     // Verify search results are displayed with log buttons
     const logButtons = screen.getAllByText("⊕");
     expect(logButtons.length).toBeGreaterThan(0);
-    
+
     // Verify the search found the expected items
     expect(screen.getByText("Banana")).toBeTruthy();
     expect(screen.getByText("Apple")).toBeTruthy();
     expect(screen.getByText("Fruit Salad")).toBeTruthy();
-    
+
     // Note: Due to SolidJS reactivity limitations in browser tests, we cannot test
     // the clicking and logging interaction. The components work correctly in the app.
   });

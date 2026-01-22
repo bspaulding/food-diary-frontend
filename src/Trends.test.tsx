@@ -62,7 +62,9 @@ describe("Trends", () => {
 
     expect(screen.getByText(/Weekly Nutrition Trends/i)).toBeTruthy();
     expect(
-      screen.getByText(/No data available yet. Add some diary entries to see trends!/i)
+      screen.getByText(
+        /No data available yet. Add some diary entries to see trends!/i
+      )
     ).toBeTruthy();
     expect(screen.getByText(/Back to Diary/i)).toBeTruthy();
   });
@@ -88,7 +90,7 @@ describe("Trends", () => {
       http.post("*/api/v1/graphql", async ({ request }) => {
         const body = (await request.json()) as any;
         const query = body.query || "";
-        
+
         if (query.includes("GetWeeklyTrends")) {
           return HttpResponse.json({
             data: {
@@ -96,7 +98,7 @@ describe("Trends", () => {
             },
           });
         }
-        
+
         // Fallback for any other queries
         return HttpResponse.json({
           data: {
@@ -127,9 +129,7 @@ describe("Trends", () => {
     expect(screen.getByText(/Average Daily Added Sugar/i)).toBeTruthy();
 
     // Verify no empty state message
-    expect(
-      screen.queryByText(/No data available yet/i)
-    ).toBeNull();
+    expect(screen.queryByText(/No data available yet/i)).toBeNull();
   });
 
   it("should have View Trends button on DiaryList page", async () => {

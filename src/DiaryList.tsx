@@ -71,21 +71,21 @@ const EntryMacro: Component<{
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
   const [getEntriesQuery, { mutate }] = createAuthorizedResource(fetchEntries);
-  
+
   // Fetch weekly stats from the backend
   const now = new Date();
   const todayStart = formatISO(startOfDay(now));
   const currentWeekStart = formatISO(startOfWeek(now, { weekStartsOn: 0 }));
   const fourWeeksAgoStart = formatISO(startOfDay(subWeeks(now, 4)));
-  
-  const [weeklyStatsQuery] = createAuthorizedResource(
-    (token: string) => fetchWeeklyStats(token, currentWeekStart, todayStart, fourWeeksAgoStart)
+
+  const [weeklyStatsQuery] = createAuthorizedResource((token: string) =>
+    fetchWeeklyStats(token, currentWeekStart, todayStart, fourWeeksAgoStart)
   );
-  
+
   // Calculate number of complete days (up to but not including today)
   const currentWeekDays = calculateCurrentWeekDays(now);
   const fourWeeksDays = calculateFourWeeksDays(now);
-  
+
   const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];
   const entriesByDay = () =>
     Object.entries(
@@ -113,12 +113,22 @@ const DiaryList: Component = () => {
       </div>
       <Show when={weeklyStatsQuery()?.data}>
         {() => {
-          const currentWeekCalories = weeklyStatsQuery()?.data?.current_week?.aggregate?.sum?.calories || 0;
-          const fourWeeksCalories = weeklyStatsQuery()?.data?.past_four_weeks?.aggregate?.sum?.calories || 0;
-          
-          const currentWeekAvg = calculateDailyAverage(currentWeekCalories, currentWeekDays);
-          const fourWeeksAvg = calculateDailyAverage(fourWeeksCalories, fourWeeksDays);
-          
+          const currentWeekCalories =
+            weeklyStatsQuery()?.data?.current_week?.aggregate?.sum?.calories ||
+            0;
+          const fourWeeksCalories =
+            weeklyStatsQuery()?.data?.past_four_weeks?.aggregate?.sum
+              ?.calories || 0;
+
+          const currentWeekAvg = calculateDailyAverage(
+            currentWeekCalories,
+            currentWeekDays
+          );
+          const fourWeeksAvg = calculateDailyAverage(
+            fourWeeksCalories,
+            fourWeeksDays
+          );
+
           return (
             <div class="flex justify-around mb-6 border-t border-b border-slate-200 py-2">
               <EntryMacro
@@ -148,12 +158,14 @@ const DiaryList: Component = () => {
                   date={parseISO(dayEntries()[0])}
                 />
                 <EntryMacro
-                  value={String(Math.ceil(
-                    dayEntries()[1].reduce(
-                      (acc, entry) => acc + entry.calories,
-                      0
+                  value={String(
+                    Math.ceil(
+                      dayEntries()[1].reduce(
+                        (acc, entry) => acc + entry.calories,
+                        0
+                      )
                     )
-                  ))}
+                  )}
                   unit=""
                   label="KCAL"
                 />

@@ -11,6 +11,7 @@ npm run test:acceptance
 ## Test Structure
 
 The acceptance tests are located in `src/acceptance.test.tsx` and use:
+
 - **Vitest Browser Mode**: Tests run in a real Chromium browser via Playwright
 - **@solidjs/testing-library**: For rendering and querying Solid components
 - **Mock Service Worker (MSW)**: API requests are intercepted using MSW in browser mode
@@ -39,16 +40,20 @@ The acceptance tests are located in `src/acceptance.test.tsx` and use:
 ## Mocking Strategy
 
 ### Authentication
+
 Auth0 is mocked using `vi.mock()` to return a logged-in user state.
 
 ### API Requests
+
 Mock Service Worker (MSW) is used to intercept all HTTP requests in the browser:
+
 - MSW worker is configured in `src/test-setup-browser.ts`
 - Handlers are set up when the worker starts (not in beforeEach)
 - **Strict mode enabled**: Any unhandled request will cause the test to fail, ensuring mocks stay in sync with the application
 - Mock responses are configured per-query type (GetEntries, SearchItems, CreateDiaryEntry, etc.)
 
 Example handler:
+
 ```typescript
 export const worker = setupWorker(
   http.post("*/api/v1/graphql", async ({ request }) => {
@@ -64,6 +69,7 @@ export const worker = setupWorker(
 ## CI Integration
 
 The acceptance tests are integrated into the CI workflow (`.github/workflows/ci.yml`) and run on every push and pull request. The workflow:
+
 1. Installs dependencies with `npm ci`
 2. Runs unit tests with `npm test`
 3. Installs Playwright browsers

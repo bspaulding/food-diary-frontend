@@ -93,20 +93,34 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
     });
 
   const handleImport = (nutritionData: Partial<NutritionItemAttrs>) => {
-    if (nutritionData.description !== undefined) setDescription(nutritionData.description);
-    if (nutritionData.calories !== undefined) setCalories(nutritionData.calories);
-    if (nutritionData.totalFatGrams !== undefined) setTotalFatGrams(nutritionData.totalFatGrams);
-    if (nutritionData.saturatedFatGrams !== undefined) setSaturatedFatGrams(nutritionData.saturatedFatGrams);
-    if (nutritionData.transFatGrams !== undefined) setTransFatGrams(nutritionData.transFatGrams);
-    if (nutritionData.polyunsaturatedFatGrams !== undefined) setPolyunsaturatedFatGrams(nutritionData.polyunsaturatedFatGrams);
-    if (nutritionData.monounsaturatedFatGrams !== undefined) setMonounsaturatedFatGrams(nutritionData.monounsaturatedFatGrams);
-    if (nutritionData.cholesterolMilligrams !== undefined) setCholesterolMilligrams(nutritionData.cholesterolMilligrams);
-    if (nutritionData.sodiumMilligrams !== undefined) setSodiumMilligrams(nutritionData.sodiumMilligrams);
-    if (nutritionData.totalCarbohydrateGrams !== undefined) setTotalCarbohydrateGrams(nutritionData.totalCarbohydrateGrams);
-    if (nutritionData.dietaryFiberGrams !== undefined) setDietaryFiberGrams(nutritionData.dietaryFiberGrams);
-    if (nutritionData.totalSugarsGrams !== undefined) setTotalSugarsGrams(nutritionData.totalSugarsGrams);
-    if (nutritionData.addedSugarsGrams !== undefined) setAddedSugarsGrams(nutritionData.addedSugarsGrams);
-    if (nutritionData.proteinGrams !== undefined) setProteinGrams(nutritionData.proteinGrams);
+    if (nutritionData.description !== undefined)
+      setDescription(nutritionData.description);
+    if (nutritionData.calories !== undefined)
+      setCalories(nutritionData.calories);
+    if (nutritionData.totalFatGrams !== undefined)
+      setTotalFatGrams(nutritionData.totalFatGrams);
+    if (nutritionData.saturatedFatGrams !== undefined)
+      setSaturatedFatGrams(nutritionData.saturatedFatGrams);
+    if (nutritionData.transFatGrams !== undefined)
+      setTransFatGrams(nutritionData.transFatGrams);
+    if (nutritionData.polyunsaturatedFatGrams !== undefined)
+      setPolyunsaturatedFatGrams(nutritionData.polyunsaturatedFatGrams);
+    if (nutritionData.monounsaturatedFatGrams !== undefined)
+      setMonounsaturatedFatGrams(nutritionData.monounsaturatedFatGrams);
+    if (nutritionData.cholesterolMilligrams !== undefined)
+      setCholesterolMilligrams(nutritionData.cholesterolMilligrams);
+    if (nutritionData.sodiumMilligrams !== undefined)
+      setSodiumMilligrams(nutritionData.sodiumMilligrams);
+    if (nutritionData.totalCarbohydrateGrams !== undefined)
+      setTotalCarbohydrateGrams(nutritionData.totalCarbohydrateGrams);
+    if (nutritionData.dietaryFiberGrams !== undefined)
+      setDietaryFiberGrams(nutritionData.dietaryFiberGrams);
+    if (nutritionData.totalSugarsGrams !== undefined)
+      setTotalSugarsGrams(nutritionData.totalSugarsGrams);
+    if (nutritionData.addedSugarsGrams !== undefined)
+      setAddedSugarsGrams(nutritionData.addedSugarsGrams);
+    if (nutritionData.proteinGrams !== undefined)
+      setProteinGrams(nutritionData.proteinGrams);
   };
 
   return (
@@ -152,154 +166,154 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
             onInput={fromTextInput(setDescription)}
           />
         </fieldset>
-      <fieldset class="flex flex-col my-4">
-        <legend class="font-semibold">Nutrition Facts</legend>
+        <fieldset class="flex flex-col my-4">
+          <legend class="font-semibold">Nutrition Facts</legend>
 
-        <label for="calories">Calories</label>
-        <input
-          type="number"
-          step="0.1"
-          name="calories"
-          disabled={disabled()}
-          value={calories()}
-          onInput={fromNumberInput(setCalories)}
-        />
+          <label for="calories">Calories</label>
+          <input
+            type="number"
+            step="0.1"
+            name="calories"
+            disabled={disabled()}
+            value={calories()}
+            onInput={fromNumberInput(setCalories)}
+          />
 
-        <label for="total-fat-grams">Total Fat (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="total-fat-grams"
-          disabled={disabled()}
-          value={totalFatGrams()}
-          onInput={fromNumberInput(setTotalFatGrams)}
-        />
+          <label for="total-fat-grams">Total Fat (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="total-fat-grams"
+            disabled={disabled()}
+            value={totalFatGrams()}
+            onInput={fromNumberInput(setTotalFatGrams)}
+          />
 
-        <label for="saturated-fat-grams">Saturated Fat (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="saturated-fat-grams"
-          disabled={disabled()}
-          value={saturatedFatGrams()}
-          onInput={fromNumberInput(setSaturatedFatGrams)}
-        />
+          <label for="saturated-fat-grams">Saturated Fat (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="saturated-fat-grams"
+            disabled={disabled()}
+            value={saturatedFatGrams()}
+            onInput={fromNumberInput(setSaturatedFatGrams)}
+          />
 
-        <label for="trans-fat-grams">Trans Fat (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="trans-fat-grams"
-          disabled={disabled()}
-          value={transFatGrams()}
-          onInput={fromNumberInput(setTransFatGrams)}
-        />
+          <label for="trans-fat-grams">Trans Fat (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="trans-fat-grams"
+            disabled={disabled()}
+            value={transFatGrams()}
+            onInput={fromNumberInput(setTransFatGrams)}
+          />
 
-        <label for="polyunsaturated-fat-grams">Polyunsaturated Fat (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="polyunsaturated-fat-grams"
-          disabled={disabled()}
-          value={polyunsaturatedFatGrams()}
-          onInput={fromNumberInput(setPolyunsaturatedFatGrams)}
-        />
+          <label for="polyunsaturated-fat-grams">Polyunsaturated Fat (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="polyunsaturated-fat-grams"
+            disabled={disabled()}
+            value={polyunsaturatedFatGrams()}
+            onInput={fromNumberInput(setPolyunsaturatedFatGrams)}
+          />
 
-        <label for="monounsaturated-fat-grams">Monounsaturated Fat (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="monounsaturated-fat-grams"
-          disabled={disabled()}
-          value={monounsaturatedFatGrams()}
-          onInput={fromNumberInput(setMonounsaturatedFatGrams)}
-        />
+          <label for="monounsaturated-fat-grams">Monounsaturated Fat (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="monounsaturated-fat-grams"
+            disabled={disabled()}
+            value={monounsaturatedFatGrams()}
+            onInput={fromNumberInput(setMonounsaturatedFatGrams)}
+          />
 
-        <label for="cholesterol-milligrams">Cholesterol (mg)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="cholesterol-milligrams"
-          disabled={disabled()}
-          value={cholesterolMilligrams()}
-          onInput={fromNumberInput(setCholesterolMilligrams)}
-        />
+          <label for="cholesterol-milligrams">Cholesterol (mg)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="cholesterol-milligrams"
+            disabled={disabled()}
+            value={cholesterolMilligrams()}
+            onInput={fromNumberInput(setCholesterolMilligrams)}
+          />
 
-        <label for="sodium-milligrams">Sodium (mg)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="sodium-milligrams"
-          disabled={disabled()}
-          value={sodiumMilligrams()}
-          onInput={fromNumberInput(setSodiumMilligrams)}
-        />
+          <label for="sodium-milligrams">Sodium (mg)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="sodium-milligrams"
+            disabled={disabled()}
+            value={sodiumMilligrams()}
+            onInput={fromNumberInput(setSodiumMilligrams)}
+          />
 
-        <label for="total-carbohydrate-grams">Total Carbohydrate (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="total-carbohydrate-grams"
-          disabled={disabled()}
-          value={totalCarbohydrateGrams()}
-          onInput={fromNumberInput(setTotalCarbohydrateGrams)}
-        />
+          <label for="total-carbohydrate-grams">Total Carbohydrate (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="total-carbohydrate-grams"
+            disabled={disabled()}
+            value={totalCarbohydrateGrams()}
+            onInput={fromNumberInput(setTotalCarbohydrateGrams)}
+          />
 
-        <label for="dietary-fiber-grams">Dietary Fiber (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="dietary-fiber-grams"
-          disabled={disabled()}
-          value={dietaryFiberGrams()}
-          onInput={fromNumberInput(setDietaryFiberGrams)}
-        />
+          <label for="dietary-fiber-grams">Dietary Fiber (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="dietary-fiber-grams"
+            disabled={disabled()}
+            value={dietaryFiberGrams()}
+            onInput={fromNumberInput(setDietaryFiberGrams)}
+          />
 
-        <label for="total-sugars-grams">Total Sugars (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="total-sugars-grams"
-          disabled={disabled()}
-          value={totalSugarsGrams()}
-          onInput={fromNumberInput(setTotalSugarsGrams)}
-        />
+          <label for="total-sugars-grams">Total Sugars (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="total-sugars-grams"
+            disabled={disabled()}
+            value={totalSugarsGrams()}
+            onInput={fromNumberInput(setTotalSugarsGrams)}
+          />
 
-        <label for="added-sugars-grams">Added Sugars (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="added-sugars-grams"
-          disabled={disabled()}
-          value={addedSugarsGrams()}
-          onInput={fromNumberInput(setAddedSugarsGrams)}
-        />
+          <label for="added-sugars-grams">Added Sugars (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="added-sugars-grams"
+            disabled={disabled()}
+            value={addedSugarsGrams()}
+            onInput={fromNumberInput(setAddedSugarsGrams)}
+          />
 
-        <label for="protein-grams">Protein (g)</label>
-        <input
-          type="number"
-          step="0.1"
-          name="protein-grams"
-          disabled={disabled()}
-          value={proteinGrams()}
-          onInput={fromNumberInput(setProteinGrams)}
-        />
-      </fieldset>
-      <fieldset class="mb-4">
-        <button
-          class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
-          disabled={disabled()}
-          onClick={async () => {
-            const id = await saveItem(accessToken(), setDisabled, item());
-            if (!onSaved) {
-              navigate(`/nutrition_item/${id}`);
-            }
-          }}
-        >
-          {disabled() ? "Saving..." : "Save"}
-        </button>
-      </fieldset>
-    </form>
+          <label for="protein-grams">Protein (g)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="protein-grams"
+            disabled={disabled()}
+            value={proteinGrams()}
+            onInput={fromNumberInput(setProteinGrams)}
+          />
+        </fieldset>
+        <fieldset class="mb-4">
+          <button
+            class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
+            disabled={disabled()}
+            onClick={async () => {
+              const id = await saveItem(accessToken(), setDisabled, item());
+              if (!onSaved) {
+                navigate(`/nutrition_item/${id}`);
+              }
+            }}
+          >
+            {disabled() ? "Saving..." : "Save"}
+          </button>
+        </fieldset>
+      </form>
     </>
   );
 };

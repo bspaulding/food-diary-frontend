@@ -54,11 +54,13 @@ describe("Add Recipe Flow Acceptance Test", () => {
     // Verify we navigated to the recipe page
     expect(screen.getByText(/Back to entries/i)).toBeTruthy();
     expect(screen.getByText(/New Recipe/i)).toBeTruthy();
-    
+
     // Verify form elements are present
-    const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+    const nameInput = document.querySelector(
+      'input[name="name"]'
+    ) as HTMLInputElement;
     expect(nameInput).not.toBeNull();
-    
+
     // Note: Full form interaction could be tested here, but we're keeping it simple
     // The test validates that navigation works and the form loads
   });

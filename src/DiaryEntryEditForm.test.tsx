@@ -100,14 +100,19 @@ describe("DiaryEntryEditForm", () => {
     await user.click(saveButton);
 
     // Wait for the update request to be made
-    await waitFor(() => {
-      expect(capturedRequest).not.toBeNull();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(capturedRequest).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
 
     // Verify the mutation contains the correct variables
     expect(capturedRequest.variables.id).toBe(1);
     expect(capturedRequest.variables.attrs.servings).toBe(2);
-    expect(capturedRequest.variables.attrs.consumed_at).toBe("2022-08-28T14:30:00Z");
+    expect(capturedRequest.variables.attrs.consumed_at).toBe(
+      "2022-08-28T14:30:00Z"
+    );
 
     unmount();
   });
@@ -161,7 +166,9 @@ describe("DiaryEntryEditForm", () => {
     await user.type(servingsInput, "3");
 
     // Change consumed_at
-    const consumedAtInput = screen.getByLabelText("Consumed At") as HTMLInputElement;
+    const consumedAtInput = screen.getByLabelText(
+      "Consumed At"
+    ) as HTMLInputElement;
     await user.clear(consumedAtInput);
     await user.type(consumedAtInput, "2022-08-29T15:30");
 
@@ -170,9 +177,12 @@ describe("DiaryEntryEditForm", () => {
     await user.click(saveButton);
 
     // Wait for the update request to be made
-    await waitFor(() => {
-      expect(capturedRequest).not.toBeNull();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(capturedRequest).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
 
     // Verify the mutation contains both updated values
     expect(capturedRequest.variables.id).toBe(1);
@@ -235,9 +245,12 @@ describe("DiaryEntryEditForm", () => {
     await user.click(saveButton);
 
     // Wait for the update request to be made
-    await waitFor(() => {
-      expect(capturedRequest).not.toBeNull();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(capturedRequest).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
 
     // Verify the request includes servings as 0, not the original value
     expect(capturedRequest.variables.attrs.servings).toBe(0);
@@ -300,14 +313,19 @@ describe("DiaryEntryEditForm", () => {
     await user.click(saveButton);
 
     // Wait for the update request to be made
-    await waitFor(() => {
-      expect(capturedRequest).not.toBeNull();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(capturedRequest).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
 
     // Verify the mutation contains the fractional value, not rounded down
     expect(capturedRequest.variables.id).toBe(1);
     expect(capturedRequest.variables.attrs.servings).toBe(2.5);
-    expect(capturedRequest.variables.attrs.consumed_at).toBe("2022-08-28T14:30:00Z");
+    expect(capturedRequest.variables.attrs.consumed_at).toBe(
+      "2022-08-28T14:30:00Z"
+    );
 
     unmount();
   });

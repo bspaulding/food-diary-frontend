@@ -41,7 +41,8 @@ const ImportDiaryEntries: Component = () => {
       setParseResult({ parsed: true, lefts, rights });
     } catch (error: unknown) {
       console.error("CSV file processing failed:", error);
-      const message = error instanceof Error ? error.message : "Failed to process CSV file";
+      const message =
+        error instanceof Error ? error.message : "Failed to process CSV file";
       setImportError(message);
     }
   };
@@ -60,7 +61,10 @@ const ImportDiaryEntries: Component = () => {
     } catch (error: unknown) {
       console.error("CSV import failed:", error);
       setSaving(false);
-      const message = error instanceof Error ? error.message : "An error occurred during import";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during import";
       setImportError(message);
     }
   };
@@ -72,7 +76,10 @@ const ImportDiaryEntries: Component = () => {
         <ButtonLink href="/">Back to diary</ButtonLink>
       </Show>
       <Show when={importError()}>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+        <div
+          class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+          role="alert"
+        >
           <p class="font-bold">Import Error</p>
           <p>{importError()}</p>
         </div>

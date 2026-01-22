@@ -9,7 +9,9 @@
     "serve": "vite preview",
     "test": "vitest",
     "test:acceptance": "vitest --config vitest.acceptance.config.mts",
-    "prettier": "./node_modules/.bin/prettier"
+    "prettier": "./node_modules/.bin/prettier",
+    "prettier:check": "npx prettier --check .",
+    "prettier:format": "npx prettier --write ."
   },
   "license": "MIT",
   "devDependencies": {
@@ -39,5 +41,12 @@
   },
   "dependencies": {
     "solid-js": "^1.8.4"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": false,
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "printWidth": 80
   }
 }
