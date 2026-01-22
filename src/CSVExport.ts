@@ -97,7 +97,9 @@ function stringsToCsv(rows: string[][]): string {
         .map((cell, cellIndex) => {
           // Quote the Description field (index 3 in data rows, not in header row)
           if (rowIndex > 0 && cellIndex === 3) {
-            return `"${cell}"`;
+            // Escape double quotes by doubling them (CSV RFC 4180)
+            const escapedCell = String(cell).replace(/"/g, '""');
+            return `"${escapedCell}"`;
           }
           return `${cell}`;
         })

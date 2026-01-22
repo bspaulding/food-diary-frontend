@@ -137,4 +137,33 @@ describe("entriesToCSV", () => {
     // The description should be quoted because it contains a comma
     expect(csv).toContain('"Salad, mixed greens"');
   });
+
+  it("escapes double quotes in description field", () => {
+    const entries = [
+      {
+        servings: 1,
+        consumed_at: "2022-08-28T14:30:00+00:00",
+        nutrition_item: {
+          description: 'Chocolate "Dark" Bar',
+          calories: 200,
+          total_fat_grams: 12,
+          saturated_fat_grams: 7,
+          trans_fat_grams: 0,
+          polyunsaturated_fat_grams: 1,
+          monounsaturated_fat_grams: 4,
+          cholesterol_milligrams: 0,
+          sodium_milligrams: 5,
+          total_carbohydrate_grams: 20,
+          dietary_fiber_grams: 3,
+          total_sugars_grams: 15,
+          added_sugars_grams: 14,
+          protein_grams: 2,
+        },
+        recipe: null,
+      },
+    ];
+    const csv = entriesToCsv(entries);
+    // The description should have double quotes escaped as ""
+    expect(csv).toContain('"Chocolate ""Dark"" Bar"');
+  });
 });
