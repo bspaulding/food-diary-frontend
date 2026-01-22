@@ -12,7 +12,7 @@ type Props = {
 // Helper to get a numeric value from API response, supporting both camelCase and snake_case keys
 const getNumericValue = (
   data: Record<string, unknown>,
-  key: string
+  key: string,
 ): number => {
   const value = data[key];
   return typeof value === "number" ? value : 0;
@@ -29,7 +29,7 @@ const CameraModal: Component<Props> = (props) => {
   let streamRef: MediaStream | null = null;
   const [capturedImage, setCapturedImage] = createSignal<Blob | null>(null);
   const [capturedImageUrl, setCapturedImageUrl] = createSignal<string | null>(
-    null
+    null,
   );
   const [isUploading, setIsUploading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
@@ -113,7 +113,7 @@ const CameraModal: Component<Props> = (props) => {
       } else {
         setCapturedImageUrl(null);
       }
-    })
+    }),
   );
 
   const handleFileSelect = async (event: Event) => {
@@ -193,7 +193,7 @@ const CameraModal: Component<Props> = (props) => {
                 }
               },
               "image/jpeg",
-              JPEG_QUALITY
+              JPEG_QUALITY,
             );
           } catch (err) {
             reject(err);
@@ -312,7 +312,7 @@ const CameraModal: Component<Props> = (props) => {
             }
           },
           "image/jpeg",
-          0.95
+          0.95,
         );
       });
 

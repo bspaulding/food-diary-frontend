@@ -62,7 +62,7 @@ export const worker = setupWorker(
       return HttpResponse.json({ data: { food_diary_diary_entry: mockData } });
     }
     // Unhandled queries will throw an error
-  })
+  }),
 );
 ```
 

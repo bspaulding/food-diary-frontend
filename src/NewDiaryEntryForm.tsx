@@ -56,7 +56,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
                           Logged at{" "}
                           {format(
                             parseISO(item().consumed_at),
-                            "hh:mma' on ' MMMM dd, yyyy"
+                            "hh:mma' on ' MMMM dd, yyyy",
                           )}
                         </p>
                       </li>

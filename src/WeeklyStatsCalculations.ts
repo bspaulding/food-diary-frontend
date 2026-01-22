@@ -8,7 +8,7 @@ import { startOfDay, startOfWeek, subWeeks } from "date-fns";
  */
 export function calculateDaysBetween(startDate: Date, endDate: Date): number {
   const days = Math.floor(
-    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
   );
   return Math.max(1, days);
 }
@@ -21,7 +21,7 @@ export function calculateDaysBetween(startDate: Date, endDate: Date): number {
  */
 export function calculateDailyAverage(
   totalCalories: number,
-  days: number
+  days: number,
 ): number {
   return Math.ceil(totalCalories / days);
 }
