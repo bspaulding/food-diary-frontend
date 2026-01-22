@@ -15,6 +15,7 @@ import RecipeEdit from "./RecipeEdit";
 import ImportDiaryEntries from "./ImportDiaryEntries";
 import UserProfile from "./UserProfile";
 import DiaryEntryEditForm from "./DiaryEntryEditForm";
+import Trends from "./Trends";
 
 render(
   () => (
@@ -22,6 +23,7 @@ render(
       <Route path="/auth/callback" />
       <Route path="/auth/logout" />
       <Route path="/" component={DiaryList} />
+      <Route path="/trends" component={Trends} />
       <Route path="/profile" component={UserProfile} />
       <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
       <Route path="/diary_entry/:id/edit" component={DiaryEntryEditForm} />

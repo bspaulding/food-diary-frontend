@@ -74,6 +74,15 @@ export const worker = setupWorker(
       });
     }
 
+    // Handle GetWeeklyTrends query
+    if (query.includes("GetWeeklyTrends")) {
+      return HttpResponse.json({
+        data: {
+          food_diary_trends_weekly: [],
+        }
+      });
+    }
+
     // Handle GetWeeklyStats query
     if (query.includes("GetWeeklyStats")) {
       return HttpResponse.json({

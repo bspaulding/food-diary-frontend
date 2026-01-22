@@ -532,3 +532,35 @@ export async function updateDiaryEntry(
     attrs: objectToSnakeCaseKeys(entry),
   }).then((res) => res.json());
 }
+
+// Weekly trends query - uses backend view for pre-aggregated data
+const getWeeklyTrendsQuery = `
+query GetWeeklyTrends {
+  food_diary_trends_weekly {
+    week_of_year
+    protein
+    calories
+    added_sugar
+  }
+}
+`;
+
+export type WeeklyTrendsData = {
+  week_of_year: string;
+  protein: number;
+  calories: number;
+  added_sugar: number;
+};
+
+export type GetWeeklyTrendsResponse = {
+  data: {
+    food_diary_trends_weekly: WeeklyTrendsData[];
+  };
+};
+
+export async function fetchWeeklyTrends(
+  accessToken: string
+): Promise<GetWeeklyTrendsResponse> {
+  const response = await fetchQuery(accessToken, getWeeklyTrendsQuery);
+  return response.json();
+}

@@ -99,6 +99,7 @@ const DiaryList: Component = () => {
         <ButtonLink href="/diary_entry/new">Add New Entry</ButtonLink>
         <ButtonLink href="/nutrition_item/new">Add Item</ButtonLink>
         <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
+        <ButtonLink href="/trends">View Trends</ButtonLink>
       </div>
       <Show when={weeklyStatsQuery()?.data}>
         <div class="flex justify-around mb-6 border-t border-b border-slate-200 py-2">
