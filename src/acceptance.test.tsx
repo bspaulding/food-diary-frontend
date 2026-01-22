@@ -86,8 +86,8 @@ describe("Browser Acceptance Tests", () => {
     // The values are now averages per day, not totals
     // Mock data: current_week = 1500 total, past_four_weeks = 8400 total
     // These get divided by the number of days in each period
-    // We just verify the format is correct with the kcal/day suffix
-    expect(screen.getByText(/\d+ kcal\/day/)).toBeTruthy();
+    expect(screen.getByText(/1500 kcal\/day/)).toBeTruthy();
+    expect(screen.getByText(/8400 kcal\/day/)).toBeTruthy();
   });
 
   it("should complete Add Item flow - create new item and log it", async () => {
