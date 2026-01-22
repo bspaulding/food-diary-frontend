@@ -25,27 +25,44 @@ const ImportDiaryEntries: Component = () => {
   const [{ accessToken }] = useAuth();
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
+  const [importError, setImportError] = createSignal<string | null>(null);
 
-  const fileChanged = async (event) => {
-    const file = event.target.files[0];
-    const csv = await readFile(file);
-    const rows = parseCSV(csv);
-    const entries = rows.map(rowToEntry);
-    const lefts = entries.filter(isLeft).map((r) => r.value);
-    const rights = entries.filter(isRight).map((r) => r.value);
-    console.log({ lefts, rights });
-    setParseResult({ parsed: true, lefts, rights });
+  const fileChanged = async (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    setImportError(null);
+    try {
+      const csv = await readFile(file);
+      const rows = parseCSV(csv);
+      const entries = rows.map(rowToEntry);
+      const lefts = entries.filter(isLeft).map((r) => r.value);
+      const rights = entries.filter(isRight).map((r) => r.value);
+      console.log({ lefts, rights });
+      setParseResult({ parsed: true, lefts, rights });
+    } catch (error: unknown) {
+      console.error("CSV file processing failed:", error);
+      const message = error instanceof Error ? error.message : "Failed to process CSV file";
+      setImportError(message);
+    }
   };
 
-  const startImport = async (e) => {
+  const startImport = async (e: Event) => {
     e.preventDefault();
     setSaving(true);
-    const response = await insertDiaryEntries(
-      accessToken(),
-      parseResult().rights
-    );
-    setSaving(false);
-    setSaved(!!response.data);
+    setImportError(null);
+    try {
+      const response = await insertDiaryEntries(
+        accessToken(),
+        parseResult().rights
+      );
+      setSaving(false);
+      setSaved(!!response.data);
+    } catch (error: unknown) {
+      console.error("CSV import failed:", error);
+      setSaving(false);
+      const message = error instanceof Error ? error.message : "An error occurred during import";
+      setImportError(message);
+    }
   };
 
   return (
@@ -53,6 +70,12 @@ const ImportDiaryEntries: Component = () => {
       <Show when={saved()}>
         <p class="font-semibold text-center text-lg mb-4">Import successful!</p>
         <ButtonLink href="/">Back to diary</ButtonLink>
+      </Show>
+      <Show when={importError()}>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+          <p class="font-bold">Import Error</p>
+          <p>{importError()}</p>
+        </div>
       </Show>
       <Show when={!parseResult().parsed}>
         <form>
