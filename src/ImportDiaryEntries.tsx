@@ -30,13 +30,18 @@ const ImportDiaryEntries: Component = () => {
   const fileChanged = async (event) => {
     const file = event.target.files[0];
     setImportError(null);
-    const csv = await readFile(file);
-    const rows = parseCSV(csv);
-    const entries = rows.map(rowToEntry);
-    const lefts = entries.filter(isLeft).map((r) => r.value);
-    const rights = entries.filter(isRight).map((r) => r.value);
-    console.log({ lefts, rights });
-    setParseResult({ parsed: true, lefts, rights });
+    try {
+      const csv = await readFile(file);
+      const rows = parseCSV(csv);
+      const entries = rows.map(rowToEntry);
+      const lefts = entries.filter(isLeft).map((r) => r.value);
+      const rights = entries.filter(isRight).map((r) => r.value);
+      console.log({ lefts, rights });
+      setParseResult({ parsed: true, lefts, rights });
+    } catch (error: any) {
+      console.error("CSV file processing failed:", error);
+      setImportError(error?.message || "Failed to process CSV file");
+    }
   };
 
   const startImport = async (e) => {
@@ -50,10 +55,10 @@ const ImportDiaryEntries: Component = () => {
       );
       setSaving(false);
       setSaved(!!response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("CSV import failed:", error);
       setSaving(false);
-      setImportError(error.message || "An error occurred during import");
+      setImportError(error?.message || "An error occurred during import");
     }
   };
 
