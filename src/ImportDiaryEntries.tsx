@@ -39,9 +39,10 @@ const ImportDiaryEntries: Component = () => {
       const rights = entries.filter(isRight).map((r) => r.value);
       console.log({ lefts, rights });
       setParseResult({ parsed: true, lefts, rights });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("CSV file processing failed:", error);
-      setImportError(error?.message || "Failed to process CSV file");
+      const message = error instanceof Error ? error.message : "Failed to process CSV file";
+      setImportError(message);
     }
   };
 
@@ -56,10 +57,11 @@ const ImportDiaryEntries: Component = () => {
       );
       setSaving(false);
       setSaved(!!response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("CSV import failed:", error);
       setSaving(false);
-      setImportError(error?.message || "An error occurred during import");
+      const message = error instanceof Error ? error.message : "An error occurred during import";
+      setImportError(message);
     }
   };
 
