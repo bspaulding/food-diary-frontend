@@ -9,12 +9,12 @@ import { accessorsToObject } from "./Util";
 import styles from "./NewNutritionItemForm.module.css";
 import CameraModal from "./CameraModal";
 
-const fromTextInput = (setter: Setter<string>) => (event) => {
+const fromTextInput = (setter: Setter<string>) => (event: any) => {
   setter(event.target.value || "");
 };
 
-const fromNumberInput = (setter: Setter<number>) => (event) => {
-  const parsed = parseFloat(event.target.value, 10);
+const fromNumberInput = (setter: Setter<number>) => (event: any) => {
+  const parsed = parseFloat(event.target.value);
   if (!isNaN(parsed)) {
     setter(parsed);
   }
@@ -25,7 +25,7 @@ type Props = {
   initialItem?: NutritionItem;
 };
 
-const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
+const NewNutritionItemForm: Component<Props> = ({ onSaved, initialItem }: Props) => {
   const [{ accessToken }] = useAuth();
   const [disabled, setDisabled] = createSignal(false);
   const [showCameraModal, setShowCameraModal] = createSignal(false);
@@ -141,7 +141,7 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
           Scan
         </button>
       </div>
-      <form className={styles.form}>
+      <form class={styles.form}>
         <fieldset class="flex flex-col">
           <label for="description">Description</label>
           <input
@@ -290,7 +290,11 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
           class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
           disabled={disabled()}
           onClick={async () => {
-            const id = await saveItem(accessToken(), setDisabled, item());
+            const itemData = item();
+            const id = await saveItem(accessToken(), setDisabled, {
+              ...itemData,
+              id: itemData.id || 0,
+            } as NutritionItem);
             if (!onSaved) {
               navigate(`/nutrition_item/${id}`);
             }

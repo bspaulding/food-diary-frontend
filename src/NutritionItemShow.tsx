@@ -1,5 +1,6 @@
 import type { Component } from "solid-js";
-import { useParams, Link } from "@solidjs/router";
+import { useParams, A } from "@solidjs/router";
+import { Show } from "solid-js";
 import { fetchNutritionItem } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import ButtonLink from "./ButtonLink";
@@ -7,7 +8,7 @@ import { LoggableItem } from "./NewDiaryEntryForm";
 
 const keys_denylist = ["id", "description"];
 
-const propTitles = {
+const propTitles: Record<string, string> = {
   calories: "Calories",
   totalFatGrams: "Total Fat (g)",
   saturatedFatGrams: "Saturated Fat (g)",
@@ -36,7 +37,7 @@ const NutritionItemShow: Component = () => {
   const params = useParams();
   const [nutritionItemQuery] = createAuthorizedResource(
     () => params.id,
-    fetchNutritionItem
+    (token: string, info: any) => fetchNutritionItem(token, parseInt(info.value, 10))
   );
 
   const nutritionItem = () =>
@@ -64,7 +65,7 @@ const NutritionItemShow: Component = () => {
               <span class={boldKeys.indexOf(k) >= 0 ? "font-semibold" : "ml-4"}>
                 {propTitles[k] || k}
               </span>
-              <span>{nutritionItem()[k]}</span>
+              <span>{(nutritionItem() as any)[k]}</span>
             </p>
           ))}
       </div>

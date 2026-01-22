@@ -28,7 +28,7 @@ describe("Add Recipe Flow Acceptance Test", () => {
     render(() => (
       <Router root={App}>
         <Route path="/" component={DiaryList} />
-        <Route path="/recipe/new" component={NewRecipeForm} />
+        <Route path="/recipe/new" component={NewRecipeForm as any} />
       </Router>
     ));
 

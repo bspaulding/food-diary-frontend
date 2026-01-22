@@ -25,13 +25,13 @@ render(
       <Route path="/" component={DiaryList} />
       <Route path="/trends" component={Trends} />
       <Route path="/profile" component={UserProfile} />
-      <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
+      <Route path="/diary_entry/new" component={NewDiaryEntryForm as any} />
       <Route path="/diary_entry/:id/edit" component={DiaryEntryEditForm} />
       <Route path="/diary_entry/import" component={ImportDiaryEntries} />
-      <Route path="/nutrition_item/new" component={NewNutritionItemForm} />
+      <Route path="/nutrition_item/new" component={NewNutritionItemForm as any} />
       <Route path="/nutrition_item/:id" component={NutritionItemShow} />
       <Route path="/nutrition_item/:id/edit" component={NutritionItemEdit} />
-      <Route path="/recipe/new" component={NewRecipeForm} />
+      <Route path="/recipe/new" component={NewRecipeForm as any} />
       <Route path="/recipe/:id" component={RecipeShow} />
       <Route path="/recipe/:id/edit" component={RecipeEdit} />
     </Router>

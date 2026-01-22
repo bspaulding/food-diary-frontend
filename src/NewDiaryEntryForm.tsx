@@ -67,7 +67,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
             </Show>
             <Show when={segment === "Search"}>
               <SearchItemsForm>
-                {({ nutritionItem, recipe }) => (
+                {(({ nutritionItem, recipe }: any) => (
                   <li>
                     <LoggableItem
                       nutritionItem={nutritionItem}
@@ -77,7 +77,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
                       {recipe ? "RECIPE" : "ITEM"}
                     </span>
                   </li>
-                )}
+                ))}
               </SearchItemsForm>
             </Show>
           </>
@@ -89,7 +89,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
 
 export default NewDiaryEntryForm;
 
-export const LoggableItem: Component = ({ recipe, nutritionItem }) => {
+export const LoggableItem: Component<{ recipe?: any; nutritionItem?: any }> = ({ recipe, nutritionItem }) => {
   const [{ accessToken }] = useAuth();
   const [logging, setLogging] = createSignal(false);
   const [servings, setServings] = createSignal(1);
@@ -116,7 +116,7 @@ export const LoggableItem: Component = ({ recipe, nutritionItem }) => {
             step="0.1"
             value={servings()}
             onInput={(event) => {
-              const parsed = parseFloat(event.target.value, 10);
+              const parsed = parseFloat(event.target.value);
               if (!isNaN(parsed)) {
                 setServings(parsed);
               }

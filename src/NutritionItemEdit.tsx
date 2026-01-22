@@ -9,14 +9,14 @@ const NutritionItemEdit: Component = () => {
   const params = useParams();
   const [nutritionItemQuery] = createAuthorizedResource(
     () => params.id,
-    fetchNutritionItem
+    (token: string, info: any) => fetchNutritionItem(token, parseInt(info.value, 10))
   );
 
   const nutritionItem = () =>
     nutritionItemQuery()?.data?.food_diary_nutrition_item_by_pk || {};
   return (
     <Show when={nutritionItem().id}>
-      <NewNutritionItemForm initialItem={nutritionItem()} />
+      <NewNutritionItemForm initialItem={nutritionItem() as any} />
     </Show>
   );
 };

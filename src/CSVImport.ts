@@ -23,15 +23,15 @@ function parseNumber(parser: (x: any, d: number) => number, value: any) {
   return isNaN(parsed) ? 0 : parsed;
 }
 
-export function rowToEntry(row: string[]): Either<object, NewDiaryEntry> {
+export function rowToEntry(row: Record<string, string>): Either<object, NewDiaryEntry> {
   try {
     const consumed_at = parseDate(row["Consumed At"]);
-    if (isNaN(consumed_at)) {
-      return Left("Invalid Consumed At Date");
+    if (isNaN(consumed_at.getTime())) {
+      return Left({ error: "Invalid Consumed At Date" });
     }
     return Right({
       consumed_at: formatISO(consumed_at),
-      servings: parseFloat(row["Servings"], 10),
+      servings: parseFloat(row["Servings"]),
       nutrition_item: {
         description: row["Description"],
         calories: parseNumber(parseInt, row["Calories"]),

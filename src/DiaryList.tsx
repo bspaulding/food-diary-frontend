@@ -27,29 +27,29 @@ function localDay(timestamp: string) {
   return formatISO(startOfDay(parseISO(timestamp)));
 }
 
-function compareEntriesByConsumedAt(a, b) {
+function compareEntriesByConsumedAt(a: DiaryEntry, b: DiaryEntry) {
   return compareAsc(parseISO(a.consumed_at), parseISO(b.consumed_at));
 }
 
-function recipeTotalForKey(key, recipe) {
+function recipeTotalForKey(key: string, recipe: any) {
   return (recipe?.recipe_items || []).reduce(
-    (acc, recipe_item) =>
+    (acc: number, recipe_item: any) =>
       acc + recipe_item.servings * recipe_item.nutrition_item[key],
     0
   );
 }
 
-function entryTotalMacro(key, entry) {
+function entryTotalMacro(key: string, entry: any) {
   const itemTotal = entry.nutrition_item?.[key] || 0;
   return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
 }
 
-function totalMacro(key, entries) {
+function totalMacro(key: string, entries: any[]) {
   return parseInt(
-    entries.reduce(
-      (acc: number, entry) => acc + entryTotalMacro(key, entry),
+    String(entries.reduce(
+      (acc: number, entry: any) => acc + entryTotalMacro(key, entry),
       0
-    ),
+    )),
     10
   );
 }
@@ -90,7 +90,7 @@ const DiaryList: Component = () => {
   const entriesByDay = () =>
     Object.entries(
       entries().reduce(
-        (acc, entry) => ({
+        (acc: Record<string, DiaryEntry[]>, entry: DiaryEntry) => ({
           ...acc,
           [localDay(entry.consumed_at)]: [
             ...(acc[localDay(entry.consumed_at)] || []),
@@ -112,28 +112,18 @@ const DiaryList: Component = () => {
         <ButtonLink href="/trends">View Trends</ButtonLink>
       </div>
       <Show when={weeklyStatsQuery()?.data}>
-        {() => {
-          const currentWeekCalories = weeklyStatsQuery()?.data?.current_week?.aggregate?.sum?.calories || 0;
-          const fourWeeksCalories = weeklyStatsQuery()?.data?.past_four_weeks?.aggregate?.sum?.calories || 0;
-          
-          const currentWeekAvg = calculateDailyAverage(currentWeekCalories, currentWeekDays);
-          const fourWeeksAvg = calculateDailyAverage(fourWeeksCalories, fourWeeksDays);
-          
-          return (
-            <div class="flex justify-around mb-6 border-t border-b border-slate-200 py-2">
-              <EntryMacro
-                value={String(currentWeekAvg)}
-                unit=" kcal/day"
-                label="This Week"
-              />
-              <EntryMacro
-                value={String(fourWeeksAvg)}
-                unit=" kcal/day"
-                label="4 Week Avg"
-              />
-            </div>
-          );
-        }}
+        <div class="flex justify-around mb-6 border-t border-b border-slate-200 py-2">
+          <EntryMacro
+            value={String(calculateDailyAverage(weeklyStatsQuery()?.data?.current_week?.aggregate?.sum?.calories || 0, currentWeekDays))}
+            unit=" kcal/day"
+            label="This Week"
+          />
+          <EntryMacro
+            value={String(calculateDailyAverage(weeklyStatsQuery()?.data?.past_four_weeks?.aggregate?.sum?.calories || 0, fourWeeksDays))}
+            unit=" kcal/day"
+            label="4 Week Avg"
+          />
+        </div>
       </Show>
       <ul class="mt-4">
         <Show when={entries().length === 0}>
@@ -149,8 +139,8 @@ const DiaryList: Component = () => {
                 />
                 <EntryMacro
                   value={String(Math.ceil(
-                    dayEntries()[1].reduce(
-                      (acc, entry) => acc + entry.calories,
+                    (dayEntries()[1] as any[]).reduce(
+                      (acc: number, entry: any) => acc + entry.calories,
                       0
                     )
                   ))}
@@ -162,23 +152,23 @@ const DiaryList: Component = () => {
                 <li class="mb-4">
                   <div class="flex flex-row justify-around">
                     <EntryMacro
-                      value={totalMacro("added_sugars_grams", dayEntries()[1])}
+                      value={String(totalMacro("added_sugars_grams", dayEntries()[1] as any[]))}
                       unit="g"
                       label="Added Sugar"
                     />
                     <EntryMacro
-                      value={totalMacro("protein_grams", dayEntries()[1])}
+                      value={String(totalMacro("protein_grams", dayEntries()[1] as any[]))}
                       unit="g"
                       label="Protein"
                     />
                     <EntryMacro
-                      value={totalMacro("total_fat_grams", dayEntries()[1])}
+                      value={String(totalMacro("total_fat_grams", dayEntries()[1] as any[]))}
                       unit="g"
                       label="Total Fat"
                     />
                   </div>
                 </li>
-                <Index each={dayEntries()[1].sort(compareEntriesByConsumedAt)}>
+                <Index each={(dayEntries()[1] as any[]).sort(compareEntriesByConsumedAt)}>
                   {(entry, i) => (
                     <li class="mb-4">
                       <p class="font-semibold">
@@ -208,7 +198,7 @@ const DiaryList: Component = () => {
                               deleteEntry(
                                 accessToken,
                                 entry(),
-                                getEntriesQuery(),
+                                getEntriesQuery() as GetEntriesQueryResponse,
                                 mutate
                               )
                             }

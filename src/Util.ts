@@ -6,9 +6,9 @@ export function accessorsToObject<T>(accessors: Accessors<T>): T {
   return Object.entries(accessors).reduce(
     (acc, [k, v]) => ({
       ...acc,
-      [k]: v(),
+      [k]: (v as any)(),
     }),
-    {}
+    {} as T
   );
 }
 

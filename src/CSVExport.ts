@@ -23,7 +23,7 @@ const header = [
 
 const DESCRIPTION_COLUMN_INDEX = header.indexOf("Description");
 
-const headerKeyMap = {
+const headerKeyMap: Record<string, string[]> = {
   "Consumed At": ["consumed_at"],
   Description: ["nutrition_item", "description"],
   Servings: ["servings"],
@@ -42,10 +42,10 @@ const headerKeyMap = {
   "Protein (g)": ["nutrition_item", "protein_grams"],
 };
 
-export function entriesToCsv(entries): string {
+export function entriesToCsv(entries: any[]): string {
   return stringsToCsv([
     header,
-    ...entries.flatMap((entry) => {
+    ...entries.flatMap((entry: any) => {
       if (entry.nutrition_item) {
         return [
           header.map((key) => {
@@ -65,7 +65,7 @@ export function entriesToCsv(entries): string {
           }),
         ];
       } else {
-        return entry.recipe.recipe_items.map((recipe_item) => {
+        return entry.recipe.recipe_items.map((recipe_item: any) => {
           return header.map((key) => {
             const consumedAt = parseISO(
               getPath(headerKeyMap["Consumed At"], entry)
@@ -111,6 +111,6 @@ function stringsToCsv(rows: string[][]): string {
     .trim();
 }
 
-function getPath(path: string[], x: object): any {
-  return path.reduce((x, k) => x[k], x);
+function getPath(path: string[], x: any): any {
+  return path.reduce((x: any, k) => x[k], x);
 }
