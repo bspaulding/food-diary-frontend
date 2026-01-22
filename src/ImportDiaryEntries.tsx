@@ -25,6 +25,7 @@ const ImportDiaryEntries: Component = () => {
   const [{ accessToken }] = useAuth();
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
+  const [importError, setImportError] = createSignal(null);
 
   const fileChanged = async (event) => {
     const file = event.target.files[0];
@@ -40,12 +41,19 @@ const ImportDiaryEntries: Component = () => {
   const startImport = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const response = await insertDiaryEntries(
-      accessToken(),
-      parseResult().rights
-    );
-    setSaving(false);
-    setSaved(!!response.data);
+    setImportError(null);
+    try {
+      const response = await insertDiaryEntries(
+        accessToken(),
+        parseResult().rights
+      );
+      setSaving(false);
+      setSaved(!!response.data);
+    } catch (error) {
+      console.error("CSV import failed:", error);
+      setSaving(false);
+      setImportError(error.message || "An error occurred during import");
+    }
   };
 
   return (
@@ -53,6 +61,12 @@ const ImportDiaryEntries: Component = () => {
       <Show when={saved()}>
         <p class="font-semibold text-center text-lg mb-4">Import successful!</p>
         <ButtonLink href="/">Back to diary</ButtonLink>
+      </Show>
+      <Show when={importError()}>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+          <p class="font-bold">Import Error</p>
+          <p>{importError()}</p>
+        </div>
       </Show>
       <Show when={!parseResult().parsed}>
         <form>
