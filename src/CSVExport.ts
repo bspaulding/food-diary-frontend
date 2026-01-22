@@ -21,6 +21,8 @@ const header = [
   "Protein (g)",
 ];
 
+const DESCRIPTION_COLUMN_INDEX = header.indexOf("Description");
+
 const headerKeyMap = {
   "Consumed At": ["consumed_at"],
   Description: ["nutrition_item", "description"],
@@ -95,8 +97,8 @@ function stringsToCsv(rows: string[][]): string {
     .map((row, rowIndex) => {
       return row
         .map((cell, cellIndex) => {
-          // Quote the Description field (index 3 in data rows, not in header row)
-          if (rowIndex > 0 && cellIndex === 3) {
+          // Quote the Description field in data rows (not in header row)
+          if (rowIndex > 0 && cellIndex === DESCRIPTION_COLUMN_INDEX) {
             // Escape double quotes by doubling them (CSV RFC 4180)
             const escapedCell = String(cell).replace(/"/g, '""');
             return `"${escapedCell}"`;
