@@ -25,10 +25,11 @@ const ImportDiaryEntries: Component = () => {
   const [{ accessToken }] = useAuth();
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
-  const [importError, setImportError] = createSignal(null);
+  const [importError, setImportError] = createSignal<string | null>(null);
 
   const fileChanged = async (event) => {
     const file = event.target.files[0];
+    setImportError(null);
     const csv = await readFile(file);
     const rows = parseCSV(csv);
     const entries = rows.map(rowToEntry);
