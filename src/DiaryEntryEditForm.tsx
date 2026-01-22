@@ -13,7 +13,7 @@ const DiaryEntryEditForm: Component = () => {
   const [{ accessToken }] = useAuth();
   const [diaryEntryQuery] = createAuthorizedResource(
     () => params.id,
-    (token: string, info: any) => getDiaryEntry(token, info.value)
+    getDiaryEntry
   );
   const [consumedAt, setConsumedAt] = createSignal<string | undefined>(undefined);
   const [servings, setServings] = createSignal<number | undefined>(undefined);

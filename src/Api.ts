@@ -257,7 +257,7 @@ query GetNutritionItem($id: Int!) {
   }
 }
 `;
-export async function fetchNutritionItem(accessToken: string, id: number) {
+export async function fetchNutritionItem(accessToken: string, id: number | string) {
   const response = await fetchQuery(accessToken, getNutritionItemQuery, { id });
   return response.json();
 }

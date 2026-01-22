@@ -45,12 +45,9 @@ function entryTotalMacro(key: string, entry: any) {
 }
 
 function totalMacro(key: string, entries: any[]) {
-  return parseInt(
-    String(entries.reduce(
-      (acc: number, entry: any) => acc + entryTotalMacro(key, entry),
-      0
-    )),
-    10
+  return entries.reduce(
+    (acc: number, entry: any) => acc + entryTotalMacro(key, entry),
+    0
   );
 }
 
