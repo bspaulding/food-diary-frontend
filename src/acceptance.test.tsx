@@ -114,7 +114,9 @@ describe("Browser Acceptance Tests", () => {
     await waitFor(
       () => {
         // Check if we're on the add item page by looking for the form
-        const descriptionInput = document.querySelector('input[name="description"]');
+        const descriptionInput = document.querySelector(
+          'input[name="description"]'
+        );
         expect(descriptionInput).not.toBeNull();
       },
       { timeout: 5000 }
