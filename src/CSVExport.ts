@@ -64,28 +64,26 @@ export function entriesToCsv(entries): string {
         ];
       } else {
         return entry.recipe.recipe_items.map((recipe_item) => {
-          return [
-            header.map((key) => {
-              const consumedAt = parseISO(
-                getPath(headerKeyMap["Consumed At"], entry)
-              );
-              switch (key) {
-                case "Date":
-                  return format(consumedAt, "yyyy-MM-dd");
-                case "Time":
-                  return format(consumedAt, "p");
-                case "Consumed At":
-                  return formatISO(consumedAt);
-                case "Servings":
-                  return entry.servings * recipe_item.servings;
-                case "Description":
-                  const itemName = getPath(headerKeyMap[key], recipe_item);
-                  return `${entry.recipe.name} - ${itemName}`;
-                default:
-                  return getPath(headerKeyMap[key], recipe_item);
-              }
-            }),
-          ];
+          return header.map((key) => {
+            const consumedAt = parseISO(
+              getPath(headerKeyMap["Consumed At"], entry)
+            );
+            switch (key) {
+              case "Date":
+                return format(consumedAt, "yyyy-MM-dd");
+              case "Time":
+                return format(consumedAt, "p");
+              case "Consumed At":
+                return formatISO(consumedAt);
+              case "Servings":
+                return entry.servings * recipe_item.servings;
+              case "Description":
+                const itemName = getPath(headerKeyMap[key], recipe_item);
+                return `${entry.recipe.name} - ${itemName}`;
+              default:
+                return getPath(headerKeyMap[key], recipe_item);
+            }
+          });
         });
       }
     }),
@@ -94,10 +92,14 @@ export function entriesToCsv(entries): string {
 
 function stringsToCsv(rows: string[][]): string {
   return rows
-    .map((row) => {
+    .map((row, rowIndex) => {
       return row
-        .map((cell) => {
-          return `${cell}`; // TODO escaping?
+        .map((cell, cellIndex) => {
+          // Quote the Description field (index 3 in data rows, not in header row)
+          if (rowIndex > 0 && cellIndex === 3) {
+            return `"${cell}"`;
+          }
+          return `${cell}`;
         })
         .join(",");
     })
