@@ -103,10 +103,10 @@ describe("entriesToCSV", () => {
     const entries = responseData.data.food_diary_diary_entry;
     expect(entriesToCsv(entries))
       .toEqual(`Date,Time,Consumed At,Description,Servings,Calories,Total Fat (g),Saturated Fat (g),Trans Fat (g),Polyunsaturated Fat (g),Monounsaturated Fat (g),Cholesterol (mg),Sodium (mg),Total Carbohydrate (g),Dietary Fiber (g),Total Sugars (g),Added Sugars (g),Protein (g)
-2022-08-28,2:30 PM,2022-08-28T14:30:00Z,"Honey Bunches of Oats",1,160,2,0,0,0.5,1,0,190,34,2,9,8,3
-2022-08-28,2:30 PM,2022-08-28T14:30:00Z,"Almondmilk",1,60,2.5,0,0,0.5,1.5,0,150,8,0,7,7,1
-2022-08-29,2:30 PM,2022-08-29T14:30:00Z,"Test Recipe - Almondmilk",4,60,2.5,0,0,0.5,1.5,0,150,8,0,7,7,1
-2022-08-29,2:30 PM,2022-08-29T14:30:00Z,"Test Recipe - Honey Bunches of Oats",2,160,2,0,0,0.5,1,0,190,34,2,9,8,3`);
+2022-08-28,7:30 AM,2022-08-28T07:30:00-07:00,"Honey Bunches of Oats",1,160,2,0,0,0.5,1,0,190,34,2,9,8,3
+2022-08-28,7:30 AM,2022-08-28T07:30:00-07:00,"Almondmilk",1,60,2.5,0,0,0.5,1.5,0,150,8,0,7,7,1
+2022-08-29,7:30 AM,2022-08-29T07:30:00-07:00,"Test Recipe - Almondmilk",4,60,2.5,0,0,0.5,1.5,0,150,8,0,7,7,1
+2022-08-29,7:30 AM,2022-08-29T07:30:00-07:00,"Test Recipe - Honey Bunches of Oats",2,160,2,0,0,0.5,1,0,190,34,2,9,8,3`);
   });
 
   it("quotes description field with special characters", () => {
