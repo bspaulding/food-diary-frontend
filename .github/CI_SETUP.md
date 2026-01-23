@@ -5,6 +5,7 @@ This document describes the CI workflow configuration and how to enable required
 ## Current Configuration
 
 The CI workflow (`.github/workflows/ci.yml`) is configured to:
+
 - Run on all push events to any branch
 - Run on all pull request events to any branch
 - Execute tests with Node.js in the America/Los_Angeles timezone
@@ -41,6 +42,7 @@ You can also use GitHub Rulesets for more flexible configuration:
 ## Verifying the Configuration
 
 Once configured, pull requests to the protected branch will:
+
 - Show the CI status check in the PR
 - Prevent merging if the CI check fails
 - Display "Required" next to the CI check status

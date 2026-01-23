@@ -50,4 +50,3 @@ jobs:
       - name: Push image
         id: push
         run: docker push ${{ inputs.targetRegistry }}/${{ inputs.targetRepo }}:${{ inputs.targetTag }}
-

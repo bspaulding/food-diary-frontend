@@ -1,12 +1,17 @@
 import type { Component, JSX } from "solid-js";
 import { createSignal, Index, Show, For } from "solid-js";
 import { debounce } from "@solid-primitives/scheduled";
-import { searchItemsAndRecipes, searchItemsOnly, SearchNutritionItem, SearchRecipe } from "./Api";
+import {
+  searchItemsAndRecipes,
+  searchItemsOnly,
+  SearchNutritionItem,
+  SearchRecipe,
+} from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 
-type ItemOrRecipe = { 
-  clear?: () => void; 
-  recipe?: SearchRecipe; 
+type ItemOrRecipe = {
+  clear?: () => void;
+  recipe?: SearchRecipe;
   nutritionItem?: SearchNutritionItem;
 };
 export enum ItemsQueryType {
@@ -24,13 +29,11 @@ const SearchItemsForm: Component<Props> = ({ children, queryType }: Props) => {
     search,
     (token: string, info: { value: string; refetching: boolean | unknown }) => {
       const searchValue = info.value;
-      return (
-        "undefined" === typeof queryType ||
+      return "undefined" === typeof queryType ||
         queryType === ItemsQueryType.ItemsAndRecipes
-          ? searchItemsAndRecipes(token, searchValue)
-          : searchItemsOnly(token, searchValue)
-      );
-    }
+        ? searchItemsAndRecipes(token, searchValue)
+        : searchItemsOnly(token, searchValue);
+    },
   );
   const nutritionItems = () =>
     getItemsQuery()?.data?.food_diary_search_nutrition_items || [];

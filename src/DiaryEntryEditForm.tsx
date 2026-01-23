@@ -13,9 +13,11 @@ const DiaryEntryEditForm: Component = () => {
   const [{ accessToken }] = useAuth();
   const [diaryEntryQuery] = createAuthorizedResource(
     () => params.id,
-    getDiaryEntry
+    getDiaryEntry,
   );
-  const [consumedAt, setConsumedAt] = createSignal<string | undefined>(undefined);
+  const [consumedAt, setConsumedAt] = createSignal<string | undefined>(
+    undefined,
+  );
   const [servings, setServings] = createSignal<number | undefined>(undefined);
   const [disabled, setDisabled] = createSignal(false);
   const [errors, setErrors] = createSignal([]);
@@ -69,7 +71,7 @@ const DiaryEntryEditForm: Component = () => {
               type="datetime-local"
               value={format(
                 parseISO(diaryEntry().consumed_at),
-                "yyyy-MM-dd'T'HH:mm"
+                "yyyy-MM-dd'T'HH:mm",
               )}
               onChange={(e) => setConsumedAt(e.target.value)}
             />
@@ -85,15 +87,19 @@ const DiaryEntryEditForm: Component = () => {
                   return; // nothing changed, nothing to do
                 }
                 setDisabled(true);
-                
+
                 // Use the changed consumed_at if provided, otherwise keep original
-                const newConsumedAt = consumedAt() !== undefined
-                  ? formatISO(parse(consumedAt()!, "yyyy-MM-dd'T'HH:mm", new Date()))
-                  : diaryEntry().consumed_at;
-                
+                const newConsumedAt =
+                  consumedAt() !== undefined
+                    ? formatISO(
+                        parse(consumedAt()!, "yyyy-MM-dd'T'HH:mm", new Date()),
+                      )
+                    : diaryEntry().consumed_at;
+
                 // Use the changed servings if provided, otherwise keep original
-                const newServings = servings() !== undefined ? servings() : diaryEntry().servings;
-                
+                const newServings =
+                  servings() !== undefined ? servings() : diaryEntry().servings;
+
                 try {
                   const response = await updateDiaryEntry(accessToken(), {
                     id: diaryEntry().id,
@@ -107,7 +113,7 @@ const DiaryEntryEditForm: Component = () => {
                     setErrors(
                       response.errors
                         .filter((e: any) => e.message)
-                        .map((e: any) => e.message)
+                        .map((e: any) => e.message),
                     );
                   } else {
                     setErrors([]);

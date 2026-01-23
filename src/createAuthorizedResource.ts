@@ -5,7 +5,7 @@ import { useAuth } from "./Auth0";
 function createAuthorizedResource<S = true, T = unknown>(
   source?: ResourceSource<S> | ResourceFetcher<string, T, unknown>,
   fetcher?: ResourceFetcher<S, T, unknown> | Record<string, any>,
-  options: Record<string, any> = {}
+  options: Record<string, any> = {},
 ) {
   if (arguments.length === 2) {
     if (typeof fetcher === "object") {
@@ -27,7 +27,7 @@ function createAuthorizedResource<S = true, T = unknown>(
     ({ accessToken, source }: { accessToken: string; source: any }) => {
       return (fetcher as any)(accessToken, source);
     },
-    options
+    options,
   );
 }
 

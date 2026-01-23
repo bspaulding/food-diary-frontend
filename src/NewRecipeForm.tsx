@@ -19,7 +19,7 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
       name: "",
       total_servings: 1,
       recipe_items: [],
-    }
+    },
   );
   const navigate = useNavigate();
   return (
@@ -100,7 +100,7 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
         <fieldset>
           <legend class="font-semibold">Add New Items</legend>
           <SearchItemsForm queryType={ItemsQueryType.ItemsOnly}>
-            {(({ clear, nutritionItem }: any) => (
+            {({ clear, nutritionItem }: any) => (
               <li class="flex flex-row">
                 <button
                   class="mr-1 text-3xl text-indigo-600 transition-transform "
@@ -124,7 +124,7 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
                 </button>
                 <p>{nutritionItem.description}</p>
               </li>
-            ))}
+            )}
           </SearchItemsForm>
         </fieldset>
         <fieldset class="mt-4">

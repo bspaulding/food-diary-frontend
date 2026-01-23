@@ -23,7 +23,7 @@ const RecipeShow: Component = () => {
   const params = useParams();
   const [recipeQuery] = createAuthorizedResource(
     () => params.id,
-    (token: string, info: any) => fetchRecipe(token, parseInt(info.value, 10))
+    (token: string, info: any) => fetchRecipe(token, parseInt(info.value, 10)),
   );
   const recipe = () =>
     recipeQuery()?.data?.food_diary_recipe_by_pk || { id: params.id };
@@ -61,7 +61,8 @@ const RecipeShow: Component = () => {
                 {item().nutrition_item.description}
               </a>
               <p class="text-sm">
-                {item().servings} servings - {Math.round(calculateItemCalories(item()))} kcal
+                {item().servings} servings -{" "}
+                {Math.round(calculateItemCalories(item()))} kcal
               </p>
             </li>
           )}

@@ -11,7 +11,9 @@ const UserProfile: Component = () => {
         src={(user() as any)?.picture}
         class="border border-slate-800 rounded-full mb-4 max-w-xs"
       />
-      <p class="font-semibold text-lg">{(user() as any)?.nickname || (user() as any)?.name}</p>
+      <p class="font-semibold text-lg">
+        {(user() as any)?.nickname || (user() as any)?.name}
+      </p>
       <p class="text-lg">{(user() as any)?.email}</p>
       <div class="mt-4 flex flex-col items-center">
         <a class="ml-3" href="/diary_entry/import">

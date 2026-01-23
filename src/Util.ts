@@ -8,7 +8,7 @@ export function accessorsToObject<T>(accessors: Accessors<T>): T {
       ...acc,
       [k]: (v as any)(),
     }),
-    {} as T
+    {} as T,
   );
 }
 

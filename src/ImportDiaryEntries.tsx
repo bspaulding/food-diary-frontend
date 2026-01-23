@@ -25,7 +25,11 @@ function readFile(file: File) {
 }
 
 const ImportDiaryEntries: Component = () => {
-  const [parseResult, setParseResult] = createSignal<{ parsed?: boolean; lefts: object[]; rights: NewDiaryEntry[] }>({ lefts: [], rights: [] });
+  const [parseResult, setParseResult] = createSignal<{
+    parsed?: boolean;
+    lefts: object[];
+    rights: NewDiaryEntry[];
+  }>({ lefts: [], rights: [] });
   const [{ accessToken }] = useAuth();
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
@@ -39,7 +43,7 @@ const ImportDiaryEntries: Component = () => {
       const csv = await readFile(file);
       const rows = parseCSV(csv);
       const entries: Either<object, NewDiaryEntry>[] = rows.map(rowToEntry);
-      
+
       const { lefts, rights } = entries.reduce(
         (acc, entry) => {
           if (isLeft(entry)) {
@@ -49,14 +53,15 @@ const ImportDiaryEntries: Component = () => {
           }
           return acc;
         },
-        { lefts: [] as object[], rights: [] as NewDiaryEntry[] }
+        { lefts: [] as object[], rights: [] as NewDiaryEntry[] },
       );
-      
+
       console.log({ lefts, rights });
       setParseResult({ parsed: true, lefts, rights });
     } catch (error: unknown) {
       console.error("CSV file processing failed:", error);
-      const message = error instanceof Error ? error.message : "Failed to process CSV file";
+      const message =
+        error instanceof Error ? error.message : "Failed to process CSV file";
       setImportError(message);
     }
   };
@@ -68,14 +73,17 @@ const ImportDiaryEntries: Component = () => {
     try {
       const response = await insertDiaryEntries(
         accessToken(),
-        parseResult().rights
+        parseResult().rights,
       );
       setSaving(false);
       setSaved(!!response.data);
     } catch (error: unknown) {
       console.error("CSV import failed:", error);
       setSaving(false);
-      const message = error instanceof Error ? error.message : "An error occurred during import";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during import";
       setImportError(message);
     }
   };
@@ -87,7 +95,10 @@ const ImportDiaryEntries: Component = () => {
         <ButtonLink href="/">Back to diary</ButtonLink>
       </Show>
       <Show when={importError()}>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+        <div
+          class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+          role="alert"
+        >
           <p class="font-bold">Import Error</p>
           <p>{importError()}</p>
         </div>
@@ -146,7 +157,7 @@ const ImportDiaryEntries: Component = () => {
                       <p class="text-xs">
                         {format(
                           parseISO(row().consumed_at),
-                          "MMMM d, yyyy pppp"
+                          "MMMM d, yyyy pppp",
                         )}
                       </p>
                     </td>
@@ -177,7 +188,9 @@ const ImportDiaryEntries: Component = () => {
 
 export default ImportDiaryEntries;
 
-const CollapsibleNutritionFacts: Component<{ entry: NewDiaryEntry }> = ({ entry }) => {
+const CollapsibleNutritionFacts: Component<{ entry: NewDiaryEntry }> = ({
+  entry,
+}) => {
   const [collapsed, setCollapsed] = createSignal(true);
   const toggleCollapsed = (e: Event) => {
     e.preventDefault();

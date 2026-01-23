@@ -28,7 +28,10 @@ render(
       <Route path="/diary_entry/new" component={NewDiaryEntryForm as any} />
       <Route path="/diary_entry/:id/edit" component={DiaryEntryEditForm} />
       <Route path="/diary_entry/import" component={ImportDiaryEntries} />
-      <Route path="/nutrition_item/new" component={NewNutritionItemForm as any} />
+      <Route
+        path="/nutrition_item/new"
+        component={NewNutritionItemForm as any}
+      />
       <Route path="/nutrition_item/:id" component={NutritionItemShow} />
       <Route path="/nutrition_item/:id/edit" component={NutritionItemEdit} />
       <Route path="/recipe/new" component={NewRecipeForm as any} />
@@ -36,5 +39,5 @@ render(
       <Route path="/recipe/:id/edit" component={RecipeEdit} />
     </Router>
   ),
-  document.getElementById("root") as HTMLElement
+  document.getElementById("root") as HTMLElement,
 );
