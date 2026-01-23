@@ -13,7 +13,6 @@ import {
   startOfDay,
   compareAsc,
   compareDesc,
-  subDays,
 } from "date-fns";
 
 function localDay(timestamp: string) {
@@ -94,13 +93,13 @@ const DiaryList: Component = () => {
     try {
       const currentEntries = entries();
       
-      // Calculate cursor: start of the oldest day we've loaded
+      // Use the exact consumed_at timestamp of the last entry as cursor
       const cursorDate = currentEntries.length > 0
-        ? startOfDay(parseISO(currentEntries[currentEntries.length - 1].consumed_at))
+        ? currentEntries[currentEntries.length - 1].consumed_at
         : null;
       
       const options = cursorDate
-        ? { cursorConsumedAt: formatISO(cursorDate) }
+        ? { cursorConsumedAt: cursorDate }
         : {};
 
       const response = await fetchEntries(accessToken(), options);
@@ -110,22 +109,29 @@ const DiaryList: Component = () => {
       if (newEntries.length === 0) {
         setHasMore(false);
       } else {
-        // Get unique days from new entries
-        const uniqueDays = new Set(newEntries.map(entry => localDay(entry.consumed_at)));
-        const sortedDays = Array.from(uniqueDays).sort((a, b) => compareDesc(parseISO(a), parseISO(b)));
+        // Pre-calculate localDay for each entry to avoid redundant parsing
+        const entriesWithDay = newEntries.map(entry => ({
+          entry,
+          day: localDay(entry.consumed_at)
+        }));
+        
+        // Get unique days and sort them (ISO strings sort correctly lexicographically)
+        const uniqueDays = Array.from(new Set(entriesWithDay.map(e => e.day)))
+          .sort()
+          .reverse();
         
         // Take only entries from the first DAYS_PER_PAGE days
-        const daysToInclude = sortedDays.slice(0, DAYS_PER_PAGE);
-        const filteredEntries = newEntries.filter(entry => 
-          daysToInclude.includes(localDay(entry.consumed_at))
-        );
+        const daysToInclude = new Set(uniqueDays.slice(0, DAYS_PER_PAGE));
+        const filteredEntries = entriesWithDay
+          .filter(e => daysToInclude.has(e.day))
+          .map(e => e.entry);
         
         if (filteredEntries.length > 0) {
           setEntries([...currentEntries, ...filteredEntries]);
         }
         
         // If we got fewer days than requested, we might be at the end
-        if (sortedDays.length < DAYS_PER_PAGE) {
+        if (uniqueDays.length < DAYS_PER_PAGE) {
           setHasMore(false);
         }
       }

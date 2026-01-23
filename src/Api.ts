@@ -53,6 +53,8 @@ export type FetchEntriesOptions = {
   cursorConsumedAt?: string;
 };
 
+const MAX_ENTRIES_PER_REQUEST = 200;
+
 type GetEntriesVariables = {
   where?: {
     consumed_at: { _lt: string };
@@ -68,7 +70,7 @@ export async function fetchEntries(
   const variables: GetEntriesVariables = {};
   
   // Use a reasonable limit to avoid fetching too many entries at once
-  variables.limit = 200;
+  variables.limit = MAX_ENTRIES_PER_REQUEST;
   
   if (cursorConsumedAt) {
     variables.where = {
