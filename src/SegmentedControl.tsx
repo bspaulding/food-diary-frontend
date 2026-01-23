@@ -3,7 +3,7 @@ import { createSignal, Index } from "solid-js";
 
 type Props = {
   segments: string[];
-  children: Component<any>;
+  children: (segment: string) => any;
 };
 
 const SegmentedControl: Component<Props> = ({ segments, children }) => {

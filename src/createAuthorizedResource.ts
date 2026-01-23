@@ -1,11 +1,10 @@
-import type { ResourceFetcher, ResourceSource } from "solid-js";
 import { createResource } from "solid-js";
 import { useAuth } from "./Auth0";
 
-function createAuthorizedResource<S, T>(
-  source: ResourceSource<S>,
-  fetcher: ResourceFetcher<S, T, unknown>,
-  options = {},
+function createAuthorizedResource<S = true, T = unknown>(
+  source?: any,
+  fetcher?: any,
+  options: Record<string, any> = {},
 ) {
   if (arguments.length === 2) {
     if (typeof fetcher === "object") {
@@ -24,7 +23,7 @@ function createAuthorizedResource<S, T>(
   });
   return createResource(
     tokenizedSource,
-    ({ accessToken, source }) => {
+    ({ accessToken, source }: { accessToken: string; source: any }) => {
       return fetcher(accessToken, source);
     },
     options,

@@ -1,28 +1,38 @@
-import type { Component } from "solid-js";
+import type { Component, JSX } from "solid-js";
 import { createSignal, Index, Show, For } from "solid-js";
 import { debounce } from "@solid-primitives/scheduled";
-import { searchItemsAndRecipes, searchItemsOnly } from "./Api";
+import {
+  searchItemsAndRecipes,
+  searchItemsOnly,
+  SearchNutritionItem,
+  SearchRecipe,
+} from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 
-type ItemOrRecipe = { recipe?: Recipe; nutritionItem?: NutritionItem };
+type ItemOrRecipe = {
+  clear?: () => void;
+  recipe?: SearchRecipe;
+  nutritionItem?: SearchNutritionItem;
+};
 export enum ItemsQueryType {
   ItemsAndRecipes,
   ItemsOnly,
 }
 type Props = {
-  children: (ItemOrRecipe) => Element;
+  children: (item: ItemOrRecipe) => JSX.Element;
   queryType?: ItemsQueryType;
 };
 
-const SearchItemsForm: Component = ({ children, queryType }: Props) => {
+const SearchItemsForm: Component<Props> = ({ children, queryType }: Props) => {
   const [search, setSearch] = createSignal("");
   const [getItemsQuery] = createAuthorizedResource(
     search,
-    // TODO this should probably handle being a signal somehow? ie i think this is broken if queryType changes
-    "undefined" === typeof queryType ||
-      queryType === ItemsQueryType.ItemsAndRecipes
-      ? searchItemsAndRecipes
-      : searchItemsOnly,
+    (token: string, searchValue: string) => {
+      return "undefined" === typeof queryType ||
+        queryType === ItemsQueryType.ItemsAndRecipes
+        ? searchItemsAndRecipes(token, searchValue)
+        : searchItemsOnly(token, searchValue);
+    },
   );
   const nutritionItems = () =>
     getItemsQuery()?.data?.food_diary_search_nutrition_items || [];

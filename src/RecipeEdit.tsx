@@ -7,12 +7,15 @@ import NewRecipeForm from "./NewRecipeForm";
 
 const RecipeEdit: Component = () => {
   const params = useParams();
-  const [recipeQuery] = createAuthorizedResource(() => params.id, fetchRecipe);
+  const [recipeQuery] = createAuthorizedResource(
+    () => params.id,
+    (token: string, id: string) => fetchRecipe(token, parseInt(id, 10)),
+  );
   const recipe = () => recipeQuery()?.data?.food_diary_recipe_by_pk || {};
 
   return (
     <Show when={recipe().id}>
-      <NewRecipeForm initialRecipe={recipe()} />
+      <NewRecipeForm initialRecipe={recipe() as any} />
     </Show>
   );
   return <div>{recipe().id}</div>;

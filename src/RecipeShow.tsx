@@ -21,7 +21,10 @@ const calculateItemCalories = (item: RecipeItem): number => {
 
 const RecipeShow: Component = () => {
   const params = useParams();
-  const [recipeQuery] = createAuthorizedResource(() => params.id, fetchRecipe);
+  const [recipeQuery] = createAuthorizedResource(
+    () => params.id,
+    (token: string, id: string) => fetchRecipe(token, parseInt(id, 10)),
+  );
   const recipe = () =>
     recipeQuery()?.data?.food_diary_recipe_by_pk || { id: params.id };
   const recipeItems = createMemo(() => recipe().recipe_items);
@@ -42,7 +45,7 @@ const RecipeShow: Component = () => {
       </div>
       <h1 class="font-semibold text-2xl">{recipe().name}</h1>
       <Show when={itemLoaded()}>
-        <LoggableItem recipe={{ id: recipe().id, name: "Log It" }} />
+        <LoggableItem recipe={{ id: recipe().id, name: "Log It" } as any} />
       </Show>
       <Show when={itemLoaded()}>
         <p class="text-lg font-semibold mt-4">

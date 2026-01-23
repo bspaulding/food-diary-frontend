@@ -28,7 +28,7 @@ describe("Add New Entry Flow Acceptance Test", () => {
     render(() => (
       <Router root={App}>
         <Route path="/" component={DiaryList} />
-        <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
+        <Route path="/diary_entry/new" component={NewDiaryEntryForm as any} />
       </Router>
     ));
 

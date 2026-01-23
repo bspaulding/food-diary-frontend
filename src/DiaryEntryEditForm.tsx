@@ -13,10 +13,12 @@ const DiaryEntryEditForm: Component = () => {
   const [{ accessToken }] = useAuth();
   const [diaryEntryQuery] = createAuthorizedResource(
     () => params.id,
-    getDiaryEntry,
+    (token: string, id: string) => getDiaryEntry(token, id),
   );
-  const [consumedAt, setConsumedAt] = createSignal(undefined);
-  const [servings, setServings] = createSignal(undefined);
+  const [consumedAt, setConsumedAt] = createSignal<string | undefined>(
+    undefined,
+  );
+  const [servings, setServings] = createSignal<number | undefined>(undefined);
   const [disabled, setDisabled] = createSignal(false);
   const [errors, setErrors] = createSignal([]);
   const navigate = useNavigate();
@@ -90,7 +92,7 @@ const DiaryEntryEditForm: Component = () => {
                 const newConsumedAt =
                   consumedAt() !== undefined
                     ? formatISO(
-                        parse(consumedAt(), "yyyy-MM-dd'T'HH:mm", new Date()),
+                        parse(consumedAt()!, "yyyy-MM-dd'T'HH:mm", new Date()),
                       )
                     : diaryEntry().consumed_at;
 
@@ -110,8 +112,8 @@ const DiaryEntryEditForm: Component = () => {
                     setDisabled(false);
                     setErrors(
                       response.errors
-                        .filter((e) => e.message)
-                        .map((e) => e.message),
+                        .filter((e: any) => e.message)
+                        .map((e: any) => e.message),
                     );
                   } else {
                     setErrors([]);
