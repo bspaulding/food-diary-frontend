@@ -7,8 +7,8 @@ fragment Macros on food_diary_nutrition_item {
 	protein_grams
 }
 
-query GetEntries($limit: Int, $where: food_diary_diary_entry_bool_exp) {
-    food_diary_diary_entry(order_by: { day: desc, consumed_at: desc }, limit: $limit, where: $where) {
+query GetEntries($where: food_diary_diary_entry_bool_exp, $limit: Int) {
+    food_diary_diary_entry(order_by: { consumed_at: desc }, where: $where, limit: $limit) {
         id
         day
         consumed_at
@@ -50,43 +50,29 @@ export type GetEntriesQueryResponse = {
 };
 
 export type FetchEntriesOptions = {
-  limit?: number;
-  cursorDay?: string;
   cursorConsumedAt?: string;
 };
 
 type GetEntriesVariables = {
-  limit?: number;
   where?: {
-    _or: Array<
-      | { day: { _lt: string } }
-      | { _and: Array<{ day: { _eq: string } } | { consumed_at: { _lt: string } }> }
-    >;
+    consumed_at: { _lt: string };
   };
+  limit?: number;
 };
 
 export async function fetchEntries(
   accessToken: string,
   options: FetchEntriesOptions = {}
 ): Promise<GetEntriesQueryResponse> {
-  const { limit, cursorDay, cursorConsumedAt } = options;
+  const { cursorConsumedAt } = options;
   const variables: GetEntriesVariables = {};
   
-  if (limit) {
-    variables.limit = limit;
-  }
+  // Use a reasonable limit to avoid fetching too many entries at once
+  variables.limit = 200;
   
-  if (cursorDay && cursorConsumedAt) {
+  if (cursorConsumedAt) {
     variables.where = {
-      _or: [
-        { day: { _lt: cursorDay } },
-        {
-          _and: [
-            { day: { _eq: cursorDay } },
-            { consumed_at: { _lt: cursorConsumedAt } }
-          ]
-        }
-      ]
+      consumed_at: { _lt: cursorConsumedAt }
     };
   }
   

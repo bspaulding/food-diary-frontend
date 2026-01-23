@@ -13,6 +13,7 @@ import {
   startOfDay,
   compareAsc,
   compareDesc,
+  subDays,
 } from "date-fns";
 
 function localDay(timestamp: string) {
@@ -60,7 +61,7 @@ const EntryMacro: Component<{
   </div>
 );
 
-const PAGE_SIZE = 30;
+const DAYS_PER_PAGE = 7;
 
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
@@ -92,25 +93,41 @@ const DiaryList: Component = () => {
     setIsLoading(true);
     try {
       const currentEntries = entries();
-      const lastEntry = currentEntries[currentEntries.length - 1];
       
-      const options = lastEntry
-        ? {
-            limit: PAGE_SIZE,
-            cursorDay: lastEntry.day,
-            cursorConsumedAt: lastEntry.consumed_at,
-          }
-        : { limit: PAGE_SIZE };
+      // Calculate cursor: start of the oldest day we've loaded
+      const cursorDate = currentEntries.length > 0
+        ? startOfDay(parseISO(currentEntries[currentEntries.length - 1].consumed_at))
+        : null;
+      
+      const options = cursorDate
+        ? { cursorConsumedAt: formatISO(cursorDate) }
+        : {};
 
       const response = await fetchEntries(accessToken(), options);
       const newEntries = response?.data?.food_diary_diary_entry || [];
 
-      if (newEntries.length < PAGE_SIZE) {
+      // Check if we've reached the end (no new entries)
+      if (newEntries.length === 0) {
         setHasMore(false);
-      }
-
-      if (newEntries.length > 0) {
-        setEntries([...currentEntries, ...newEntries]);
+      } else {
+        // Get unique days from new entries
+        const uniqueDays = new Set(newEntries.map(entry => localDay(entry.consumed_at)));
+        const sortedDays = Array.from(uniqueDays).sort((a, b) => compareDesc(parseISO(a), parseISO(b)));
+        
+        // Take only entries from the first DAYS_PER_PAGE days
+        const daysToInclude = sortedDays.slice(0, DAYS_PER_PAGE);
+        const filteredEntries = newEntries.filter(entry => 
+          daysToInclude.includes(localDay(entry.consumed_at))
+        );
+        
+        if (filteredEntries.length > 0) {
+          setEntries([...currentEntries, ...filteredEntries]);
+        }
+        
+        // If we got fewer days than requested, we might be at the end
+        if (sortedDays.length < DAYS_PER_PAGE) {
+          setHasMore(false);
+        }
       }
 
       if (!initialLoadComplete()) {
