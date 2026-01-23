@@ -37,7 +37,7 @@ const NutritionItemShow: Component = () => {
   const params = useParams();
   const [nutritionItemQuery] = createAuthorizedResource(
     () => params.id,
-    fetchNutritionItem,
+    (token: string, id: string) => fetchNutritionItem(token, id),
   );
 
   const nutritionItem = () =>

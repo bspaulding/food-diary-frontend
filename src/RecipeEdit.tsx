@@ -9,7 +9,7 @@ const RecipeEdit: Component = () => {
   const params = useParams();
   const [recipeQuery] = createAuthorizedResource(
     () => params.id,
-    (token: string, info: any) => fetchRecipe(token, parseInt(info.value, 10)),
+    (token: string, id: string) => fetchRecipe(token, parseInt(id, 10)),
   );
   const recipe = () => recipeQuery()?.data?.food_diary_recipe_by_pk || {};
 

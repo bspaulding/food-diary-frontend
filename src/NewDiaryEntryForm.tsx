@@ -28,7 +28,9 @@ type Props = {
 };
 
 const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
-  const [getRecentItemsQuery] = createAuthorizedResource(fetchRecentEntries);
+  const [getRecentItemsQuery] = createAuthorizedResource((token: string) =>
+    fetchRecentEntries(token),
+  );
   const recentItems = () =>
     getRecentItemsQuery()?.data?.food_diary_diary_entry_recent || [];
 

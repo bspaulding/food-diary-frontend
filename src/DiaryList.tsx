@@ -76,7 +76,9 @@ const EntryMacro: Component<{
 
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
-  const [getEntriesQuery, { mutate }] = createAuthorizedResource(fetchEntries);
+  const [getEntriesQuery, { mutate }] = createAuthorizedResource(
+    (token: string) => fetchEntries(token),
+  );
 
   // Fetch weekly stats from the backend
   const now = new Date();

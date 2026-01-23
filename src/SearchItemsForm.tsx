@@ -27,8 +27,7 @@ const SearchItemsForm: Component<Props> = ({ children, queryType }: Props) => {
   const [search, setSearch] = createSignal("");
   const [getItemsQuery] = createAuthorizedResource(
     search,
-    (token: string, info: { value: string; refetching: boolean | unknown }) => {
-      const searchValue = info.value;
+    (token: string, searchValue: string) => {
       return "undefined" === typeof queryType ||
         queryType === ItemsQueryType.ItemsAndRecipes
         ? searchItemsAndRecipes(token, searchValue)
