@@ -1,7 +1,7 @@
 import type { Accessor, Component, Setter } from "solid-js";
 import { Index, Show, createSignal, createEffect, onMount, onCleanup } from "solid-js";
 import type { DiaryEntry, GetEntriesQueryResponse } from "./Api";
-import { fetchEntries, deleteDiaryEntry } from "./Api";
+import { fetchEntries, deleteDiaryEntry, MAX_ENTRIES_PER_REQUEST } from "./Api";
 import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
 import DateBadge from "./DateBadge";
@@ -115,10 +115,8 @@ const DiaryList: Component = () => {
           day: localDay(entry.consumed_at)
         }));
         
-        // Get unique days and sort them (ISO strings sort correctly lexicographically)
-        const uniqueDays = Array.from(new Set(entriesWithDay.map(e => e.day)))
-          .sort()
-          .reverse();
+        // Get unique days - already in descending order since API sorts by consumed_at desc
+        const uniqueDays = Array.from(new Set(entriesWithDay.map(e => e.day)));
         
         // Take only entries from the first DAYS_PER_PAGE days
         const daysToInclude = new Set(uniqueDays.slice(0, DAYS_PER_PAGE));
@@ -130,8 +128,9 @@ const DiaryList: Component = () => {
           setEntries([...currentEntries, ...filteredEntries]);
         }
         
-        // If we got fewer days than requested, we might be at the end
-        if (uniqueDays.length < DAYS_PER_PAGE) {
+        // We've reached the end if we got fewer entries than the max fetch limit
+        // (not when we got fewer days, since there could be more days beyond what we loaded)
+        if (newEntries.length < MAX_ENTRIES_PER_REQUEST) {
           setHasMore(false);
         }
       }

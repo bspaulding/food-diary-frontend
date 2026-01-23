@@ -53,7 +53,7 @@ export type FetchEntriesOptions = {
   cursorConsumedAt?: string;
 };
 
-const MAX_ENTRIES_PER_REQUEST = 200;
+export const MAX_ENTRIES_PER_REQUEST = 200;
 
 type GetEntriesVariables = {
   where?: {
