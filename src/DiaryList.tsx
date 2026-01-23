@@ -1,6 +1,6 @@
 import type { Accessor, Component, Setter } from "solid-js";
 import { Index, Show } from "solid-js";
-import type { DiaryEntry, GetEntriesQueryResponse } from "./Api";
+import type { DiaryEntry, GetEntriesQueryResponse, MacroKey, RecipeWithItems } from "./Api";
 import { fetchEntries, deleteDiaryEntry, fetchWeeklyStats } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
@@ -31,22 +31,23 @@ function compareEntriesByConsumedAt(a: DiaryEntry, b: DiaryEntry) {
   return compareAsc(parseISO(a.consumed_at), parseISO(b.consumed_at));
 }
 
-function recipeTotalForKey(key: string, recipe: any) {
-  return (recipe?.recipe_items || []).reduce(
-    (acc: number, recipe_item: any) =>
+function recipeTotalForKey(key: MacroKey, recipe: RecipeWithItems | undefined): number {
+  if (!recipe) return 0;
+  return (recipe.recipe_items || []).reduce(
+    (acc: number, recipe_item) =>
       acc + recipe_item.servings * recipe_item.nutrition_item[key],
     0
   );
 }
 
-function entryTotalMacro(key: string, entry: any) {
+function entryTotalMacro(key: MacroKey, entry: DiaryEntry): number {
   const itemTotal = entry.nutrition_item?.[key] || 0;
   return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
 }
 
-function totalMacro(key: string, entries: any[]) {
+function totalMacro(key: MacroKey, entries: DiaryEntry[]): number {
   return entries.reduce(
-    (acc: number, entry: any) => acc + entryTotalMacro(key, entry),
+    (acc: number, entry: DiaryEntry) => acc + entryTotalMacro(key, entry),
     0
   );
 }
@@ -84,21 +85,21 @@ const DiaryList: Component = () => {
   const fourWeeksDays = calculateFourWeeksDays(now);
   
   const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];
-  const entriesByDay = () =>
-    Object.entries(
-      entries().reduce(
-        (acc: Record<string, DiaryEntry[]>, entry: DiaryEntry) => ({
-          ...acc,
-          [localDay(entry.consumed_at)]: [
-            ...(acc[localDay(entry.consumed_at)] || []),
-            entry,
-          ],
-        }),
-        {}
-      )
-    ).sort(function (a, b) {
+  const entriesByDay = (): [string, DiaryEntry[]][] => {
+    const grouped = entries().reduce(
+      (acc: Record<string, DiaryEntry[]>, entry: DiaryEntry) => ({
+        ...acc,
+        [localDay(entry.consumed_at)]: [
+          ...(acc[localDay(entry.consumed_at)] || []),
+          entry,
+        ],
+      }),
+      {}
+    );
+    return (Object.entries(grouped) as [string, DiaryEntry[]][]).sort(function (a, b) {
       return compareDesc(parseISO(a[0]), parseISO(b[0]));
     });
+  };
 
   return (
     <>
@@ -127,17 +128,19 @@ const DiaryList: Component = () => {
           <p class="text-slate-400 text-center">No entries, yet...</p>
         </Show>
         <Index each={entriesByDay()}>
-          {(dayEntries, i) => (
+          {(dayEntries, i) => {
+            const [dateStr, entries] = dayEntries();
+            return (
             <li class="grid grid-cols-6 -ml-4 mb-6">
               <div>
                 <DateBadge
                   class="col-span-1"
-                  date={parseISO(dayEntries()[0])}
+                  date={parseISO(dateStr)}
                 />
                 <EntryMacro
                   value={String(Math.ceil(
-                    (dayEntries()[1] as any[]).reduce(
-                      (acc: number, entry: any) => acc + entry.calories,
+                    entries.reduce(
+                      (acc: number, entry: DiaryEntry) => acc + entry.calories,
                       0
                     )
                   ))}
@@ -149,23 +152,23 @@ const DiaryList: Component = () => {
                 <li class="mb-4">
                   <div class="flex flex-row justify-around">
                     <EntryMacro
-                      value={String(totalMacro("added_sugars_grams", dayEntries()[1] as any[]))}
+                      value={String(totalMacro("added_sugars_grams", entries))}
                       unit="g"
                       label="Added Sugar"
                     />
                     <EntryMacro
-                      value={String(totalMacro("protein_grams", dayEntries()[1] as any[]))}
+                      value={String(totalMacro("protein_grams", entries))}
                       unit="g"
                       label="Protein"
                     />
                     <EntryMacro
-                      value={String(totalMacro("total_fat_grams", dayEntries()[1] as any[]))}
+                      value={String(totalMacro("total_fat_grams", entries))}
                       unit="g"
                       label="Total Fat"
                     />
                   </div>
                 </li>
-                <Index each={(dayEntries()[1] as any[]).sort(compareEntriesByConsumedAt)}>
+                <Index each={entries.sort(compareEntriesByConsumedAt)}>
                   {(entry, i) => (
                     <li class="mb-4">
                       <p class="font-semibold">
@@ -216,7 +219,8 @@ const DiaryList: Component = () => {
                 </Index>
               </ul>
             </li>
-          )}
+            );
+          }}
         </Index>
       </ul>
     </>

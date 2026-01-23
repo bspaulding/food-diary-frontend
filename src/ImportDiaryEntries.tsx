@@ -2,8 +2,8 @@ import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
 import { format, parseISO } from "date-fns";
 import type { NewDiaryEntry } from "./Api";
-import type { Either } from "./Either";
-import { Left, Right, isRight, isLeft } from "./Either";
+import type { Either, Left } from "./Either";
+import { Right, isRight, isLeft } from "./Either";
 import { useAuth } from "./Auth0";
 import { insertDiaryEntries } from "./Api";
 import ButtonLink from "./ButtonLink";
@@ -25,7 +25,7 @@ function readFile(file: File) {
 }
 
 const ImportDiaryEntries: Component = () => {
-  const [parseResult, setParseResult] = createSignal<{ parsed?: boolean; lefts: any[]; rights: NewDiaryEntry[] }>({ lefts: [], rights: [] });
+  const [parseResult, setParseResult] = createSignal<{ parsed?: boolean; lefts: object[]; rights: NewDiaryEntry[] }>({ lefts: [], rights: [] });
   const [{ accessToken }] = useAuth();
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
@@ -38,9 +38,18 @@ const ImportDiaryEntries: Component = () => {
     try {
       const csv = await readFile(file);
       const rows = parseCSV(csv);
-      const entries = rows.map(rowToEntry);
-      const lefts = entries.filter(isLeft).map((r: any) => r.value);
-      const rights = entries.filter(isRight).map((r: any) => r.value);
+      const entries: Either<object, NewDiaryEntry>[] = rows.map(rowToEntry);
+      const lefts: object[] = [];
+      const rights: NewDiaryEntry[] = [];
+      
+      entries.forEach((entry) => {
+        if (isLeft(entry)) {
+          lefts.push(entry.value);
+        } else if (isRight(entry)) {
+          rights.push(entry.value);
+        }
+      });
+      
       console.log({ lefts, rights });
       setParseResult({ parsed: true, lefts, rights });
     } catch (error: unknown) {

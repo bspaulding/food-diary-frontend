@@ -1,10 +1,14 @@
 import type { Component, JSX } from "solid-js";
 import { createSignal, Index, Show, For } from "solid-js";
 import { debounce } from "@solid-primitives/scheduled";
-import { searchItemsAndRecipes, searchItemsOnly } from "./Api";
+import { searchItemsAndRecipes, searchItemsOnly, SearchNutritionItem, SearchRecipe } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 
-type ItemOrRecipe = { clear?: () => void; recipe?: any; nutritionItem?: any };
+type ItemOrRecipe = { 
+  clear?: () => void; 
+  recipe?: SearchRecipe; 
+  nutritionItem?: SearchNutritionItem;
+};
 export enum ItemsQueryType {
   ItemsAndRecipes,
   ItemsOnly,
@@ -18,7 +22,7 @@ const SearchItemsForm: Component<Props> = ({ children, queryType }: Props) => {
   const [search, setSearch] = createSignal("");
   const [getItemsQuery] = createAuthorizedResource(
     search,
-    (token: string, info: any) => {
+    (token: string, info: { value: string; refetching: boolean | unknown }) => {
       const searchValue = info.value;
       return (
         "undefined" === typeof queryType ||

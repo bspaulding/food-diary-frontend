@@ -1,6 +1,6 @@
 import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
-import { fetchRecentEntries, createDiaryEntry } from "./Api";
+import { fetchRecentEntries, createDiaryEntry, SearchNutritionItem, SearchRecipe, CreateDiaryEntryInput } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
 import SearchItemsForm from "./SearchItemsForm";
@@ -67,7 +67,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
             </Show>
             <Show when={segment === "Search"}>
               <SearchItemsForm>
-                {(({ nutritionItem, recipe }: any) => (
+                {({ nutritionItem, recipe }: { nutritionItem?: SearchNutritionItem; recipe?: SearchRecipe }) => (
                   <li>
                     <LoggableItem
                       nutritionItem={nutritionItem}
@@ -77,7 +77,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
                       {recipe ? "RECIPE" : "ITEM"}
                     </span>
                   </li>
-                ))}
+                )}
               </SearchItemsForm>
             </Show>
           </>
@@ -89,7 +89,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
 
 export default NewDiaryEntryForm;
 
-export const LoggableItem: Component<{ recipe?: any; nutritionItem?: any }> = ({ recipe, nutritionItem }) => {
+export const LoggableItem: Component<{ recipe?: SearchRecipe; nutritionItem?: SearchNutritionItem }> = ({ recipe, nutritionItem }) => {
   const [{ accessToken }] = useAuth();
   const [logging, setLogging] = createSignal(false);
   const [servings, setServings] = createSignal(1);
@@ -126,11 +126,15 @@ export const LoggableItem: Component<{ recipe?: any; nutritionItem?: any }> = ({
           <button
             class="ml-2 bg-indigo-600 text-slate-50 py-1 px-3 text-lg rounded-md"
             onClick={async () => {
-              const entry = {
-                servings: servings(),
-                recipe_id: recipe?.id,
-                nutrition_item_id: nutritionItem?.id,
-              };
+              const entry: CreateDiaryEntryInput = recipe
+                ? {
+                    servings: servings(),
+                    recipe_id: recipe.id,
+                  }
+                : {
+                    servings: servings(),
+                    nutrition_item_id: nutritionItem!.id,
+                  };
               setSaving(true);
               await createDiaryEntry(accessToken(), entry);
               setSaving(false);

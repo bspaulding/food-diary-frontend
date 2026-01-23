@@ -9,11 +9,11 @@ import { accessorsToObject } from "./Util";
 import styles from "./NewNutritionItemForm.module.css";
 import CameraModal from "./CameraModal";
 
-const fromTextInput = (setter: Setter<string>) => (event: any) => {
+const fromTextInput = (setter: Setter<string>) => (event: InputEvent & { target: HTMLInputElement }) => {
   setter(event.target.value || "");
 };
 
-const fromNumberInput = (setter: Setter<number>) => (event: any) => {
+const fromNumberInput = (setter: Setter<number>) => (event: InputEvent & { target: HTMLInputElement }) => {
   const parsed = parseFloat(event.target.value);
   if (!isNaN(parsed)) {
     setter(parsed);

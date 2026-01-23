@@ -33,13 +33,64 @@ async function fetchQuery(
   });
 }
 
+// Macro nutrient keys that can be accessed on nutrition items
+export type MacroKey = 
+  | "calories"
+  | "added_sugars_grams"
+  | "protein_grams"
+  | "total_fat_grams"
+  | "saturated_fat_grams"
+  | "trans_fat_grams"
+  | "polyunsaturated_fat_grams"
+  | "monounsaturated_fat_grams"
+  | "cholesterol_milligrams"
+  | "sodium_milligrams"
+  | "total_carbohydrate_grams"
+  | "dietary_fiber_grams"
+  | "total_sugars_grams";
+
+// Nutrition item with all macro fields
+export type NutritionItemWithMacros = {
+  id: number;
+  description: string;
+  calories: number;
+  added_sugars_grams: number;
+  protein_grams: number;
+  total_fat_grams: number;
+  saturated_fat_grams: number;
+  trans_fat_grams: number;
+  polyunsaturated_fat_grams: number;
+  monounsaturated_fat_grams: number;
+  cholesterol_milligrams: number;
+  sodium_milligrams: number;
+  total_carbohydrate_grams: number;
+  dietary_fiber_grams: number;
+  total_sugars_grams: number;
+};
+
+// Recipe item that's part of a recipe
+export type RecipeItem = {
+  id: number;
+  servings: number;
+  nutrition_item: NutritionItemWithMacros;
+};
+
+// Recipe with items
+export type RecipeWithItems = {
+  id: number;
+  name: string;
+  calories: number;
+  recipe_items: RecipeItem[];
+};
+
 export type DiaryEntry = {
   id: number;
   day: string;
   consumed_at: string;
   servings: number;
-  nutrition_item: { id: number; description: string; calories: number };
-  recipe: { id: number; name: string; calories: number };
+  calories: number;
+  nutrition_item?: NutritionItemWithMacros;
+  recipe?: RecipeWithItems;
 };
 
 export type GetEntriesQueryResponse = {
@@ -127,10 +178,21 @@ query SearchItemsAndRecipes($search: String!) {
 }
 `;
 
+// Search result types
+export type SearchNutritionItem = {
+  id: number;
+  description: string;
+};
+
+export type SearchRecipe = {
+  id: number;
+  name: string;
+};
+
 export type SearchItemsAndRecipesQueryResponse = {
   data: {
-    food_diary_search_nutrition_items: { id: number; description: string }[];
-    food_diary_search_recipes: { id: number; name: string }[];
+    food_diary_search_nutrition_items: SearchNutritionItem[];
+    food_diary_search_recipes: SearchRecipe[];
   };
 };
 
@@ -283,16 +345,16 @@ mutation CreateDiaryEntry($entry: food_diary_diary_entry_insert_input!) {
   }
 }`;
 
-type CreateDiaryEntryInput =
+export type CreateDiaryEntryInput =
   | CreateDiaryEntryRecipeInput
   | CreateDiaryEntryItemInput;
 
-type CreateDiaryEntryItemInput = {
+export type CreateDiaryEntryItemInput = {
   servings: number;
   nutrition_item_id: number;
 };
 
-type CreateDiaryEntryRecipeInput = {
+export type CreateDiaryEntryRecipeInput = {
   servings: number;
   recipe_id: number;
 };
