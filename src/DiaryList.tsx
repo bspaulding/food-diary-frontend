@@ -35,7 +35,7 @@ function recipeTotalForKey(key, recipe) {
   return (recipe?.recipe_items || []).reduce(
     (acc, recipe_item) =>
       acc + recipe_item.servings * recipe_item.nutrition_item[key],
-    0,
+    0
   );
 }
 
@@ -48,9 +48,9 @@ function totalMacro(key, entries) {
   return parseInt(
     entries.reduce(
       (acc: number, entry) => acc + entryTotalMacro(key, entry),
-      0,
+      0
     ),
-    10,
+    10
   );
 }
 
@@ -79,7 +79,7 @@ const DiaryList: Component = () => {
   const fourWeeksAgoStart = formatISO(startOfDay(subWeeks(now, 4)));
 
   const [weeklyStatsQuery] = createAuthorizedResource((token: string) =>
-    fetchWeeklyStats(token, currentWeekStart, todayStart, fourWeeksAgoStart),
+    fetchWeeklyStats(token, currentWeekStart, todayStart, fourWeeksAgoStart)
   );
 
   // Calculate number of complete days (up to but not including today)
@@ -97,8 +97,8 @@ const DiaryList: Component = () => {
             entry,
           ],
         }),
-        {},
-      ),
+        {}
+      )
     ).sort(function (a, b) {
       return compareDesc(parseISO(a[0]), parseISO(b[0]));
     });
@@ -122,11 +122,11 @@ const DiaryList: Component = () => {
 
           const currentWeekAvg = calculateDailyAverage(
             currentWeekCalories,
-            currentWeekDays,
+            currentWeekDays
           );
           const fourWeeksAvg = calculateDailyAverage(
             fourWeeksCalories,
-            fourWeeksDays,
+            fourWeeksDays
           );
 
           return (
@@ -162,9 +162,9 @@ const DiaryList: Component = () => {
                     Math.ceil(
                       dayEntries()[1].reduce(
                         (acc, entry) => acc + entry.calories,
-                        0,
-                      ),
-                    ),
+                        0
+                      )
+                    )
                   )}
                   unit=""
                   label="KCAL"
@@ -221,7 +221,7 @@ const DiaryList: Component = () => {
                                 accessToken,
                                 entry(),
                                 getEntriesQuery(),
-                                mutate,
+                                mutate
                               )
                             }
                           >
@@ -253,7 +253,7 @@ export default DiaryList;
 function removeEntry(
   entry: DiaryEntry,
   entriesQuery: GetEntriesQueryResponse,
-  mutate: Setter<GetEntriesQueryResponse>,
+  mutate: Setter<GetEntriesQueryResponse>
 ) {
   mutate({
     ...entriesQuery,
@@ -269,7 +269,7 @@ async function deleteEntry(
   accessToken: Accessor<string>,
   entry: DiaryEntry,
   entriesQuery: GetEntriesQueryResponse,
-  mutate: Setter<GetEntriesQueryResponse>,
+  mutate: Setter<GetEntriesQueryResponse>
 ) {
   try {
     removeEntry(entry, entriesQuery, mutate);

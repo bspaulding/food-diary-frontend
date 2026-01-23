@@ -5,7 +5,7 @@ import { useAuth } from "./Auth0";
 function createAuthorizedResource<S, T>(
   source: ResourceSource<S>,
   fetcher: ResourceFetcher<S, T, unknown>,
-  options = {},
+  options = {}
 ) {
   if (arguments.length === 2) {
     if (typeof fetcher === "object") {
@@ -27,7 +27,7 @@ function createAuthorizedResource<S, T>(
     ({ accessToken, source }) => {
       return fetcher(accessToken, source);
     },
-    options,
+    options
   );
 }
 

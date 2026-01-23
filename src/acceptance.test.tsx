@@ -40,7 +40,7 @@ describe("Browser Acceptance Tests", () => {
         const banana = screen.queryByText(/Banana/i);
         expect(banana).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Verify diary list is displayed
@@ -66,7 +66,7 @@ describe("Browser Acceptance Tests", () => {
         const banana = screen.queryByText(/Banana/i);
         expect(banana).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Wait for the weekly stats to be fetched and displayed
@@ -75,7 +75,7 @@ describe("Browser Acceptance Tests", () => {
         const thisWeekLabel = screen.queryByText(/THIS WEEK/i);
         expect(thisWeekLabel).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Verify weekly summary labels are displayed
@@ -115,26 +115,26 @@ describe("Browser Acceptance Tests", () => {
       () => {
         // Check if we're on the add item page by looking for the form
         const descriptionInput = document.querySelector(
-          'input[name="description"]',
+          'input[name="description"]'
         );
         expect(descriptionInput).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Fill in the nutrition item form
     const descriptionInput = document.querySelector(
-      'input[name="description"]',
+      'input[name="description"]'
     ) as HTMLInputElement;
     await user.type(descriptionInput, "Test Protein Bar");
 
     const caloriesInput = document.querySelector(
-      'input[name="calories"]',
+      'input[name="calories"]'
     ) as HTMLInputElement;
     await user.type(caloriesInput, "200");
 
     const proteinInput = document.querySelector(
-      'input[name="protein-grams"]',
+      'input[name="protein-grams"]'
     ) as HTMLInputElement;
     await user.type(proteinInput, "20");
 
@@ -150,7 +150,7 @@ describe("Browser Acceptance Tests", () => {
         const stillOnForm = screen.queryByText(/Save/i);
         expect(stillOnForm).toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
   });
 });

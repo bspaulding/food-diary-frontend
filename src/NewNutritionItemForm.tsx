@@ -33,44 +33,44 @@ const NewNutritionItemForm: Component = ({ onSaved, initialItem }: Props) => {
 
   const [id, _setId] = createSignal(initialItem?.id);
   const [description, setDescription] = createSignal(
-    initialItem?.description || "",
+    initialItem?.description || ""
   );
   const [calories, setCalories] = createSignal(initialItem?.calories || 0);
   const [totalFatGrams, setTotalFatGrams] = createSignal(
-    initialItem?.totalFatGrams || 0,
+    initialItem?.totalFatGrams || 0
   );
   const [saturatedFatGrams, setSaturatedFatGrams] = createSignal(
-    initialItem?.saturatedFatGrams || 0,
+    initialItem?.saturatedFatGrams || 0
   );
   const [transFatGrams, setTransFatGrams] = createSignal(
-    initialItem?.transFatGrams || 0,
+    initialItem?.transFatGrams || 0
   );
   const [polyunsaturatedFatGrams, setPolyunsaturatedFatGrams] = createSignal(
-    initialItem?.polyunsaturatedFatGrams || 0,
+    initialItem?.polyunsaturatedFatGrams || 0
   );
   const [monounsaturatedFatGrams, setMonounsaturatedFatGrams] = createSignal(
-    initialItem?.monounsaturatedFatGrams || 0,
+    initialItem?.monounsaturatedFatGrams || 0
   );
   const [cholesterolMilligrams, setCholesterolMilligrams] = createSignal(
-    initialItem?.cholesterolMilligrams || 0,
+    initialItem?.cholesterolMilligrams || 0
   );
   const [sodiumMilligrams, setSodiumMilligrams] = createSignal(
-    initialItem?.sodiumMilligrams || 0,
+    initialItem?.sodiumMilligrams || 0
   );
   const [totalCarbohydrateGrams, setTotalCarbohydrateGrams] = createSignal(
-    initialItem?.totalCarbohydrateGrams || 0,
+    initialItem?.totalCarbohydrateGrams || 0
   );
   const [dietaryFiberGrams, setDietaryFiberGrams] = createSignal(
-    initialItem?.dietaryFiberGrams || 0,
+    initialItem?.dietaryFiberGrams || 0
   );
   const [totalSugarsGrams, setTotalSugarsGrams] = createSignal(
-    initialItem?.totalSugarsGrams || 0,
+    initialItem?.totalSugarsGrams || 0
   );
   const [addedSugarsGrams, setAddedSugarsGrams] = createSignal(
-    initialItem?.addedSugarsGrams || 0,
+    initialItem?.addedSugarsGrams || 0
   );
   const [proteinGrams, setProteinGrams] = createSignal(
-    initialItem?.proteinGrams || 0,
+    initialItem?.proteinGrams || 0
   );
 
   const item = () =>
@@ -323,7 +323,7 @@ export default NewNutritionItemForm;
 const saveItem = async (
   accessToken: string,
   setLoading: Setter<boolean>,
-  item: NutritionItem,
+  item: NutritionItem
 ) => {
   setLoading(true);
   if (item.id) {

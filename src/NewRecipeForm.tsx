@@ -19,7 +19,7 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
       name: "",
       total_servings: 1,
       recipe_items: [],
-    },
+    }
   );
   const navigate = useNavigate();
   return (

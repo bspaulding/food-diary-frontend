@@ -31,13 +31,13 @@ const Trends: Component = () => {
   });
 
   const maxCalories = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgCalories), 1),
+    Math.max(...weeklyStats().map((s) => s.avgCalories), 1)
   );
   const maxProtein = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgProtein), 1),
+    Math.max(...weeklyStats().map((s) => s.avgProtein), 1)
   );
   const maxAddedSugar = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgAddedSugar), 1),
+    Math.max(...weeklyStats().map((s) => s.avgAddedSugar), 1)
   );
 
   const LineChart: Component<{

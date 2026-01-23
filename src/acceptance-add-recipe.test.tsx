@@ -48,7 +48,7 @@ describe("Add Recipe Flow Acceptance Test", () => {
         const backButton = screen.queryByText(/Back to entries/i);
         expect(backButton).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Verify we navigated to the recipe page
@@ -57,7 +57,7 @@ describe("Add Recipe Flow Acceptance Test", () => {
 
     // Verify form elements are present
     const nameInput = document.querySelector(
-      'input[name="name"]',
+      'input[name="name"]'
     ) as HTMLInputElement;
     expect(nameInput).not.toBeNull();
 

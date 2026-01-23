@@ -22,7 +22,7 @@ const SearchItemsForm: Component = ({ children, queryType }: Props) => {
     "undefined" === typeof queryType ||
       queryType === ItemsQueryType.ItemsAndRecipes
       ? searchItemsAndRecipes
-      : searchItemsOnly,
+      : searchItemsOnly
   );
   const nutritionItems = () =>
     getItemsQuery()?.data?.food_diary_search_nutrition_items || [];

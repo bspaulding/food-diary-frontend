@@ -36,5 +36,5 @@ render(
       <Route path="/recipe/:id/edit" component={RecipeEdit} />
     </Router>
   ),
-  document.getElementById("root") as HTMLElement,
+  document.getElementById("root") as HTMLElement
 );

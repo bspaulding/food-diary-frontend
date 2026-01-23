@@ -50,7 +50,7 @@ export function entriesToCsv(entries): string {
         return [
           header.map((key) => {
             const consumedAt = parseISO(
-              getPath(headerKeyMap["Consumed At"], entry),
+              getPath(headerKeyMap["Consumed At"], entry)
             );
             switch (key) {
               case "Date":
@@ -68,7 +68,7 @@ export function entriesToCsv(entries): string {
         return entry.recipe.recipe_items.map((recipe_item) => {
           return header.map((key) => {
             const consumedAt = parseISO(
-              getPath(headerKeyMap["Consumed At"], entry),
+              getPath(headerKeyMap["Consumed At"], entry)
             );
             switch (key) {
               case "Date":

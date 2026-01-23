@@ -10,8 +10,8 @@
     "test": "vitest",
     "test:acceptance": "vitest --config vitest.acceptance.config.mts",
     "prettier": "./node_modules/.bin/prettier",
-    "prettier:check": "npx prettier --check .",
-    "prettier:format": "npx prettier --write ."
+    "prettier:check": "prettier --check .",
+    "prettier:format": "prettier --write ."
   },
   "license": "MIT",
   "devDependencies": {

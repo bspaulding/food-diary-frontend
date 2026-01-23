@@ -22,7 +22,7 @@ query GetEntries {
 async function fetchQuery(
   accessToken: string,
   query: string,
-  variables: object = {},
+  variables: object = {}
 ) {
   return await fetch(`${host}`, {
     method: "POST",
@@ -49,7 +49,7 @@ export type GetEntriesQueryResponse = {
 };
 
 export async function fetchEntries(
-  accessToken: string,
+  accessToken: string
 ): Promise<GetEntriesQueryResponse> {
   const response = await fetchQuery(accessToken, getEntriesQuery);
   return response.json();
@@ -103,7 +103,7 @@ export async function fetchWeeklyStats(
   accessToken: string,
   currentWeekStart: string,
   todayStart: string,
-  fourWeeksAgoStart: string,
+  fourWeeksAgoStart: string
 ): Promise<WeeklyStatsResponse> {
   const response = await fetchQuery(accessToken, getWeeklyStatsQuery, {
     currentWeekStart,
@@ -136,7 +136,7 @@ export type SearchItemsAndRecipesQueryResponse = {
 
 export async function searchItemsAndRecipes(
   accessToken: string,
-  search: string,
+  search: string
 ): Promise<SearchItemsAndRecipesQueryResponse> {
   const response = await fetchQuery(accessToken, searchItemsAndRecipesQuery, {
     search,
@@ -191,7 +191,7 @@ export type NutritionItem = NutritionItemAttrs & {
 
 export async function createNutritionItem(
   accessToken: string,
-  item: NutritionItem,
+  item: NutritionItem
 ) {
   const response = await fetchQuery(accessToken, createNutritionItemMutation, {
     nutritionItem: objectToSnakeCaseKeys(item),
@@ -209,7 +209,7 @@ mutation UpdateItem($id: Int!, $attrs: food_diary_nutrition_item_set_input!) {
 
 export async function updateNutritionItem(
   accessToken: string,
-  item: NutritionItem,
+  item: NutritionItem
 ) {
   const response = await fetchQuery(accessToken, updateNutritionItemMutation, {
     id: item.id,
@@ -225,14 +225,14 @@ function isUppercase(s: string): boolean {
 function camelToSnakeCase(s: string): string {
   return Array.from(s).reduce(
     (acc, c) => acc + (isUppercase(c) ? "_" + c.toLowerCase() : c),
-    "",
+    ""
   );
 }
 
 function objectToSnakeCaseKeys(o: object): object {
   return Object.entries(o).reduce(
     (acc, [k, v]) => ({ ...acc, [camelToSnakeCase(k)]: v }),
-    {},
+    {}
   );
 }
 
@@ -299,7 +299,7 @@ type CreateDiaryEntryRecipeInput = {
 
 export async function createDiaryEntry(
   accessToken: string,
-  entry: CreateDiaryEntryInput,
+  entry: CreateDiaryEntryInput
 ) {
   return (
     await fetchQuery(accessToken, createDiaryEntryQuery, { entry })
@@ -363,7 +363,7 @@ function transformRecipeInput(formInput: RecipeAttrs) {
 
 export async function createRecipe(
   accessToken: string,
-  formInput: RecipeAttrs,
+  formInput: RecipeAttrs
 ) {
   return (
     await fetchQuery(accessToken, createRecipeMutation, {
@@ -440,7 +440,7 @@ mutation InsertDiaryEntriesWithNewItems($entries: [food_diary_diary_entry_insert
 
 export async function insertDiaryEntries(
   accessToken: string,
-  entries: NewDiaryEntry[],
+  entries: NewDiaryEntry[]
 ) {
   return (
     await fetchQuery(accessToken, insertDiaryEntriesWithItemsMutation, {
@@ -527,7 +527,7 @@ mutation UpdateDiaryEntry($id: Int!, $attrs: food_diary_diary_entry_set_input!) 
 
 export async function updateDiaryEntry(
   accessToken: string,
-  entry: { id: number; servings: number; consumedAt: string },
+  entry: { id: number; servings: number; consumedAt: string }
 ) {
   return fetchQuery(accessToken, updateDiaryEntryMutation, {
     id: entry.id,
@@ -561,7 +561,7 @@ export type GetWeeklyTrendsResponse = {
 };
 
 export async function fetchWeeklyTrends(
-  accessToken: string,
+  accessToken: string
 ): Promise<GetWeeklyTrendsResponse> {
   const response = await fetchQuery(accessToken, getWeeklyTrendsQuery);
   return response.json();

@@ -54,7 +54,7 @@ const ImportDiaryEntries: Component = () => {
     try {
       const response = await insertDiaryEntries(
         accessToken(),
-        parseResult().rights,
+        parseResult().rights
       );
       setSaving(false);
       setSaved(!!response.data);
@@ -138,7 +138,7 @@ const ImportDiaryEntries: Component = () => {
                       <p class="text-xs">
                         {format(
                           parseISO(row().consumed_at),
-                          "MMMM d, yyyy pppp",
+                          "MMMM d, yyyy pppp"
                         )}
                       </p>
                     </td>

@@ -9,7 +9,7 @@ const NutritionItemEdit: Component = () => {
   const params = useParams();
   const [nutritionItemQuery] = createAuthorizedResource(
     () => params.id,
-    fetchNutritionItem,
+    fetchNutritionItem
   );
 
   const nutritionItem = () =>

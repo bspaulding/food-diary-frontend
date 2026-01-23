@@ -43,7 +43,7 @@ describe("Trends", () => {
             },
           });
         }
-      }),
+      })
     );
 
     render(() => (
@@ -57,14 +57,14 @@ describe("Trends", () => {
         const header = screen.queryByText(/Weekly Nutrition Trends/i);
         expect(header).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     expect(screen.getByText(/Weekly Nutrition Trends/i)).toBeTruthy();
     expect(
       screen.getByText(
-        /No data available yet. Add some diary entries to see trends!/i,
-      ),
+        /No data available yet. Add some diary entries to see trends!/i
+      )
     ).toBeTruthy();
     expect(screen.getByText(/Back to Diary/i)).toBeTruthy();
   });
@@ -105,7 +105,7 @@ describe("Trends", () => {
             food_diary_diary_entry: [],
           },
         });
-      }),
+      })
     );
 
     render(() => (
@@ -120,7 +120,7 @@ describe("Trends", () => {
         const chartLabel = screen.queryByText(/Average Daily Calories/i);
         expect(chartLabel).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Verify charts are displayed
@@ -143,7 +143,7 @@ describe("Trends", () => {
             },
           });
         }
-      }),
+      })
     );
 
     render(() => (
@@ -157,7 +157,7 @@ describe("Trends", () => {
         const viewTrendsButton = screen.queryByText(/View Trends/i);
         expect(viewTrendsButton).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     expect(screen.getByText(/View Trends/i)).toBeTruthy();

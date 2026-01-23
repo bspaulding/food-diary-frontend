@@ -45,7 +45,7 @@ describe("Add New Entry Flow Acceptance Test", () => {
       () => {
         expect(screen.queryByText("Search")).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Switch to Search tab
@@ -55,14 +55,14 @@ describe("Add New Entry Flow Acceptance Test", () => {
     // Wait for search input to appear
     await waitFor(() => {
       const searchInput = screen.queryByPlaceholderText(
-        /Search Previous Items/i,
+        /Search Previous Items/i
       );
       expect(searchInput).not.toBeNull();
     });
 
     // Search for an item
     const searchInput = screen.getByPlaceholderText(
-      /Search Previous Items/i,
+      /Search Previous Items/i
     ) as HTMLInputElement;
     await user.type(searchInput, "Banana");
 
@@ -72,7 +72,7 @@ describe("Add New Entry Flow Acceptance Test", () => {
         const bananaResult = screen.queryByText(/Banana/i);
         expect(bananaResult).not.toBeNull();
       },
-      { timeout: 5000 },
+      { timeout: 5000 }
     );
 
     // Verify search results are displayed with log buttons
