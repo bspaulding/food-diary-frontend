@@ -39,16 +39,18 @@ const ImportDiaryEntries: Component = () => {
       const csv = await readFile(file);
       const rows = parseCSV(csv);
       const entries: Either<object, NewDiaryEntry>[] = rows.map(rowToEntry);
-      const lefts: object[] = [];
-      const rights: NewDiaryEntry[] = [];
       
-      entries.forEach((entry) => {
-        if (isLeft(entry)) {
-          lefts.push(entry.value);
-        } else if (isRight(entry)) {
-          rights.push(entry.value);
-        }
-      });
+      const { lefts, rights } = entries.reduce(
+        (acc, entry) => {
+          if (isLeft(entry)) {
+            return { ...acc, lefts: [...acc.lefts, entry.value] };
+          } else if (isRight(entry)) {
+            return { ...acc, rights: [...acc.rights, entry.value] };
+          }
+          return acc;
+        },
+        { lefts: [] as object[], rights: [] as NewDiaryEntry[] }
+      );
       
       console.log({ lefts, rights });
       setParseResult({ parsed: true, lefts, rights });
