@@ -84,8 +84,9 @@ describe("Browser Acceptance Tests", () => {
 
     // Verify the weekly stats values are displayed with kcal/day units
     // The values are now averages per day, not totals
-    expect(screen.getByText(/300 kcal\/day/)).toBeTruthy();
-    expect(screen.getByText(/300 kcal\/day/)).toBeTruthy();
+    // Both This Week and 4 Week Avg show 300 kcal/day in the mock data
+    const kcalElements = screen.getAllByText(/300 kcal\/day/);
+    expect(kcalElements).toHaveLength(2);
   });
 
   it("should complete Add Item flow - create new item and log it", async () => {
