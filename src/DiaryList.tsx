@@ -105,10 +105,14 @@ const DiaryList: Component = () => {
       const response = await fetchEntries(accessToken(), options);
       const newEntries = response?.data?.food_diary_diary_entry || [];
 
-      // Check if we've reached the end (no new entries)
+      // We've reached the end if we got no entries or fewer than the max fetch limit
       if (newEntries.length === 0) {
         setHasMore(false);
-      } else {
+      } else if (newEntries.length < MAX_ENTRIES_PER_REQUEST) {
+        setHasMore(false);
+      }
+      
+      if (newEntries.length > 0) {
         // Pre-calculate localDay for each entry to avoid redundant parsing
         const entriesWithDay = newEntries.map(entry => ({
           entry,
@@ -126,12 +130,6 @@ const DiaryList: Component = () => {
         
         if (filteredEntries.length > 0) {
           setEntries([...currentEntries, ...filteredEntries]);
-        }
-        
-        // We've reached the end if we got fewer entries than the max fetch limit
-        // (not when we got fewer days, since there could be more days beyond what we loaded)
-        if (newEntries.length < MAX_ENTRIES_PER_REQUEST) {
-          setHasMore(false);
         }
       }
 
