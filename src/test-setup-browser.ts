@@ -170,7 +170,7 @@ export const worker = setupWorker(
     // Throw an error so the test fails
     console.error("Unhandled GraphQL query:", query);
     throw new Error(`Unhandled GraphQL query: ${query.substring(0, 100)}`);
-  })
+  }),
 );
 
 beforeAll(async () => {

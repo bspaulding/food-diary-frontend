@@ -13,7 +13,7 @@ const DiaryEntryEditForm: Component = () => {
   const [{ accessToken }] = useAuth();
   const [diaryEntryQuery] = createAuthorizedResource(
     () => params.id,
-    getDiaryEntry
+    getDiaryEntry,
   );
   const [consumedAt, setConsumedAt] = createSignal(undefined);
   const [servings, setServings] = createSignal(undefined);
@@ -69,7 +69,7 @@ const DiaryEntryEditForm: Component = () => {
               type="datetime-local"
               value={format(
                 parseISO(diaryEntry().consumed_at),
-                "yyyy-MM-dd'T'HH:mm"
+                "yyyy-MM-dd'T'HH:mm",
               )}
               onChange={(e) => setConsumedAt(e.target.value)}
             />
@@ -90,7 +90,7 @@ const DiaryEntryEditForm: Component = () => {
                 const newConsumedAt =
                   consumedAt() !== undefined
                     ? formatISO(
-                        parse(consumedAt(), "yyyy-MM-dd'T'HH:mm", new Date())
+                        parse(consumedAt(), "yyyy-MM-dd'T'HH:mm", new Date()),
                       )
                     : diaryEntry().consumed_at;
 
@@ -111,7 +111,7 @@ const DiaryEntryEditForm: Component = () => {
                     setErrors(
                       response.errors
                         .filter((e) => e.message)
-                        .map((e) => e.message)
+                        .map((e) => e.message),
                     );
                   } else {
                     setErrors([]);
