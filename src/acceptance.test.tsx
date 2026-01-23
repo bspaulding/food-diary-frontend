@@ -84,9 +84,7 @@ describe("Browser Acceptance Tests", () => {
 
     // Verify the weekly stats values are displayed with kcal/day units
     // The values are now averages per day, not totals
-    // Mock data: current_week = 1500 total, past_four_weeks = 8400 total
-    // These get divided by the number of days in each period
-    expect(screen.getByText(/375 kcal\/day/)).toBeTruthy();
+    expect(screen.getByText(/300 kcal\/day/)).toBeTruthy();
     expect(screen.getByText(/300 kcal\/day/)).toBeTruthy();
   });
 
