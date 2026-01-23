@@ -145,7 +145,10 @@ const DiaryList: Component = () => {
             label="4 Week Avg"
           />
           <div class="text-center mb-4">
-            <a href="/trends" class="text-indigo-600 hover:text-indigo-800 underline">
+            <a
+              href="/trends"
+              class="text-indigo-600 hover:text-indigo-800 underline"
+            >
               View Trends
             </a>
           </div>
@@ -210,7 +213,9 @@ const DiaryList: Component = () => {
                             href={
                               entry().recipe?.id
                                 ? `/recipe/${entry().recipe?.id}`
-                                : `/nutrition_item/${entry().nutrition_item?.id}`
+                                : `/nutrition_item/${
+                                    entry().nutrition_item?.id
+                                  }`
                             }
                           >
                             {entry().nutrition_item?.description ||
