@@ -49,7 +49,7 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
             step="0.1"
             value={input().total_servings}
             onInput={(event) => {
-              const total_servings = parseFloat(event.target.value, 10);
+              const total_servings = parseFloat(event.target.value);
               if (isNaN(total_servings)) {
                 return;
               }
@@ -75,7 +75,7 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
                     step="0.1"
                     class="w-20"
                     onInput={(event) => {
-                      const servings = parseFloat(event.target.value, 10);
+                      const servings = parseFloat(event.target.value);
                       if (isNaN(servings)) {
                         return;
                       }
@@ -100,7 +100,7 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
         <fieldset>
           <legend class="font-semibold">Add New Items</legend>
           <SearchItemsForm queryType={ItemsQueryType.ItemsOnly}>
-            {({ clear, nutritionItem }) => (
+            {({ clear, nutritionItem }: any) => (
               <li class="flex flex-row">
                 <button
                   class="mr-1 text-3xl text-indigo-600 transition-transform "

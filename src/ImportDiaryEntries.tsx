@@ -2,18 +2,22 @@ import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
 import { format, parseISO } from "date-fns";
 import type { NewDiaryEntry } from "./Api";
-import type { Either } from "./Either";
-import { Left, Right, isRight, isLeft } from "./Either";
+import type { Either, Left } from "./Either";
+import { Right, isRight, isLeft } from "./Either";
 import { useAuth } from "./Auth0";
 import { insertDiaryEntries } from "./Api";
 import ButtonLink from "./ButtonLink";
 import { parseCSV, rowToEntry } from "./CSVImport";
 
 function readFile(file: File) {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.addEventListener("load", (event) => {
-      resolve(event.target.result);
+      if (event.target) {
+        resolve(event.target.result as string);
+      } else {
+        reject(new Error("Failed to read file"));
+      }
     });
     reader.addEventListener("error", reject);
     reader.readAsText(file);
@@ -21,7 +25,11 @@ function readFile(file: File) {
 }
 
 const ImportDiaryEntries: Component = () => {
-  const [parseResult, setParseResult] = createSignal({ lefts: [], rights: [] });
+  const [parseResult, setParseResult] = createSignal<{
+    parsed?: boolean;
+    lefts: object[];
+    rights: NewDiaryEntry[];
+  }>({ lefts: [], rights: [] });
   const [{ accessToken }] = useAuth();
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
@@ -34,9 +42,20 @@ const ImportDiaryEntries: Component = () => {
     try {
       const csv = await readFile(file);
       const rows = parseCSV(csv);
-      const entries = rows.map(rowToEntry);
-      const lefts = entries.filter(isLeft).map((r) => r.value);
-      const rights = entries.filter(isRight).map((r) => r.value);
+      const entries: Either<object, NewDiaryEntry>[] = rows.map(rowToEntry);
+
+      const { lefts, rights } = entries.reduce(
+        (acc, entry) => {
+          if (isLeft(entry)) {
+            return { ...acc, lefts: [...acc.lefts, entry.value] };
+          } else if (isRight(entry)) {
+            return { ...acc, rights: [...acc.rights, entry.value] };
+          }
+          return acc;
+        },
+        { lefts: [] as object[], rights: [] as NewDiaryEntry[] },
+      );
+
       console.log({ lefts, rights });
       setParseResult({ parsed: true, lefts, rights });
     } catch (error: unknown) {
@@ -169,9 +188,11 @@ const ImportDiaryEntries: Component = () => {
 
 export default ImportDiaryEntries;
 
-const CollapsibleNutritionFacts: Component = ({ entry }) => {
+const CollapsibleNutritionFacts: Component<{ entry: NewDiaryEntry }> = ({
+  entry,
+}) => {
   const [collapsed, setCollapsed] = createSignal(true);
-  const toggleCollapsed = (e) => {
+  const toggleCollapsed = (e: Event) => {
     e.preventDefault();
     setCollapsed(!collapsed());
   };

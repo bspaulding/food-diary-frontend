@@ -13,7 +13,9 @@ type WeeklyStats = {
 };
 
 const Trends: Component = () => {
-  const [getTrendsQuery] = createAuthorizedResource(fetchWeeklyTrends);
+  const [getTrendsQuery] = createAuthorizedResource((token: string) =>
+    fetchWeeklyTrends(token),
+  );
   const trendsData = () =>
     getTrendsQuery()?.data?.food_diary_trends_weekly || [];
 

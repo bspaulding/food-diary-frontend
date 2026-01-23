@@ -1,9 +1,9 @@
-import type { Component } from "solid-js";
+import type { Component, ParentProps } from "solid-js";
 import { Show } from "solid-js";
 import { Router, Route } from "@solidjs/router";
 import { useAuth } from "./Auth0";
 
-const App: Component = (props) => {
+const App: Component<ParentProps> = (props) => {
   const [{ user, isAuthenticated, auth0 }] = useAuth();
 
   return (
@@ -14,7 +14,7 @@ const App: Component = (props) => {
           <div class="absolute right-2 w-12 h-12 ">
             <a href="/profile">
               <img
-                src={user().picture}
+                src={(user() as any)?.picture}
                 class="border border-slate-800 rounded-full"
               />
             </a>

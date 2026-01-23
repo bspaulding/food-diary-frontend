@@ -96,8 +96,11 @@ describe("Browser Acceptance Tests", () => {
     render(() => (
       <Router root={App}>
         <Route path="/" component={DiaryList} />
-        <Route path="/nutrition_item/new" component={NewNutritionItemForm} />
-        <Route path="/diary_entry/new" component={NewDiaryEntryForm} />
+        <Route
+          path="/nutrition_item/new"
+          component={NewNutritionItemForm as any}
+        />
+        <Route path="/diary_entry/new" component={NewDiaryEntryForm as any} />
       </Router>
     ));
 
