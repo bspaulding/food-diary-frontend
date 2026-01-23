@@ -132,7 +132,7 @@ describe("Trends", () => {
     expect(screen.queryByText(/No data available yet/i)).toBeNull();
   });
 
-  it("should have View Trends button on DiaryList page", async () => {
+  it("should have View Trends link on DiaryList page", async () => {
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
         const body = (await request.json()) as any;
@@ -140,6 +140,26 @@ describe("Trends", () => {
           return HttpResponse.json({
             data: {
               food_diary_diary_entry: [],
+            },
+          });
+        }
+        if (body.query.includes("GetWeeklyStats")) {
+          return HttpResponse.json({
+            data: {
+              current_week: {
+                aggregate: {
+                  sum: {
+                    calories: 1500,
+                  },
+                },
+              },
+              past_four_weeks: {
+                aggregate: {
+                  sum: {
+                    calories: 10000,
+                  },
+                },
+              },
             },
           });
         }
@@ -154,8 +174,8 @@ describe("Trends", () => {
 
     await waitFor(
       () => {
-        const viewTrendsButton = screen.queryByText(/View Trends/i);
-        expect(viewTrendsButton).not.toBeNull();
+        const viewTrendsLink = screen.queryByText(/View Trends/i);
+        expect(viewTrendsLink).not.toBeNull();
       },
       { timeout: 5000 },
     );
