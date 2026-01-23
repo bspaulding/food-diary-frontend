@@ -2,9 +2,9 @@ import type { ResourceFetcher, ResourceSource } from "solid-js";
 import { createResource } from "solid-js";
 import { useAuth } from "./Auth0";
 
-function createAuthorizedResource<S = true, T = unknown>(
-  source?: ResourceSource<S> | ResourceFetcher<string, T, unknown>,
-  fetcher?: ResourceFetcher<S, T, unknown> | Record<string, any>,
+function createAuthorizedResource<S, T>(
+  source: ResourceSource<S>,
+  fetcher: ResourceFetcher<S, T, unknown>,
   options: Record<string, any> = {},
 ) {
   if (arguments.length === 2) {
