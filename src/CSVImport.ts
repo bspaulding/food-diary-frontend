@@ -13,8 +13,8 @@ export function parseCSV(csv: string) {
         ...acc,
         [header[i]]: cell,
       }),
-      {}
-    )
+      {},
+    ),
   );
 }
 
@@ -40,17 +40,17 @@ export function rowToEntry(row: string[]): Either<object, NewDiaryEntry> {
         transFatGrams: parseNumber(parseFloat, row["Trans Fat (g)"]),
         polyunsaturatedFatGrams: parseNumber(
           parseFloat,
-          row["Polyunsaturated Fat (g)"]
+          row["Polyunsaturated Fat (g)"],
         ),
         monounsaturatedFatGrams: parseNumber(
           parseFloat,
-          row["Monounsaturated Fat (g)"]
+          row["Monounsaturated Fat (g)"],
         ),
         cholesterolMilligrams: parseNumber(parseFloat, row["Cholesterol (mg)"]),
         sodiumMilligrams: parseNumber(parseFloat, row["Sodium (mg)"]),
         totalCarbohydrateGrams: parseNumber(
           parseFloat,
-          row["Total Carbohydrate (g)"]
+          row["Total Carbohydrate (g)"],
         ),
         dietaryFiberGrams: parseNumber(parseFloat, row["Dietary Fiber (g)"]),
         totalSugarsGrams: parseNumber(parseFloat, row["Total Sugars (g)"]),

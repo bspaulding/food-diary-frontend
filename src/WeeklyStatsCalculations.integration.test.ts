@@ -49,10 +49,10 @@ describe("Weekly Stats Integration Tests", () => {
     it("rounds up partial calories correctly", () => {
       // 15000 / 10 = 1500.0 (exact)
       expect(calculateDailyAverage(15000, 10)).toBe(1500);
-      
+
       // 15001 / 10 = 1500.1 -> rounds up to 1501
       expect(calculateDailyAverage(15001, 10)).toBe(1501);
-      
+
       // 15009 / 10 = 1500.9 -> rounds up to 1501
       expect(calculateDailyAverage(15009, 10)).toBe(1501);
     });
@@ -61,25 +61,25 @@ describe("Weekly Stats Integration Tests", () => {
   describe("Full week progression", () => {
     it("should correctly calculate days for each day of the week", () => {
       const sunday = new Date("2024-01-07T12:00:00Z");
-      
+
       // Sunday: 1 day (minimum, even though it's start of week)
       expect(calculateCurrentWeekDays(sunday)).toBe(1);
-      
+
       // Monday: 1 day (Sunday)
       expect(calculateCurrentWeekDays(addDays(sunday, 1))).toBe(1);
-      
+
       // Tuesday: 2 days (Sunday, Monday)
       expect(calculateCurrentWeekDays(addDays(sunday, 2))).toBe(2);
-      
+
       // Wednesday: 3 days (Sunday, Monday, Tuesday)
       expect(calculateCurrentWeekDays(addDays(sunday, 3))).toBe(3);
-      
+
       // Thursday: 4 days (Sunday-Wednesday)
       expect(calculateCurrentWeekDays(addDays(sunday, 4))).toBe(4);
-      
+
       // Friday: 5 days (Sunday-Thursday)
       expect(calculateCurrentWeekDays(addDays(sunday, 5))).toBe(5);
-      
+
       // Saturday: 6 days (Sunday-Friday)
       expect(calculateCurrentWeekDays(addDays(sunday, 6))).toBe(6);
     });
@@ -104,7 +104,7 @@ describe("Weekly Stats Integration Tests", () => {
     it("should handle end of month transitions", () => {
       const endOfJan = new Date("2024-01-31T12:00:00Z");
       const startOfWeek = new Date("2024-01-28T00:00:00Z"); // Sunday
-      
+
       // Days from Sunday Jan 28 to Wednesday Jan 31
       const days = calculateCurrentWeekDays(endOfJan);
       expect(days).toBe(3);

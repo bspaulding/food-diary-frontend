@@ -14,7 +14,8 @@ type WeeklyStats = {
 
 const Trends: Component = () => {
   const [getTrendsQuery] = createAuthorizedResource(fetchWeeklyTrends);
-  const trendsData = () => getTrendsQuery()?.data?.food_diary_trends_weekly || [];
+  const trendsData = () =>
+    getTrendsQuery()?.data?.food_diary_trends_weekly || [];
 
   const weeklyStats = createMemo<WeeklyStats[]>(() => {
     const data = trendsData();
@@ -30,13 +31,13 @@ const Trends: Component = () => {
   });
 
   const maxCalories = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgCalories), 1)
+    Math.max(...weeklyStats().map((s) => s.avgCalories), 1),
   );
   const maxProtein = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgProtein), 1)
+    Math.max(...weeklyStats().map((s) => s.avgProtein), 1),
   );
   const maxAddedSugar = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgAddedSugar), 1)
+    Math.max(...weeklyStats().map((s) => s.avgAddedSugar), 1),
   );
 
   const LineChart: Component<{
@@ -52,8 +53,12 @@ const Trends: Component = () => {
 
       return props.data
         .map((value, index) => {
-          const x = padding + (index * (width - 2 * padding)) / Math.max(props.data.length - 1, 1);
-          const y = height - padding - ((value / props.max) * (height - 2 * padding));
+          const x =
+            padding +
+            (index * (width - 2 * padding)) /
+              Math.max(props.data.length - 1, 1);
+          const y =
+            height - padding - (value / props.max) * (height - 2 * padding);
           return `${x},${y}`;
         })
         .join(" ");
@@ -106,8 +111,10 @@ const Trends: Component = () => {
 
             {/* Data points */}
             {props.data.map((value, index) => {
-              const x = 20 + (index * (width() - 40)) / Math.max(props.data.length - 1, 1);
-              const y = 180 - ((value / props.max) * 160);
+              const x =
+                20 +
+                (index * (width() - 40)) / Math.max(props.data.length - 1, 1);
+              const y = 180 - (value / props.max) * 160;
               return (
                 <g>
                   <circle cx={x} cy={y} r="4" fill={props.color} />
@@ -128,7 +135,8 @@ const Trends: Component = () => {
             {(() => {
               const stats = weeklyStats();
               return stats.map((stat, index) => {
-                const x = 20 + (index * (width() - 40)) / Math.max(stats.length - 1, 1);
+                const x =
+                  20 + (index * (width() - 40)) / Math.max(stats.length - 1, 1);
                 return (
                   <text
                     x={x}

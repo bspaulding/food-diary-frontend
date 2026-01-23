@@ -56,7 +56,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
                           Logged at{" "}
                           {format(
                             parseISO(item().consumed_at),
-                            "hh:mma' on ' MMMM dd, yyyy"
+                            "hh:mma' on ' MMMM dd, yyyy",
                           )}
                         </p>
                       </li>
@@ -121,7 +121,11 @@ export const LoggableItem: Component = ({ recipe, nutritionItem }) => {
                 setServings(parsed);
               }
             }}
-            style={{ "min-width": "50px", "border": "1px solid #3e4a49", "padding": "8px" }}
+            style={{
+              "min-width": "50px",
+              border: "1px solid #3e4a49",
+              padding: "8px",
+            }}
           />
           <button
             class="ml-2 bg-indigo-600 text-slate-50 py-1 px-3 text-lg rounded-md"

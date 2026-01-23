@@ -43,7 +43,7 @@ describe("Trends", () => {
             },
           });
         }
-      })
+      }),
     );
 
     render(() => (
@@ -57,12 +57,14 @@ describe("Trends", () => {
         const header = screen.queryByText(/Weekly Nutrition Trends/i);
         expect(header).not.toBeNull();
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
 
     expect(screen.getByText(/Weekly Nutrition Trends/i)).toBeTruthy();
     expect(
-      screen.getByText(/No data available yet. Add some diary entries to see trends!/i)
+      screen.getByText(
+        /No data available yet. Add some diary entries to see trends!/i,
+      ),
     ).toBeTruthy();
     expect(screen.getByText(/Back to Diary/i)).toBeTruthy();
   });
@@ -88,7 +90,7 @@ describe("Trends", () => {
       http.post("*/api/v1/graphql", async ({ request }) => {
         const body = (await request.json()) as any;
         const query = body.query || "";
-        
+
         if (query.includes("GetWeeklyTrends")) {
           return HttpResponse.json({
             data: {
@@ -96,14 +98,14 @@ describe("Trends", () => {
             },
           });
         }
-        
+
         // Fallback for any other queries
         return HttpResponse.json({
           data: {
             food_diary_diary_entry: [],
           },
         });
-      })
+      }),
     );
 
     render(() => (
@@ -118,7 +120,7 @@ describe("Trends", () => {
         const chartLabel = screen.queryByText(/Average Daily Calories/i);
         expect(chartLabel).not.toBeNull();
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
 
     // Verify charts are displayed
@@ -127,9 +129,7 @@ describe("Trends", () => {
     expect(screen.getByText(/Average Daily Added Sugar/i)).toBeTruthy();
 
     // Verify no empty state message
-    expect(
-      screen.queryByText(/No data available yet/i)
-    ).toBeNull();
+    expect(screen.queryByText(/No data available yet/i)).toBeNull();
   });
 
   it("should have View Trends button on DiaryList page", async () => {
@@ -143,7 +143,7 @@ describe("Trends", () => {
             },
           });
         }
-      })
+      }),
     );
 
     render(() => (
@@ -157,7 +157,7 @@ describe("Trends", () => {
         const viewTrendsButton = screen.queryByText(/View Trends/i);
         expect(viewTrendsButton).not.toBeNull();
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
 
     expect(screen.getByText(/View Trends/i)).toBeTruthy();

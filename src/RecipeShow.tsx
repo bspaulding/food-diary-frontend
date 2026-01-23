@@ -58,7 +58,8 @@ const RecipeShow: Component = () => {
                 {item().nutrition_item.description}
               </a>
               <p class="text-sm">
-                {item().servings} servings - {Math.round(calculateItemCalories(item()))} kcal
+                {item().servings} servings -{" "}
+                {Math.round(calculateItemCalories(item()))} kcal
               </p>
             </li>
           )}
