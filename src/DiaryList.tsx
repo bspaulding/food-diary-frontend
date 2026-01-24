@@ -119,7 +119,6 @@ const DiaryList: Component = () => {
         <ButtonLink href="/diary_entry/new">Add New Entry</ButtonLink>
         <ButtonLink href="/nutrition_item/new">Add Item</ButtonLink>
         <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
-        <ButtonLink href="/trends">View Trends</ButtonLink>
       </div>
       <Show when={weeklyStatsQuery()?.data}>
         <div class="flex justify-around mb-6 border-t border-b border-slate-200 py-2">
@@ -145,6 +144,14 @@ const DiaryList: Component = () => {
             unit=" kcal/day"
             label="4 Week Avg"
           />
+          <div class="text-center mb-4">
+            <a
+              href="/trends"
+              class="text-indigo-600 hover:text-indigo-800 underline"
+            >
+              View Trends
+            </a>
+          </div>
         </div>
       </Show>
       <ul class="mt-4">
@@ -206,7 +213,9 @@ const DiaryList: Component = () => {
                             href={
                               entry().recipe?.id
                                 ? `/recipe/${entry().recipe?.id}`
-                                : `/nutrition_item/${entry().nutrition_item?.id}`
+                                : `/nutrition_item/${
+                                    entry().nutrition_item?.id
+                                  }`
                             }
                           >
                             {entry().nutrition_item?.description ||
