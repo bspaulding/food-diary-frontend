@@ -46,7 +46,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
     fetchEntriesAroundTime(token, startTime, endTime),
   );
   const timeBasedItems = () =>
-    getTimeBasedItemsQuery()?.data?.food_diary_diary_entry_recent || [];
+    getTimeBasedItemsQuery()?.data?.food_diary_diary_entry || [];
 
   return (
     <div>

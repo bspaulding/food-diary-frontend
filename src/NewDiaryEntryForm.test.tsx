@@ -31,7 +31,7 @@ describe("NewDiaryEntryForm", () => {
         if (query.includes("GetEntriesAroundTime")) {
           return HttpResponse.json({
             data: {
-              food_diary_diary_entry_recent: [
+              food_diary_diary_entry: [
                 {
                   consumed_at: "2024-01-24T05:30:00Z",
                   nutrition_item: { id: 1, description: "Morning Oatmeal" },
@@ -105,7 +105,7 @@ describe("NewDiaryEntryForm", () => {
         if (query.includes("GetEntriesAroundTime")) {
           return HttpResponse.json({
             data: {
-              food_diary_diary_entry_recent: [],
+              food_diary_diary_entry: [],
             },
           });
         }
