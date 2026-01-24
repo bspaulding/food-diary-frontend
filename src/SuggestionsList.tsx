@@ -26,7 +26,10 @@ const SuggestionsList: Component<Props> = ({ items }) => {
             />
             <p class="text-xs ml-8 mb-2">
               Logged at{" "}
-              {format(parseISO(item().consumed_at), "hh:mma' on ' MMMM dd, yyyy")}
+              {format(
+                parseISO(item().consumed_at),
+                "hh:mma' on ' MMMM dd, yyyy",
+              )}
             </p>
           </li>
         )}
