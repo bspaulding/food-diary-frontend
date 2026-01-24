@@ -26,7 +26,7 @@ type NewDiaryEntryInput = {
 };
 
 type Props = {
-  onSubmit: (input: NewDiaryEntryInput) => {};
+  onSubmit?: (input: NewDiaryEntryInput) => {};
 };
 
 const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
