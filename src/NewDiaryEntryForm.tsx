@@ -1,5 +1,5 @@
 import type { Component } from "solid-js";
-import { createSignal, Index, Show } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import {
   fetchRecentEntries,
   fetchEntriesAroundTime,
@@ -13,7 +13,8 @@ import { useAuth } from "./Auth0";
 import SearchItemsForm from "./SearchItemsForm";
 import ButtonLink from "./ButtonLink";
 import SegmentedControl from "./SegmentedControl";
-import { parseISO, format, subHours, addHours } from "date-fns";
+import SuggestionsList from "./SuggestionsList";
+import { subHours, addHours } from "date-fns";
 
 type RecipeId = number;
 type NutritionItemId = number;
@@ -61,51 +62,17 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
               <div>
                 <Show when={timeBasedItems().length > 0}>
                   <h2 class="text-lg font-semibold">Logged around this time</h2>
-                  <ul class="mb-4">
-                    <Index each={timeBasedItems()}>
-                      {(item) => (
-                        <li>
-                          <LoggableItem
-                            recipe={item().recipe}
-                            nutritionItem={item().nutrition_item}
-                          />
-                          <p class="text-xs ml-8 mb-2">
-                            Logged at{" "}
-                            {format(
-                              parseISO(item().consumed_at),
-                              "hh:mma' on ' MMMM dd, yyyy",
-                            )}
-                          </p>
-                        </li>
-                      )}
-                    </Index>
-                  </ul>
+                  <SuggestionsList items={timeBasedItems()} />
                 </Show>
                 <h2 class="text-lg font-semibold">Suggested Items</h2>
-                <ul>
-                  <Show when={recentItems().length === 0}>
-                    <p class="text-slate-400 text-center">
-                      No suggestions available
-                    </p>
-                  </Show>
-                  <Index each={recentItems()}>
-                    {(item) => (
-                      <li>
-                        <LoggableItem
-                          recipe={item().recipe}
-                          nutritionItem={item().nutrition_item}
-                        />
-                        <p class="text-xs ml-8 mb-2">
-                          Logged at{" "}
-                          {format(
-                            parseISO(item().consumed_at),
-                            "hh:mma' on ' MMMM dd, yyyy",
-                          )}
-                        </p>
-                      </li>
-                    )}
-                  </Index>
-                </ul>
+                <Show when={recentItems().length === 0}>
+                  <p class="text-slate-400 text-center">
+                    No suggestions available
+                  </p>
+                </Show>
+                <Show when={recentItems().length > 0}>
+                  <SuggestionsList items={recentItems()} />
+                </Show>
               </div>
             </Show>
             <Show when={segment === "Search"}>
