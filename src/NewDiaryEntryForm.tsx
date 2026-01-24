@@ -36,6 +36,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
     getRecentItemsQuery()?.data?.food_diary_diary_entry_recent || [];
 
   // Calculate time range: current time ± 1 hour
+  // These values are captured once when the component mounts, which is the desired behavior
   const now = new Date();
   const startTime = subHours(now, 1).toISOString();
   const endTime = addHours(now, 1).toISOString();
