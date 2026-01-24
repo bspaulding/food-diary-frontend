@@ -21,8 +21,8 @@ const SuggestionsList: Component<Props> = ({ items }) => {
         {(item) => (
           <li>
             <LoggableItem
-              recipe={item().recipe}
-              nutritionItem={item().nutrition_item}
+              recipe={item().recipe || undefined}
+              nutritionItem={item().nutrition_item || undefined}
             />
             <p class="text-xs ml-8 mb-2">
               Logged at{" "}

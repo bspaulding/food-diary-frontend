@@ -66,7 +66,7 @@ describe("NewDiaryEntryForm", () => {
       }),
     );
 
-    render(() => <NewDiaryEntryForm onSubmit={() => {}} />);
+    render(() => <NewDiaryEntryForm onSubmit={() => ({})} />);
 
     // Wait for the component to load
     await waitFor(
@@ -129,7 +129,7 @@ describe("NewDiaryEntryForm", () => {
       }),
     );
 
-    render(() => <NewDiaryEntryForm onSubmit={() => {}} />);
+    render(() => <NewDiaryEntryForm onSubmit={() => ({})} />);
 
     // Wait for the component to load
     await waitFor(
