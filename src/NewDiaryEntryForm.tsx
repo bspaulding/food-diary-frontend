@@ -2,6 +2,7 @@ import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
 import {
   fetchRecentEntries,
+  fetchEntriesAroundTime,
   createDiaryEntry,
   SearchNutritionItem,
   SearchRecipe,
@@ -12,7 +13,7 @@ import { useAuth } from "./Auth0";
 import SearchItemsForm from "./SearchItemsForm";
 import ButtonLink from "./ButtonLink";
 import SegmentedControl from "./SegmentedControl";
-import { parseISO, format } from "date-fns";
+import { parseISO, format, subHours, addHours } from "date-fns";
 
 type RecipeId = number;
 type NutritionItemId = number;
@@ -34,6 +35,17 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
   const recentItems = () =>
     getRecentItemsQuery()?.data?.food_diary_diary_entry_recent || [];
 
+  // Calculate time range: current time ± 1 hour
+  const now = new Date();
+  const startTime = subHours(now, 1).toISOString();
+  const endTime = addHours(now, 1).toISOString();
+
+  const [getTimeBasedItemsQuery] = createAuthorizedResource((token: string) =>
+    fetchEntriesAroundTime(token, startTime, endTime),
+  );
+  const timeBasedItems = () =>
+    getTimeBasedItemsQuery()?.data?.food_diary_diary_entry_recent || [];
+
   return (
     <div>
       <div class="flex space-x-4 mb-4">
@@ -46,6 +58,28 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
           <>
             <Show when={segment === "Suggestions"}>
               <div>
+                <Show when={timeBasedItems().length > 0}>
+                  <h2 class="text-lg font-semibold">Logged around this time</h2>
+                  <ul class="mb-4">
+                    <Index each={timeBasedItems()}>
+                      {(item) => (
+                        <li>
+                          <LoggableItem
+                            recipe={item().recipe}
+                            nutritionItem={item().nutrition_item}
+                          />
+                          <p class="text-xs ml-8 mb-2">
+                            Logged at{" "}
+                            {format(
+                              parseISO(item().consumed_at),
+                              "hh:mma' on ' MMMM dd, yyyy",
+                            )}
+                          </p>
+                        </li>
+                      )}
+                    </Index>
+                  </ul>
+                </Show>
                 <h2 class="text-lg font-semibold">Suggested Items</h2>
                 <ul>
                   <Show when={recentItems().length === 0}>
