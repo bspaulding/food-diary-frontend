@@ -114,6 +114,15 @@ export const worker = setupWorker(
       });
     }
 
+    // Handle GetEntriesAroundTime query
+    if (query.includes("GetEntriesAroundTime")) {
+      return HttpResponse.json({
+        data: {
+          food_diary_diary_entry: [],
+        },
+      });
+    }
+
     // Handle SearchItemsAndRecipes query
     if (query.includes("SearchItemsAndRecipes")) {
       return HttpResponse.json({
