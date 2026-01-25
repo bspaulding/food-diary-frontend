@@ -1,6 +1,10 @@
 import { beforeAll, afterEach, afterAll } from "vitest";
 import { http, HttpResponse } from "msw";
 import { setupWorker } from "msw/browser";
+import {
+  calculateCurrentWeekDays,
+  calculateFourWeeksDays,
+} from "./WeeklyStatsCalculations";
 
 // Mock data for tests - defined here so handlers can access them
 const mockNutritionItems = [
@@ -85,19 +89,27 @@ export const worker = setupWorker(
 
     // Handle GetWeeklyStats query
     if (query.includes("GetWeeklyStats")) {
+      // Calculate days dynamically based on current date to ensure test stability
+      const now = new Date();
+      const currentWeekDays = calculateCurrentWeekDays(now);
+      const fourWeeksDays = calculateFourWeeksDays(now);
+
+      // Target: 300 kcal/day for both metrics
+      const targetDailyCalories = 300;
+
       return HttpResponse.json({
         data: {
           current_week: {
             aggregate: {
               sum: {
-                calories: 300,
+                calories: targetDailyCalories * currentWeekDays,
               },
             },
           },
           past_four_weeks: {
             aggregate: {
               sum: {
-                calories: 8400,
+                calories: targetDailyCalories * fourWeeksDays,
               },
             },
           },
