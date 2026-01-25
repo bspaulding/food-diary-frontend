@@ -37,6 +37,14 @@ const RecipeShow: Component = () => {
     }, 0);
   });
 
+  const caloriesPerServing = createMemo(() => {
+    const servings =
+      recipe().total_servings && recipe().total_servings > 0
+        ? recipe().total_servings
+        : 1;
+    return totalCalories() / servings;
+  });
+
   return (
     <div style={{ margin: "18px" }}>
       <div class="flex space-x-4 mb-4">
@@ -50,6 +58,9 @@ const RecipeShow: Component = () => {
       <Show when={itemLoaded()}>
         <p class="text-lg font-semibold mt-4">
           Total Calories: {Math.round(totalCalories())} kcal
+        </p>
+        <p class="text-lg font-semibold mt-2">
+          Calories per Serving: {Math.round(caloriesPerServing())} kcal
         </p>
       </Show>
       <div class="text-lg mt-4">

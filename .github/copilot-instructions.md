@@ -52,6 +52,7 @@ src/
 
 ### API Layer
 
+- This application uses a hasura/graphql-engine backend
 - GraphQL queries and mutations are defined as template strings in `Api.ts`
 - API functions accept an `accessToken` as the first parameter
 - Use snake_case for GraphQL field names, camelCase for TypeScript properties
@@ -63,6 +64,18 @@ src/
 - Test files are named `*.test.ts` and placed alongside source files
 - Use `describe`, `it`, and `expect` from Vitest
 - Tests run with `npm test`
+- Tests expect to be run in the America/Los_Angeles timezone. set TZ=America/Los_Angeles before running
+
+### Automated Checks
+
+This project uses several automated checks tha must pass before any pull request is merged.
+
+- tsc checks for any errors or warnings in typescript types
+- prettier checks for consistent formatting
+- the unit tests must pass
+- the acceptance tests must pass
+
+please run all of these checks, and make sure they pass, before committing changes.
 
 ## Common Commands
 
