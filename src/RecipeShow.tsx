@@ -38,7 +38,10 @@ const RecipeShow: Component = () => {
   });
 
   const caloriesPerServing = createMemo(() => {
-    const servings = recipe().total_servings && recipe().total_servings > 0 ? recipe().total_servings : 1;
+    const servings =
+      recipe().total_servings && recipe().total_servings > 0
+        ? recipe().total_servings
+        : 1;
     return totalCalories() / servings;
   });
 
