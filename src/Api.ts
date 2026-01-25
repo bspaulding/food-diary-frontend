@@ -341,6 +341,35 @@ export async function fetchRecentEntries(accessToken: string) {
   return (await fetchQuery(accessToken, getRecentEntriesQuery)).json();
 }
 
+const getEntriesAroundTimeQuery = `
+query GetEntriesAroundTime($startTime: timestamptz!, $endTime: timestamptz!) {
+  food_diary_diary_entry(
+    where: {
+      consumed_at: { _gte: $startTime, _lte: $endTime }
+    }
+    order_by: {consumed_at: desc}
+    distinct_on: [nutrition_item_id, recipe_id]
+  ) {
+    consumed_at
+    nutrition_item { id, description }
+    recipe { id, name }
+  }
+}
+`;
+
+export async function fetchEntriesAroundTime(
+  accessToken: string,
+  startTime: string,
+  endTime: string,
+) {
+  return (
+    await fetchQuery(accessToken, getEntriesAroundTimeQuery, {
+      startTime,
+      endTime,
+    })
+  ).json();
+}
+
 const createDiaryEntryQuery = `
 mutation CreateDiaryEntry($entry: food_diary_diary_entry_insert_input!) {
   insert_food_diary_diary_entry_one(object: $entry) {
