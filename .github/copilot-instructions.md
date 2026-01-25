@@ -64,6 +64,7 @@ src/
 - Test files are named `*.test.ts` and placed alongside source files
 - Use `describe`, `it`, and `expect` from Vitest
 - Tests run with `npm test`
+- Tests expect to be run in the America/Los_Angeles timezone. set TZ=America/Los_Angeles before running
 
 ### Automated Checks
 
