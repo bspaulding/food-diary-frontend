@@ -90,7 +90,7 @@ export const worker = setupWorker(
           current_week: {
             aggregate: {
               sum: {
-                calories: 1500,
+                calories: 300,
               },
             },
           },
