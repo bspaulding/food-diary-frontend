@@ -23,7 +23,7 @@ query GetEntries($where: food_diary_diary_entry_bool_exp, $limit: Int) {
 async function fetchQuery(
   accessToken: string,
   query: string,
-  variables: object = {}
+  variables: object = {},
 ) {
   return await fetch(`${host}`, {
     method: "POST",
@@ -34,13 +34,64 @@ async function fetchQuery(
   });
 }
 
+// Macro nutrient keys that can be accessed on nutrition items
+export type MacroKey =
+  | "calories"
+  | "added_sugars_grams"
+  | "protein_grams"
+  | "total_fat_grams"
+  | "saturated_fat_grams"
+  | "trans_fat_grams"
+  | "polyunsaturated_fat_grams"
+  | "monounsaturated_fat_grams"
+  | "cholesterol_milligrams"
+  | "sodium_milligrams"
+  | "total_carbohydrate_grams"
+  | "dietary_fiber_grams"
+  | "total_sugars_grams";
+
+// Nutrition item with all macro fields
+export type NutritionItemWithMacros = {
+  id: number;
+  description: string;
+  calories: number;
+  added_sugars_grams: number;
+  protein_grams: number;
+  total_fat_grams: number;
+  saturated_fat_grams: number;
+  trans_fat_grams: number;
+  polyunsaturated_fat_grams: number;
+  monounsaturated_fat_grams: number;
+  cholesterol_milligrams: number;
+  sodium_milligrams: number;
+  total_carbohydrate_grams: number;
+  dietary_fiber_grams: number;
+  total_sugars_grams: number;
+};
+
+// Recipe item that's part of a recipe
+export type RecipeItem = {
+  id: number;
+  servings: number;
+  nutrition_item: NutritionItemWithMacros;
+};
+
+// Recipe with items
+export type RecipeWithItems = {
+  id: number;
+  name: string;
+  calories: number;
+  recipe_items: RecipeItem[];
+};
+
 export type DiaryEntry = {
   id: number;
   day: string;
   consumed_at: string;
   servings: number;
-  nutrition_item: { id: number; description: string; calories: number };
-  recipe: { id: number; name: string; calories: number };
+  calories: number;
+  nutrition_item?: NutritionItemWithMacros;
+  recipe?: RecipeWithItems;
 };
 
 export type GetEntriesQueryResponse = {
@@ -82,6 +133,64 @@ export async function fetchEntries(
   return response.json();
 }
 
+const getWeeklyStatsQuery = `
+query GetWeeklyStats($currentWeekStart: timestamptz!, $todayStart: timestamptz!, $fourWeeksAgoStart: timestamptz!) {
+  current_week: food_diary_diary_entry_aggregate(
+    where: { consumed_at: { _gte: $currentWeekStart, _lt: $todayStart } }
+  ) {
+    aggregate {
+      sum {
+        calories
+      }
+    }
+  }
+  past_four_weeks: food_diary_diary_entry_aggregate(
+    where: { 
+      consumed_at: { _gte: $fourWeeksAgoStart, _lt: $todayStart }
+    }
+  ) {
+    aggregate {
+      sum {
+        calories
+      }
+    }
+  }
+}
+`;
+
+export type WeeklyStatsResponse = {
+  data: {
+    current_week: {
+      aggregate: {
+        sum: {
+          calories: number | null;
+        };
+      };
+    };
+    past_four_weeks: {
+      aggregate: {
+        sum: {
+          calories: number | null;
+        };
+      };
+    };
+  };
+};
+
+export async function fetchWeeklyStats(
+  accessToken: string,
+  currentWeekStart: string,
+  todayStart: string,
+  fourWeeksAgoStart: string,
+): Promise<WeeklyStatsResponse> {
+  const response = await fetchQuery(accessToken, getWeeklyStatsQuery, {
+    currentWeekStart,
+    todayStart,
+    fourWeeksAgoStart,
+  });
+  return response.json();
+}
+
 const searchItemsAndRecipesQuery = `
 query SearchItemsAndRecipes($search: String!) {
   food_diary_search_nutrition_items(args: { search: $search }) {
@@ -96,16 +205,27 @@ query SearchItemsAndRecipes($search: String!) {
 }
 `;
 
+// Search result types
+export type SearchNutritionItem = {
+  id: number;
+  description: string;
+};
+
+export type SearchRecipe = {
+  id: number;
+  name: string;
+};
+
 export type SearchItemsAndRecipesQueryResponse = {
   data: {
-    food_diary_search_nutrition_items: { id: number; description: string }[];
-    food_diary_search_recipes: { id: number; name: string }[];
+    food_diary_search_nutrition_items: SearchNutritionItem[];
+    food_diary_search_recipes: SearchRecipe[];
   };
 };
 
 export async function searchItemsAndRecipes(
   accessToken: string,
-  search: string
+  search: string,
 ): Promise<SearchItemsAndRecipesQueryResponse> {
   const response = await fetchQuery(accessToken, searchItemsAndRecipesQuery, {
     search,
@@ -160,7 +280,7 @@ export type NutritionItem = NutritionItemAttrs & {
 
 export async function createNutritionItem(
   accessToken: string,
-  item: NutritionItem
+  item: NutritionItem,
 ) {
   const response = await fetchQuery(accessToken, createNutritionItemMutation, {
     nutritionItem: objectToSnakeCaseKeys(item),
@@ -178,7 +298,7 @@ mutation UpdateItem($id: Int!, $attrs: food_diary_nutrition_item_set_input!) {
 
 export async function updateNutritionItem(
   accessToken: string,
-  item: NutritionItem
+  item: NutritionItem,
 ) {
   const response = await fetchQuery(accessToken, updateNutritionItemMutation, {
     id: item.id,
@@ -194,14 +314,14 @@ function isUppercase(s: string): boolean {
 function camelToSnakeCase(s: string): string {
   return Array.from(s).reduce(
     (acc, c) => acc + (isUppercase(c) ? "_" + c.toLowerCase() : c),
-    ""
+    "",
   );
 }
 
 function objectToSnakeCaseKeys(o: object): object {
   return Object.entries(o).reduce(
     (acc, [k, v]) => ({ ...acc, [camelToSnakeCase(k)]: v }),
-    {}
+    {},
   );
 }
 
@@ -226,7 +346,10 @@ query GetNutritionItem($id: Int!) {
   }
 }
 `;
-export async function fetchNutritionItem(accessToken: string, id: number) {
+export async function fetchNutritionItem(
+  accessToken: string,
+  id: number | string,
+) {
   const response = await fetchQuery(accessToken, getNutritionItemQuery, { id });
   return response.json();
 }
@@ -245,6 +368,35 @@ export async function fetchRecentEntries(accessToken: string) {
   return (await fetchQuery(accessToken, getRecentEntriesQuery)).json();
 }
 
+const getEntriesAroundTimeQuery = `
+query GetEntriesAroundTime($startTime: timestamptz!, $endTime: timestamptz!) {
+  food_diary_diary_entry(
+    where: {
+      consumed_at: { _gte: $startTime, _lte: $endTime }
+    }
+    order_by: {consumed_at: desc}
+    distinct_on: [nutrition_item_id, recipe_id]
+  ) {
+    consumed_at
+    nutrition_item { id, description }
+    recipe { id, name }
+  }
+}
+`;
+
+export async function fetchEntriesAroundTime(
+  accessToken: string,
+  startTime: string,
+  endTime: string,
+) {
+  return (
+    await fetchQuery(accessToken, getEntriesAroundTimeQuery, {
+      startTime,
+      endTime,
+    })
+  ).json();
+}
+
 const createDiaryEntryQuery = `
 mutation CreateDiaryEntry($entry: food_diary_diary_entry_insert_input!) {
   insert_food_diary_diary_entry_one(object: $entry) {
@@ -252,23 +404,23 @@ mutation CreateDiaryEntry($entry: food_diary_diary_entry_insert_input!) {
   }
 }`;
 
-type CreateDiaryEntryInput =
+export type CreateDiaryEntryInput =
   | CreateDiaryEntryRecipeInput
   | CreateDiaryEntryItemInput;
 
-type CreateDiaryEntryItemInput = {
+export type CreateDiaryEntryItemInput = {
   servings: number;
   nutrition_item_id: number;
 };
 
-type CreateDiaryEntryRecipeInput = {
+export type CreateDiaryEntryRecipeInput = {
   servings: number;
   recipe_id: number;
 };
 
 export async function createDiaryEntry(
   accessToken: string,
-  entry: CreateDiaryEntryInput
+  entry: CreateDiaryEntryInput,
 ) {
   return (
     await fetchQuery(accessToken, createDiaryEntryQuery, { entry })
@@ -332,7 +484,7 @@ function transformRecipeInput(formInput: RecipeAttrs) {
 
 export async function createRecipe(
   accessToken: string,
-  formInput: RecipeAttrs
+  formInput: RecipeAttrs,
 ) {
   return (
     await fetchQuery(accessToken, createRecipeMutation, {
@@ -409,7 +561,7 @@ mutation InsertDiaryEntriesWithNewItems($entries: [food_diary_diary_entry_insert
 
 export async function insertDiaryEntries(
   accessToken: string,
-  entries: NewDiaryEntry[]
+  entries: NewDiaryEntry[],
 ) {
   return (
     await fetchQuery(accessToken, insertDiaryEntriesWithItemsMutation, {
@@ -496,10 +648,42 @@ mutation UpdateDiaryEntry($id: Int!, $attrs: food_diary_diary_entry_set_input!) 
 
 export async function updateDiaryEntry(
   accessToken: string,
-  entry: { id: number; servings: number; consumedAt: string }
+  entry: { id: number; servings: number; consumedAt: string },
 ) {
   return fetchQuery(accessToken, updateDiaryEntryMutation, {
     id: entry.id,
     attrs: objectToSnakeCaseKeys(entry),
   }).then((res) => res.json());
+}
+
+// Weekly trends query - uses backend view for pre-aggregated data
+const getWeeklyTrendsQuery = `
+query GetWeeklyTrends {
+  food_diary_trends_weekly {
+    week_of_year
+    protein
+    calories
+    added_sugar
+  }
+}
+`;
+
+export type WeeklyTrendsData = {
+  week_of_year: string;
+  protein: number;
+  calories: number;
+  added_sugar: number;
+};
+
+export type GetWeeklyTrendsResponse = {
+  data: {
+    food_diary_trends_weekly: WeeklyTrendsData[];
+  };
+};
+
+export async function fetchWeeklyTrends(
+  accessToken: string,
+): Promise<GetWeeklyTrendsResponse> {
+  const response = await fetchQuery(accessToken, getWeeklyTrendsQuery);
+  return response.json();
 }
