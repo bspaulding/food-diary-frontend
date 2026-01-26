@@ -86,7 +86,7 @@ export const worker = setupWorker(
 
     // Handle GetWeeklyStats query
     if (query.includes("GetWeeklyStats")) {
-      // Calculate days dynamically based on current date to ensure test stability
+      // Use fixed 7-day rolling window and calculate 4-week period
       const now = new Date();
       const currentWeekDays = 7;
       const fourWeeksDays = calculateFourWeeksDays(now);

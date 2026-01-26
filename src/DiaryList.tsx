@@ -89,7 +89,7 @@ const DiaryList: Component = () => {
     fetchWeeklyStats(token, sevenDaysAgoStart, todayStart, fourWeeksAgoStart),
   );
 
-  // Calculate number of complete days (up to but not including today)
+  // Rolling 7-day window for consistent daily average
   const currentWeekDays = 7;
   const fourWeeksDays = calculateFourWeeksDays(now);
 
