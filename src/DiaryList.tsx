@@ -23,7 +23,6 @@ import {
   subWeeks,
 } from "date-fns";
 import {
-  calculateCurrentWeekDays,
   calculateFourWeeksDays,
   calculateDailyAverage,
 } from "./WeeklyStatsCalculations";
@@ -91,7 +90,7 @@ const DiaryList: Component = () => {
   );
 
   // Calculate number of complete days (up to but not including today)
-  const currentWeekDays = calculateCurrentWeekDays(now);
+  const currentWeekDays = 7;
   const fourWeeksDays = calculateFourWeeksDays(now);
 
   const entries = () => getEntriesQuery()?.data?.food_diary_diary_entry || [];

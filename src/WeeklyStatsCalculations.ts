@@ -27,15 +27,6 @@ export function calculateDailyAverage(
 }
 
 /**
- * Calculate the number of complete days in the last 7 days (up to but not including today)
- * @param now - The current date/time
- * @returns 7 days (rolling 7-day window)
- */
-export function calculateCurrentWeekDays(now: Date): number {
-  return 7;
-}
-
-/**
  * Calculate the number of complete days in the last 4 weeks (up to but not including today)
  * @param now - The current date/time
  * @returns The number of complete days in the last 4 weeks, up to but not including today
