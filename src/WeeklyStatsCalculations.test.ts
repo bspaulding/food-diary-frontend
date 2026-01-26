@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   calculateDaysBetween,
   calculateDailyAverage,
-  calculateCurrentWeekDays,
   calculateFourWeeksDays,
 } from "./WeeklyStatsCalculations";
 
@@ -38,33 +37,6 @@ describe("WeeklyStatsCalculations", () => {
 
     it("handles zero calories", () => {
       expect(calculateDailyAverage(0, 7)).toBe(0);
-    });
-  });
-
-  describe("calculateCurrentWeekDays", () => {
-    it("returns 1 on Sunday (start of week)", () => {
-      const sunday = new Date("2024-01-07T12:00:00Z"); // Sunday
-      expect(calculateCurrentWeekDays(sunday)).toBe(1);
-    });
-
-    it("returns 1 on Monday", () => {
-      const monday = new Date("2024-01-08T12:00:00Z"); // Monday
-      expect(calculateCurrentWeekDays(monday)).toBe(1);
-    });
-
-    it("returns 2 on Tuesday", () => {
-      const tuesday = new Date("2024-01-09T12:00:00Z"); // Tuesday
-      expect(calculateCurrentWeekDays(tuesday)).toBe(2);
-    });
-
-    it("returns 3 on Wednesday", () => {
-      const wednesday = new Date("2024-01-10T12:00:00Z"); // Wednesday
-      expect(calculateCurrentWeekDays(wednesday)).toBe(3);
-    });
-
-    it("returns 6 on Saturday", () => {
-      const saturday = new Date("2024-01-13T12:00:00Z"); // Saturday
-      expect(calculateCurrentWeekDays(saturday)).toBe(6);
     });
   });
 
