@@ -72,19 +72,19 @@ describe("Browser Acceptance Tests", () => {
     // Wait for the weekly stats to be fetched and displayed
     await waitFor(
       () => {
-        const thisWeekLabel = screen.queryByText(/THIS WEEK/i);
-        expect(thisWeekLabel).not.toBeNull();
+        const last7DaysLabel = screen.queryByText(/LAST 7 DAYS/i);
+        expect(last7DaysLabel).not.toBeNull();
       },
       { timeout: 5000 },
     );
 
     // Verify weekly summary labels are displayed
-    expect(screen.getByText(/THIS WEEK/i)).toBeTruthy();
+    expect(screen.getByText(/LAST 7 DAYS/i)).toBeTruthy();
     expect(screen.getByText(/4 WEEK AVG/i)).toBeTruthy();
 
     // Verify the weekly stats values are displayed with kcal/day units
     // The values are now averages per day, not totals
-    // Both This Week and 4 Week Avg show 300 kcal/day in the mock data
+    // Both Last 7 Days and 4 Week Avg show 300 kcal/day in the mock data
     const kcalElements = screen.getAllByText(/300 kcal\/day/);
     expect(kcalElements).toHaveLength(2);
   });

@@ -7,26 +7,26 @@ import {
 } from "./WeeklyStatsCalculations";
 
 describe("Weekly Stats Integration Tests", () => {
-  describe("Example scenarios from the issue", () => {
-    it("Monday scenario: should calculate 1 day for this week (Sunday only)", () => {
-      // If today is Monday, we should have 1 complete day (Sunday)
+  describe("Last 7 days rolling window", () => {
+    it("Monday scenario: should calculate 7 days for last 7 days", () => {
+      // If today is Monday, we should have 7 complete days (rolling window)
       const monday = new Date("2024-01-08T12:00:00Z"); // Monday, Jan 8
       const days = calculateCurrentWeekDays(monday);
-      expect(days).toBe(1);
+      expect(days).toBe(7);
     });
 
-    it("Tuesday scenario: should calculate 2 days for this week (Sunday and Monday)", () => {
-      // If today is Tuesday, we should have 2 complete days (Sunday and Monday)
+    it("Tuesday scenario: should calculate 7 days for last 7 days", () => {
+      // If today is Tuesday, we should have 7 complete days (rolling window)
       const tuesday = new Date("2024-01-09T12:00:00Z"); // Tuesday, Jan 9
       const days = calculateCurrentWeekDays(tuesday);
-      expect(days).toBe(2);
+      expect(days).toBe(7);
     });
 
-    it("Sunday scenario: should calculate 1 day minimum (even though it's start of week)", () => {
-      // If today is Sunday (start of week), we should get minimum of 1 day
+    it("Sunday scenario: should calculate 7 days for last 7 days", () => {
+      // If today is Sunday, we should have 7 complete days (rolling window)
       const sunday = new Date("2024-01-07T12:00:00Z"); // Sunday, Jan 7
       const days = calculateCurrentWeekDays(sunday);
-      expect(days).toBe(1);
+      expect(days).toBe(7);
     });
   });
 
@@ -59,29 +59,17 @@ describe("Weekly Stats Integration Tests", () => {
   });
 
   describe("Full week progression", () => {
-    it("should correctly calculate days for each day of the week", () => {
+    it("should always return 7 days for any day of the week (rolling window)", () => {
       const sunday = new Date("2024-01-07T12:00:00Z");
 
-      // Sunday: 1 day (minimum, even though it's start of week)
-      expect(calculateCurrentWeekDays(sunday)).toBe(1);
-
-      // Monday: 1 day (Sunday)
-      expect(calculateCurrentWeekDays(addDays(sunday, 1))).toBe(1);
-
-      // Tuesday: 2 days (Sunday, Monday)
-      expect(calculateCurrentWeekDays(addDays(sunday, 2))).toBe(2);
-
-      // Wednesday: 3 days (Sunday, Monday, Tuesday)
-      expect(calculateCurrentWeekDays(addDays(sunday, 3))).toBe(3);
-
-      // Thursday: 4 days (Sunday-Wednesday)
-      expect(calculateCurrentWeekDays(addDays(sunday, 4))).toBe(4);
-
-      // Friday: 5 days (Sunday-Thursday)
-      expect(calculateCurrentWeekDays(addDays(sunday, 5))).toBe(5);
-
-      // Saturday: 6 days (Sunday-Friday)
-      expect(calculateCurrentWeekDays(addDays(sunday, 6))).toBe(6);
+      // All days should return 7 for rolling 7-day window
+      expect(calculateCurrentWeekDays(sunday)).toBe(7);
+      expect(calculateCurrentWeekDays(addDays(sunday, 1))).toBe(7); // Monday
+      expect(calculateCurrentWeekDays(addDays(sunday, 2))).toBe(7); // Tuesday
+      expect(calculateCurrentWeekDays(addDays(sunday, 3))).toBe(7); // Wednesday
+      expect(calculateCurrentWeekDays(addDays(sunday, 4))).toBe(7); // Thursday
+      expect(calculateCurrentWeekDays(addDays(sunday, 5))).toBe(7); // Friday
+      expect(calculateCurrentWeekDays(addDays(sunday, 6))).toBe(7); // Saturday
     });
   });
 
@@ -103,11 +91,9 @@ describe("Weekly Stats Integration Tests", () => {
   describe("Edge cases", () => {
     it("should handle end of month transitions", () => {
       const endOfJan = new Date("2024-01-31T12:00:00Z");
-      const startOfWeek = new Date("2024-01-28T00:00:00Z"); // Sunday
-
-      // Days from Sunday Jan 28 to Wednesday Jan 31
+      // Rolling 7-day window always returns 7
       const days = calculateCurrentWeekDays(endOfJan);
-      expect(days).toBe(3);
+      expect(days).toBe(7);
     });
 
     it("should handle leap year February correctly", () => {
@@ -117,11 +103,11 @@ describe("Weekly Stats Integration Tests", () => {
       expect(days).toBe(28);
     });
 
-    it("should handle minimum of 1 day to avoid division by zero", () => {
-      // Even with dates very close together, we get minimum of 1 day
+    it("should return 7 days for rolling window", () => {
+      // Rolling 7-day window always returns 7
       const date = new Date("2024-01-07T12:00:00Z"); // Sunday midday
       const days = calculateCurrentWeekDays(date);
-      expect(days).toBe(1);
+      expect(days).toBe(7);
     });
   });
 });

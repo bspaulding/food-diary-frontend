@@ -19,7 +19,7 @@ import {
   startOfDay,
   compareAsc,
   compareDesc,
-  startOfWeek,
+  subDays,
   subWeeks,
 } from "date-fns";
 import {
@@ -83,11 +83,11 @@ const DiaryList: Component = () => {
   // Fetch weekly stats from the backend
   const now = new Date();
   const todayStart = formatISO(startOfDay(now));
-  const currentWeekStart = formatISO(startOfWeek(now, { weekStartsOn: 0 }));
+  const sevenDaysAgoStart = formatISO(startOfDay(subDays(now, 7)));
   const fourWeeksAgoStart = formatISO(startOfDay(subWeeks(now, 4)));
 
   const [weeklyStatsQuery] = createAuthorizedResource((token: string) =>
-    fetchWeeklyStats(token, currentWeekStart, todayStart, fourWeeksAgoStart),
+    fetchWeeklyStats(token, sevenDaysAgoStart, todayStart, fourWeeksAgoStart),
   );
 
   // Calculate number of complete days (up to but not including today)
@@ -131,7 +131,7 @@ const DiaryList: Component = () => {
               ),
             )}
             unit=" kcal/day"
-            label="This Week"
+            label="Last 7 Days"
           />
           <EntryMacro
             value={String(

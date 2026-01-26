@@ -1,4 +1,4 @@
-import { startOfDay, startOfWeek, subWeeks } from "date-fns";
+import { startOfDay, subDays, subWeeks } from "date-fns";
 
 /**
  * Calculate the number of complete days between two dates (excluding the end date)
@@ -27,14 +27,12 @@ export function calculateDailyAverage(
 }
 
 /**
- * Calculate the number of complete days in the current week (up to but not including today)
+ * Calculate the number of complete days in the last 7 days (up to but not including today)
  * @param now - The current date/time
- * @returns The number of complete days since Sunday (start of week), up to but not including today
+ * @returns 7 days (rolling 7-day window)
  */
 export function calculateCurrentWeekDays(now: Date): number {
-  const todayStart = startOfDay(now);
-  const currentWeekStart = startOfWeek(now, { weekStartsOn: 0 });
-  return calculateDaysBetween(currentWeekStart, todayStart);
+  return 7;
 }
 
 /**
