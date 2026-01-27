@@ -65,6 +65,26 @@ src/
 - Use `describe`, `it`, and `expect` from Vitest
 - Tests run with `npm test`
 - Tests expect to be run in the America/Los_Angeles timezone. set TZ=America/Los_Angeles before running
+- **NEVER mock `fetch` directly** - always use Mock Service Worker (MSW) instead
+- MSW is configured in `src/test-setup.ts` with a `server` export
+- Import `server` from `./test-setup` and use `server.use()` to mock HTTP requests
+- Use `http.post()` or `http.get()` from `msw` to define request handlers
+- Example:
+
+  ```typescript
+  import { http, HttpResponse } from "msw";
+  import { server } from "./test-setup";
+
+  server.use(
+    http.post("/api/v1/graphql", () => {
+      return HttpResponse.json({
+        data: {
+          /* mock data */
+        },
+      });
+    }),
+  );
+  ```
 
 ### Automated Checks
 

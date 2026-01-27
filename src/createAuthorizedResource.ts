@@ -1,6 +1,7 @@
 import type { ResourceOptions, ResourceReturn, ResourceSource } from "solid-js";
 import { createResource } from "solid-js";
 import { useAuth } from "./Auth0";
+import { AuthorizationError } from "./Api";
 
 /**
  * Type for the fetcher function used in createAuthorizedResource.
@@ -45,15 +46,29 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
     fetcher = source;
     source = true;
   }
-  const [{ accessToken }] = useAuth();
+  const [{ accessToken, auth0 }] = useAuth();
   const tokenizedSource = () => ({
     accessToken: accessToken(),
     source: source === true ? source : source(),
   });
   return createResource(
     tokenizedSource,
-    ({ accessToken, source }: { accessToken: string; source: any }) => {
-      return fetcher(accessToken, source);
+    async ({ accessToken, source }: { accessToken: string; source: any }) => {
+      try {
+        return await fetcher(accessToken, source);
+      } catch (error) {
+        // If we get an authorization error, log out the user
+        if (error instanceof AuthorizationError) {
+          const client = auth0();
+          if (client) {
+            await client.logout({
+              returnTo: window.location.origin,
+            });
+          }
+        }
+        // Re-throw the error so the resource can handle it
+        throw error;
+      }
     },
     options as any,
   ) as ResourceReturn<T, R>;
