@@ -1,7 +1,7 @@
 import type { Component } from "solid-js";
 import { createSignal, Index } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import type { RecipeAttrs, Recipe } from "./Api";
+import type { RecipeAttrs, Recipe, SearchNutritionItem } from "./Api";
 import { createRecipe, updateRecipe } from "./Api";
 import SearchItemsForm, { ItemsQueryType } from "./SearchItemsForm";
 import { useAuth } from "./Auth0";
@@ -11,10 +11,15 @@ type Props = {
   initialRecipe?: Recipe;
 };
 
-const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: Array<{ message: string }>;
+}
+
+const NewRecipeForm: Component<Props> = ({ initialRecipe }: Props) => {
   const [{ accessToken }] = useAuth();
   const [input, setInput] = createSignal<Recipe>(
-    initialRecipe || {
+    initialRecipe ?? {
       id: 0,
       name: "",
       total_servings: 1,
@@ -34,8 +39,8 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
             type="text"
             name="name"
             value={input().name}
-            onInput={(event) => {
-              setInput((input) => ({
+            onInput={(event: InputEvent & { target: HTMLInputElement }) => {
+              setInput((input: Recipe) => ({
                 ...input,
                 name: event.target.value,
               }));
@@ -48,12 +53,12 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
             min="0"
             step="0.1"
             value={input().total_servings}
-            onInput={(event) => {
-              const total_servings = parseFloat(event.target.value);
+            onInput={(event: InputEvent & { target: HTMLInputElement }) => {
+              const total_servings: number = parseFloat(event.target.value);
               if (isNaN(total_servings)) {
                 return;
               }
-              setInput((input) => ({
+              setInput((input: Recipe) => ({
                 ...input,
                 total_servings,
               }));
@@ -65,7 +70,7 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
           <small>{input().recipe_items.length} items in recipe.</small>
           <ul>
             <Index each={input().recipe_items}>
-              {(item, i) => (
+              {(item: () => Recipe["recipe_items"][number], i: number) => (
                 <li class="flex flex-row place-content-between items-center">
                   <p>{item().nutrition_item.description}</p>
                   <input
@@ -74,12 +79,14 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
                     min="0"
                     step="0.1"
                     class="w-20"
-                    onInput={(event) => {
-                      const servings = parseFloat(event.target.value);
+                    onInput={(
+                      event: InputEvent & { target: HTMLInputElement },
+                    ) => {
+                      const servings: number = parseFloat(event.target.value);
                       if (isNaN(servings)) {
                         return;
                       }
-                      setInput((input) => ({
+                      setInput((input: Recipe) => ({
                         ...input,
                         recipe_items: [
                           ...input.recipe_items.slice(0, i),
@@ -100,13 +107,19 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
         <fieldset>
           <legend class="font-semibold">Add New Items</legend>
           <SearchItemsForm queryType={ItemsQueryType.ItemsOnly}>
-            {({ clear, nutritionItem }: any) => (
+            {({
+              clear,
+              nutritionItem,
+            }: {
+              clear: () => void;
+              nutritionItem: SearchNutritionItem;
+            }) => (
               <li class="flex flex-row">
                 <button
                   class="mr-1 text-3xl text-indigo-600 transition-transform "
-                  onClick={(event) => {
+                  onClick={(event: MouseEvent) => {
                     event.preventDefault();
-                    setInput((input) => ({
+                    setInput((input: Recipe) => ({
                       ...input,
                       recipe_items: [
                         ...input.recipe_items,
@@ -130,18 +143,23 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
         <fieldset class="mt-4">
           <button
             class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
-            onClick={async (event) => {
+            onClick={async (event: MouseEvent) => {
               event.preventDefault();
               if (input().id) {
-                const response = await updateRecipe(accessToken(), input());
-                const id = response?.data?.update_food_diary_recipe_by_pk?.id;
+                const response: GraphQLResponse<{
+                  update_food_diary_recipe_by_pk?: { id: number };
+                }> = await updateRecipe(accessToken(), input());
+                const id: number | undefined =
+                  response?.data?.update_food_diary_recipe_by_pk?.id;
                 if (id) {
                   navigate(`/recipe/${id}`);
                 }
               } else {
                 const { id, ...attrs } = input();
-                const response = await createRecipe(accessToken(), attrs);
-                const responseId =
+                const response: GraphQLResponse<{
+                  insert_food_diary_recipe_one?: { id: number };
+                }> = await createRecipe(accessToken(), attrs);
+                const responseId: number | undefined =
                   response?.data?.insert_food_diary_recipe_one?.id;
                 if (responseId) {
                   navigate(`/recipe/${responseId}`);

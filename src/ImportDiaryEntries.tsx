@@ -2,26 +2,33 @@ import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
 import { format, parseISO } from "date-fns";
 import type { NewDiaryEntry } from "./Api";
-import type { Either, Left } from "./Either";
-import { Right, isRight, isLeft } from "./Either";
+import type { Either } from "./Either";
+import { isRight, isLeft } from "./Either";
 import { useAuth } from "./Auth0";
 import { insertDiaryEntries } from "./Api";
 import ButtonLink from "./ButtonLink";
 import { parseCSV, rowToEntry } from "./CSVImport";
 
-function readFile(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", (event) => {
-      if (event.target) {
-        resolve(event.target.result as string);
-      } else {
-        reject(new Error("Failed to read file"));
-      }
-    });
-    reader.addEventListener("error", reject);
-    reader.readAsText(file);
-  });
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: Array<{ message: string }>;
+}
+
+function readFile(file: File): Promise<string> {
+  return new Promise<string>(
+    (resolve: (value: string) => void, reject: (reason?: unknown) => void) => {
+      const reader: FileReader = new FileReader();
+      reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
+        if (event.target) {
+          resolve(event.target.result as string);
+        } else {
+          reject(new Error("Failed to read file"));
+        }
+      });
+      reader.addEventListener("error", reject);
+      reader.readAsText(file);
+    },
+  );
 }
 
 const ImportDiaryEntries: Component = () => {
@@ -35,26 +42,31 @@ const ImportDiaryEntries: Component = () => {
   const [saved, setSaved] = createSignal(false);
   const [importError, setImportError] = createSignal<string | null>(null);
 
-  const fileChanged = async (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
+  const fileChanged = async (event: Event): Promise<void> => {
+    const file: File | undefined = (event.target as HTMLInputElement)
+      .files?.[0];
     if (!file) return;
     setImportError(null);
     try {
-      const csv = await readFile(file);
-      const rows = parseCSV(csv);
+      const csv: string = await readFile(file);
+      const rows: string[][] = parseCSV(csv);
       const entries: Either<object, NewDiaryEntry>[] = rows.map(rowToEntry);
 
-      const { lefts, rights } = entries.reduce(
-        (acc, entry) => {
-          if (isLeft(entry)) {
-            return { ...acc, lefts: [...acc.lefts, entry.value] };
-          } else if (isRight(entry)) {
-            return { ...acc, rights: [...acc.rights, entry.value] };
-          }
-          return acc;
-        },
-        { lefts: [] as object[], rights: [] as NewDiaryEntry[] },
-      );
+      const { lefts, rights }: { lefts: object[]; rights: NewDiaryEntry[] } =
+        entries.reduce(
+          (
+            acc: { lefts: object[]; rights: NewDiaryEntry[] },
+            entry: Either<object, NewDiaryEntry>,
+          ) => {
+            if (isLeft(entry)) {
+              return { ...acc, lefts: [...acc.lefts, entry.value] };
+            } else if (isRight(entry)) {
+              return { ...acc, rights: [...acc.rights, entry.value] };
+            }
+            return acc;
+          },
+          { lefts: [] as object[], rights: [] as NewDiaryEntry[] },
+        );
 
       console.log({ lefts, rights });
       setParseResult({ parsed: true, lefts, rights });
@@ -66,21 +78,20 @@ const ImportDiaryEntries: Component = () => {
     }
   };
 
-  const startImport = async (e: Event) => {
+  const startImport = async (e: Event): Promise<void> => {
     e.preventDefault();
     setSaving(true);
     setImportError(null);
     try {
-      const response = await insertDiaryEntries(
-        accessToken(),
-        parseResult().rights,
-      );
+      const response: GraphQLResponse<{
+        insert_food_diary_diary_entry?: { affected_rows: number };
+      }> = await insertDiaryEntries(accessToken(), parseResult().rights);
       setSaving(false);
       setSaved(!!response.data);
     } catch (error: unknown) {
       console.error("CSV import failed:", error);
       setSaving(false);
-      const message =
+      const message: string =
         error instanceof Error
           ? error.message
           : "An error occurred during import";
@@ -147,7 +158,7 @@ const ImportDiaryEntries: Component = () => {
           </thead>
           <tbody>
             <Index each={parseResult().rights}>
-              {(row) => (
+              {(row: () => NewDiaryEntry) => (
                 <>
                   <tr>
                     <td>
@@ -190,9 +201,11 @@ export default ImportDiaryEntries;
 
 const CollapsibleNutritionFacts: Component<{ entry: NewDiaryEntry }> = ({
   entry,
+}: {
+  entry: NewDiaryEntry;
 }) => {
   const [collapsed, setCollapsed] = createSignal(true);
-  const toggleCollapsed = (e: Event) => {
+  const toggleCollapsed = (e: Event): void => {
     e.preventDefault();
     setCollapsed(!collapsed());
   };
