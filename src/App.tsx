@@ -3,8 +3,13 @@ import { Show } from "solid-js";
 import { Router, Route } from "@solidjs/router";
 import { useAuth } from "./Auth0";
 
-const App: Component<ParentProps> = (props) => {
+type Auth0User = {
+  picture?: string;
+};
+
+const App: Component<ParentProps> = (props: ParentProps) => {
   const [{ user, isAuthenticated, auth0 }] = useAuth();
+  const userObj = (): Auth0User => (user() as Auth0User) || {};
 
   return (
     <div class="font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-20">
@@ -14,7 +19,7 @@ const App: Component<ParentProps> = (props) => {
           <div class="absolute right-2 w-12 h-12 ">
             <a href="/profile">
               <img
-                src={(user() as any)?.picture}
+                src={userObj()?.picture}
                 class="border border-slate-800 rounded-full"
               />
             </a>
@@ -25,7 +30,13 @@ const App: Component<ParentProps> = (props) => {
         when={isAuthenticated()}
         keyed
         fallback={
-          <button onClick={() => auth0()?.loginWithRedirect()}>Log In</button>
+          <button
+            onClick={(): void => {
+              auth0()?.loginWithRedirect();
+            }}
+          >
+            Log In
+          </button>
         }
       >
         {props.children}

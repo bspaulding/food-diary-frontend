@@ -2,17 +2,15 @@ import type { Component } from "solid-js";
 import { createMemo, Index, Show } from "solid-js";
 import { useParams } from "@solidjs/router";
 import createAuthorizedResource from "./createAuthorizedResource";
-import { fetchRecipe } from "./Api";
+import { fetchRecipe, RecipeItem } from "./Api";
 import ButtonLink from "./ButtonLink";
 import { LoggableItem } from "./NewDiaryEntryForm";
 
-type RecipeItem = {
-  servings: number;
-  nutrition_item: {
-    id: number;
-    description: string;
-    calories?: number;
-  };
+type RecipeQueryResult = {
+  id?: number;
+  name?: string;
+  total_servings?: number;
+  recipe_items?: RecipeItem[];
 };
 
 const calculateItemCalories = (item: RecipeItem): number => {
@@ -25,22 +23,26 @@ const RecipeShow: Component = () => {
     () => params.id,
     (token: string, id: string) => fetchRecipe(token, parseInt(id, 10)),
   );
-  const recipe = () =>
-    recipeQuery()?.data?.food_diary_recipe_by_pk || { id: params.id };
-  const recipeItems = createMemo(() => recipe().recipe_items);
+  const recipe = (): RecipeQueryResult =>
+    recipeQuery()?.data?.food_diary_recipe_by_pk || {
+      id: parseInt(params.id, 10),
+    };
+  const recipeItems = createMemo(
+    (): RecipeItem[] => recipe().recipe_items || [],
+  );
 
-  const itemLoaded = () => !!recipeQuery()?.data;
+  const itemLoaded = (): boolean => !!recipeQuery()?.data;
 
-  const totalCalories = createMemo(() => {
-    return (recipeItems() || []).reduce((acc: number, item: RecipeItem) => {
+  const totalCalories = createMemo((): number => {
+    return recipeItems().reduce((acc: number, item: RecipeItem) => {
       return acc + calculateItemCalories(item);
     }, 0);
   });
 
-  const caloriesPerServing = createMemo(() => {
-    const servings =
-      recipe().total_servings && recipe().total_servings > 0
-        ? recipe().total_servings
+  const caloriesPerServing = createMemo((): number => {
+    const servings: number =
+      recipe().total_servings && recipe().total_servings! > 0
+        ? recipe().total_servings!
         : 1;
     return totalCalories() / servings;
   });
@@ -53,7 +55,14 @@ const RecipeShow: Component = () => {
       </div>
       <h1 class="font-semibold text-2xl">{recipe().name}</h1>
       <Show when={itemLoaded()}>
-        <LoggableItem recipe={{ id: recipe().id, name: "Log It" } as any} />
+        <LoggableItem
+          recipe={
+            { id: recipe().id as number, name: "Log It" } as {
+              id: number;
+              name: string;
+            }
+          }
+        />
       </Show>
       <Show when={itemLoaded()}>
         <p class="text-lg font-semibold mt-4">
@@ -66,7 +75,7 @@ const RecipeShow: Component = () => {
       <div class="text-lg mt-4">
         <h2 class="font-semibold mb-2">Ingredients:</h2>
         <Index each={recipeItems()} fallback="No recipe items.">
-          {(item) => (
+          {(item: () => RecipeItem) => (
             <li class="list-none my-1">
               <a href={`/nutrition_item/${item().nutrition_item.id}`}>
                 {item().nutrition_item.description}

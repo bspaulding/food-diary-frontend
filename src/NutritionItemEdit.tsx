@@ -12,11 +12,11 @@ const NutritionItemEdit: Component = () => {
     (token: string, id: string) => fetchNutritionItem(token, id),
   );
 
-  const nutritionItem = () =>
+  const nutritionItem = (): Partial<NutritionItem> =>
     nutritionItemQuery()?.data?.food_diary_nutrition_item_by_pk || {};
   return (
     <Show when={nutritionItem().id}>
-      <NewNutritionItemForm initialItem={nutritionItem() as any} />
+      <NewNutritionItemForm initialItem={nutritionItem() as NutritionItem} />
     </Show>
   );
 };

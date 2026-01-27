@@ -14,11 +14,11 @@ type Props = {
   items: SuggestionItem[];
 };
 
-const SuggestionsList: Component<Props> = ({ items }) => {
+const SuggestionsList: Component<Props> = (props: Props) => {
   return (
     <ul class="mb-4">
-      <Index each={items}>
-        {(item) => (
+      <Index each={props.items}>
+        {(item: () => SuggestionItem) => (
           <li>
             <LoggableItem
               recipe={item().recipe || undefined}

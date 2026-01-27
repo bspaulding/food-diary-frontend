@@ -2,8 +2,15 @@ import type { Component } from "solid-js";
 import { Show } from "solid-js";
 import { useParams } from "@solidjs/router";
 import createAuthorizedResource from "./createAuthorizedResource";
-import { fetchRecipe } from "./Api";
+import { fetchRecipe, Recipe, RecipeItem } from "./Api";
 import NewRecipeForm from "./NewRecipeForm";
+
+type RecipeQueryResult = {
+  id?: number;
+  name?: string;
+  total_servings?: number;
+  recipe_items?: RecipeItem[];
+};
 
 const RecipeEdit: Component = () => {
   const params = useParams();
@@ -11,14 +18,14 @@ const RecipeEdit: Component = () => {
     () => params.id,
     (token: string, id: string) => fetchRecipe(token, parseInt(id, 10)),
   );
-  const recipe = () => recipeQuery()?.data?.food_diary_recipe_by_pk || {};
+  const recipe = (): RecipeQueryResult =>
+    recipeQuery()?.data?.food_diary_recipe_by_pk || {};
 
   return (
     <Show when={recipe().id}>
-      <NewRecipeForm initialRecipe={recipe() as any} />
+      <NewRecipeForm initialRecipe={recipe() as Recipe} />
     </Show>
   );
-  return <div>{recipe().id}</div>;
 };
 
 export default RecipeEdit;
