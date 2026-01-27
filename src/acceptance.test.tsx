@@ -47,7 +47,7 @@ describe("Browser Acceptance Tests", () => {
     expect(screen.getByText("Add New Entry")).toBeTruthy();
     expect(screen.getByText("Add Item")).toBeTruthy();
     expect(screen.getByText("Add Recipe")).toBeTruthy();
-    
+
     // If using mock backend (worker is defined and not undefined), verify mock data is displayed
     if (worker !== undefined) {
       // Wait for mock data to load

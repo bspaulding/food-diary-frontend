@@ -8,7 +8,7 @@ on:
 jobs:
   test-live-backend:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -22,7 +22,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
       graphql-engine:
         image: ghcr.io/bspaulding/food-diary-graphql-engine:latest
         env:
@@ -35,25 +35,29 @@ jobs:
           HASURA_GRAPHQL_JWT_SECRET: '{"type":"RS256","jwk_url":"https://motingo.auth0.com/.well-known/jwks.json","claims_format":"stringified_json"}'
         ports:
           - 8080:8080
-        options: >-
-          --health-cmd "wget --no-verbose --tries=1 --spider http://localhost:8080/healthz || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
       - run: npm ci
-      
+
       - name: Wait for GraphQL Engine
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:8080/healthz; do sleep 2; done'
-          echo "GraphQL engine is ready"
-      
+          echo "Waiting for GraphQL engine to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/healthz 2>/dev/null; then
+              echo "GraphQL engine is ready!"
+              exit 0
+            fi
+            echo "Attempt $i: GraphQL engine not ready yet, waiting..."
+            sleep 2
+          done
+          echo "GraphQL engine failed to start"
+          exit 1
+
       - name: Install Playwright Browsers
         run: npx playwright install chromium
-      
+
       - name: Run Acceptance Tests Against Live Backend
         run: npm run test:acceptance:live -- --run
         env:
