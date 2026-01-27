@@ -385,7 +385,9 @@ describe("DiaryEntryEditForm", () => {
 
   it("should handle exception during save", async () => {
     const user = userEvent.setup();
-    const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const consoleDebugSpy = vi
+      .spyOn(console, "debug")
+      .mockImplementation(() => {});
 
     // Mock the GraphQL endpoint to throw exception
     server.use(

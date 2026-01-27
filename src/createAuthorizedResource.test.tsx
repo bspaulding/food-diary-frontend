@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
-import { Component, Show, createSignal } from "solid-js";
+import { Component, Show } from "solid-js";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { AuthorizationError } from "./Api";
 
@@ -49,7 +49,7 @@ describe("createAuthorizedResource", () => {
         { initialValue: { value: 0 } },
       );
 
-      return <div>{data().value}</div>;
+      return <div>{data()?.value ?? 0}</div>;
     };
 
     render(() => <TestComponent />);
@@ -74,7 +74,7 @@ describe("createAuthorizedResource", () => {
         { initialValue: { result: "initial" } },
       );
 
-      return <div>{data().result}</div>;
+      return <div>{data()?.result ?? "initial"}</div>;
     };
 
     render(() => <TestComponent />);
@@ -91,7 +91,7 @@ describe("createAuthorizedResource", () => {
 
     const TestComponent: Component = () => {
       const [data] = createAuthorizedResource(async (token: string) => {
-        throw new AuthorizationError(401, "Unauthorized");
+        throw new AuthorizationError("Unauthorized");
       });
 
       return (
@@ -136,4 +136,3 @@ describe("createAuthorizedResource", () => {
     expect(mockLogout).not.toHaveBeenCalled();
   });
 });
-

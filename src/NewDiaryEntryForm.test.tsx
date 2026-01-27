@@ -166,7 +166,7 @@ describe("NewDiaryEntryForm", () => {
         // Mock GetRecentEntryItems query
         if (query.includes("GetRecentEntryItems")) {
           return HttpResponse.json({
-            data: { food_diary_diary_entry: [] },
+            data: { food_diary_diary_entry_recent: [] },
           });
         }
 
@@ -178,13 +178,13 @@ describe("NewDiaryEntryForm", () => {
         }
 
         // Mock search query
-        if (query.includes("SearchNutritionItems")) {
+        if (query.includes("SearchItemsAndRecipes")) {
           return HttpResponse.json({
             data: {
-              food_diary_nutrition_item: [
+              food_diary_search_nutrition_items: [
                 { id: 10, description: "Search Result Item" },
               ],
-              food_diary_recipe: [],
+              food_diary_search_recipes: [],
             },
           });
         }

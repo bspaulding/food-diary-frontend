@@ -120,7 +120,10 @@ describe("SearchItemsForm", () => {
         const body = (await request.json()) as any;
         const query = body.query || "";
 
-        if (query.includes("SearchItems") && !query.includes("SearchItemsAndRecipes")) {
+        if (
+          query.includes("SearchItems") &&
+          !query.includes("SearchItemsAndRecipes")
+        ) {
           queryCalled = true;
           return HttpResponse.json({
             data: {

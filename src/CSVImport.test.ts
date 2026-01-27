@@ -363,9 +363,9 @@ describe("parseCSV", function () {
   it("should return Left when Consumed At date is invalid", () => {
     const row = {
       "Consumed At": "invalid-date",
-      "Description": "Test Food",
-      "Servings": "1",
-      "Calories": "100",
+      Description: "Test Food",
+      Servings: "1",
+      Calories: "100",
       "Total Fat (g)": "5",
       "Saturated Fat (g)": "1",
       "Trans Fat (g)": "0",
