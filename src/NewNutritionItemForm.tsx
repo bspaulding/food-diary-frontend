@@ -310,7 +310,8 @@ const NewNutritionItemForm: Component<Props> = ({
           <button
             class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
             disabled={disabled()}
-            onClick={async () => {
+            onClick={async (event) => {
+              event.preventDefault();
               const itemData = item();
               const id = await saveItem(accessToken(), setDisabled, {
                 ...itemData,
