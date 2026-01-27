@@ -1,6 +1,5 @@
 import { beforeAll, afterEach, afterAll } from "vitest";
-import { http, HttpResponse } from "msw";
-import type { HttpRequestResolverExtras } from "msw";
+import { http, HttpResponse, type HttpResponseResolver } from "msw";
 import { setupWorker } from "msw/browser";
 import { calculateFourWeeksDays } from "./WeeklyStatsCalculations";
 
@@ -76,16 +75,15 @@ const mockRecentEntries = [
 ];
 
 // Setup MSW worker for browser mode with handlers
-export const worker = setupWorker(
-  http.post("*/api/v1/graphql", async ({ request }: HttpRequestResolverExtras<Record<string, never>>): Promise<Response> => {
-    const body: unknown = await request.json();
-    if (!isGraphQLRequest(body)) {
-      return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
-    }
-    const query: string = body.query || "";
+const graphqlHandler: HttpResponseResolver = async ({ request }) => {
+  const body: unknown = await request.json();
+  if (!isGraphQLRequest(body)) {
+    return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+  }
+  const query: string = body.query || "";
 
-    // Handle GetEntries query
-    if (query.includes("GetEntries")) {
+  // Handle GetEntries query
+  if (query.includes("GetEntries")) {
       return HttpResponse.json({
         data: {
           food_diary_diary_entry: mockDiaryEntries,
@@ -207,7 +205,10 @@ export const worker = setupWorker(
     const queryPreview: string = query.substring(0, 100);
     console.error("Unhandled GraphQL query:", query);
     throw new Error(`Unhandled GraphQL query: ${queryPreview}`);
-  }),
+};
+
+export const worker = setupWorker(
+  http.post("*/api/v1/graphql", graphqlHandler),
 );
 
 beforeAll(async () => {
