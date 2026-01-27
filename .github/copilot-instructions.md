@@ -70,14 +70,19 @@ src/
 - Import `server` from `./test-setup` and use `server.use()` to mock HTTP requests
 - Use `http.post()` or `http.get()` from `msw` to define request handlers
 - Example:
+
   ```typescript
   import { http, HttpResponse } from "msw";
   import { server } from "./test-setup";
-  
+
   server.use(
     http.post("/api/v1/graphql", () => {
-      return HttpResponse.json({ data: { /* mock data */ } });
-    })
+      return HttpResponse.json({
+        data: {
+          /* mock data */
+        },
+      });
+    }),
   );
   ```
 
