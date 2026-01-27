@@ -19,6 +19,8 @@ jobs:
         run: npm run prettier:check
       - name: TypeScript Check
         run: npx tsc --noEmit
+      - name: Type Coverage Check
+        run: npm run type-coverage
       - run: npm test
         env:
           TZ: America/Los_Angeles
