@@ -26,7 +26,10 @@ render(
       <Route path="/" component={DiaryList} />
       <Route path="/trends" component={Trends} />
       <Route path="/profile" component={UserProfile} />
-      <Route path="/diary_entry/new" component={NewDiaryEntryForm as Component} />
+      <Route
+        path="/diary_entry/new"
+        component={NewDiaryEntryForm as Component}
+      />
       <Route path="/diary_entry/:id/edit" component={DiaryEntryEditForm} />
       <Route path="/diary_entry/import" component={ImportDiaryEntries} />
       <Route

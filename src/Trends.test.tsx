@@ -44,7 +44,9 @@ describe("Trends", () => {
       http.post("*/api/v1/graphql", async ({ request }) => {
         const body: unknown = await request.json();
         if (!isGraphQLRequest(body)) {
-          return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+          return HttpResponse.json({
+            errors: [{ message: "Invalid request" }],
+          });
         }
         const query: string = body.query;
         if (query.includes("GetWeeklyTrends")) {
@@ -109,7 +111,9 @@ describe("Trends", () => {
       http.post("*/api/v1/graphql", async ({ request }): Promise<Response> => {
         const body: unknown = await request.json();
         if (!isGraphQLRequest(body)) {
-          return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+          return HttpResponse.json({
+            errors: [{ message: "Invalid request" }],
+          });
         }
         const query: string = body.query || "";
 
@@ -159,7 +163,9 @@ describe("Trends", () => {
       http.post("*/api/v1/graphql", async ({ request }): Promise<Response> => {
         const body: unknown = await request.json();
         if (!isGraphQLRequest(body)) {
-          return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+          return HttpResponse.json({
+            errors: [{ message: "Invalid request" }],
+          });
         }
         const query: string = body.query;
         if (query.includes("GetEntries")) {

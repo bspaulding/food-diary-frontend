@@ -2,9 +2,11 @@ type Accessors<T> = {
   [P in keyof T]: () => T[P];
 };
 
-export function accessorsToObject<T extends Record<string, unknown>>(accessors: Accessors<T>): T {
+export function accessorsToObject<T extends Record<string, unknown>>(
+  accessors: Accessors<T>,
+): T {
   return Object.entries(accessors).reduce(
-    (acc: Partial<T>, [k, v]: [string, (() => unknown)]) => ({
+    (acc: Partial<T>, [k, v]: [string, () => unknown]) => ({
       ...acc,
       [k]: v(),
     }),

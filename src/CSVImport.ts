@@ -20,7 +20,10 @@ export function parseCSV(csv: string): ParsedRow[] {
   );
 }
 
-function parseNumber(parser: (x: string, d: number) => number, value: string): number {
+function parseNumber(
+  parser: (x: string, d: number) => number,
+  value: string,
+): number {
   const parsed: number = parser(value, 10);
   return isNaN(parsed) ? 0 : parsed;
 }

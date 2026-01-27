@@ -33,7 +33,11 @@ export function Right<R>(value: R): Right<R> {
 }
 
 export function split<L, R>(es: Either<L, R>[]): { lefts: L[]; rights: R[] } {
-  const lefts: L[] = es.filter((e): e is Left<L> => isLeft<L>(e)).map((e: Left<L>) => e.value);
-  const rights: R[] = es.filter((e): e is Right<R> => isRight<R>(e)).map((e: Right<R>) => e.value);
+  const lefts: L[] = es
+    .filter((e): e is Left<L> => isLeft<L>(e))
+    .map((e: Left<L>) => e.value);
+  const rights: R[] = es
+    .filter((e): e is Right<R> => isRight<R>(e))
+    .map((e: Right<R>) => e.value);
   return { lefts, rights };
 }

@@ -246,7 +246,10 @@ export type SearchItemsOnlyQueryResponse = {
   };
 };
 
-export async function searchItemsOnly(accessToken: string, search: string): Promise<SearchItemsOnlyQueryResponse> {
+export async function searchItemsOnly(
+  accessToken: string,
+  search: string,
+): Promise<SearchItemsOnlyQueryResponse> {
   const response = await fetchQuery(accessToken, searchItemsOnlyQuery, {
     search,
   });
@@ -324,7 +327,10 @@ function camelToSnakeCase(s: string): string {
 
 function objectToSnakeCaseKeys(o: object): object {
   return Object.entries(o).reduce(
-    (acc: object, [k, v]: [string, unknown]) => ({ ...acc, [camelToSnakeCase(k)]: v }),
+    (acc: object, [k, v]: [string, unknown]) => ({
+      ...acc,
+      [camelToSnakeCase(k)]: v,
+    }),
     {},
   );
 }
@@ -562,7 +568,10 @@ export type GetRecipeQueryResponse = {
   };
 };
 
-export async function fetchRecipe(accessToken: string, id: number): Promise<GetRecipeQueryResponse> {
+export async function fetchRecipe(
+  accessToken: string,
+  id: number,
+): Promise<GetRecipeQueryResponse> {
   return (await fetchQuery(accessToken, fetchRecipeQuery, { id })).json();
 }
 

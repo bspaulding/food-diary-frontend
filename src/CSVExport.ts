@@ -82,7 +82,9 @@ export function entriesToCsv(entries: EntryRecord[]): string {
               case "Servings":
                 return String(entry.servings * recipe_item.servings);
               case "Description":
-                const itemName: string = String(getPath(headerKeyMap[key], recipe_item));
+                const itemName: string = String(
+                  getPath(headerKeyMap[key], recipe_item),
+                );
                 return `${entry.recipe.name} - ${itemName}`;
               default:
                 return String(getPath(headerKeyMap[key], recipe_item));

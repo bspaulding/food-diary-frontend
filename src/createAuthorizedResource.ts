@@ -38,7 +38,10 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
 ): ResourceReturn<T, R> {
   let finalSource: ResourceSource<any> | true = true;
   let finalFetcher: AuthorizedResourceFetcher<any, T>;
-  let finalOptions: ResourceOptions<T, any> = options as ResourceOptions<T, any>;
+  let finalOptions: ResourceOptions<T, any> = options as ResourceOptions<
+    T,
+    any
+  >;
 
   if (arguments.length === 2) {
     if (typeof fetcher === "object") {
@@ -59,7 +62,10 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
   const [{ accessToken, auth0 }] = useAuth();
   const tokenizedSource: () => { accessToken: string; source: any } = () => ({
     accessToken: accessToken(),
-    source: finalSource === true ? (finalSource as true) : (finalSource as () => any)(),
+    source:
+      finalSource === true
+        ? (finalSource as true)
+        : (finalSource as () => any)(),
   });
   return createResource(
     tokenizedSource,
