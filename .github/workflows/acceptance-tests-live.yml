@@ -26,13 +26,15 @@ jobs:
       graphql-engine:
         image: ghcr.io/bspaulding/food-diary-graphql-engine:latest
         env:
-          HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+          HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+          PG_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
           HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
           HASURA_GRAPHQL_DEV_MODE: "true"
           HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
           HASURA_GRAPHQL_ADMIN_SECRET: adminsecret
           HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
-          HASURA_GRAPHQL_JWT_SECRET: '{"type":"RS256","jwk_url":"https://motingo.auth0.com/.well-known/jwks.json","claims_format":"stringified_json"}'
+          HASURA_GRAPHQL_JWT_SECRET: ${{ secrets.HASURA_GRAPHQL_JWT_SECRET }}
+          HASURA_GRAPHQL_ENABLE_TELEMETRY: "false"
         ports:
           - 8080:8080
 
