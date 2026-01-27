@@ -151,4 +151,224 @@ describe("NewDiaryEntryForm", () => {
     const timeBasedHeader = screen.queryByText("Logged around this time");
     expect(timeBasedHeader).toBeNull();
   });
+
+  it("should display Search tab and allow searching for items", async () => {
+    const user = await import("@testing-library/user-event").then((m) =>
+      m.default.setup(),
+    );
+
+    // Mock GraphQL responses
+    server.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const query = body.query || "";
+
+        // Mock GetRecentEntryItems query
+        if (query.includes("GetRecentEntryItems")) {
+          return HttpResponse.json({
+            data: { food_diary_diary_entry: [] },
+          });
+        }
+
+        // Mock GetEntriesAroundTime query
+        if (query.includes("GetEntriesAroundTime")) {
+          return HttpResponse.json({
+            data: { food_diary_diary_entry: [] },
+          });
+        }
+
+        // Mock search query
+        if (query.includes("SearchNutritionItems")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_nutrition_item: [
+                { id: 10, description: "Search Result Item" },
+              ],
+              food_diary_recipe: [],
+            },
+          });
+        }
+
+        return HttpResponse.json({ data: {} });
+      }),
+    );
+
+    render(() => <NewDiaryEntryForm />);
+
+    // Wait for component to load
+    await waitFor(() => {
+      expect(screen.queryByText("Suggested Items")).not.toBeNull();
+    });
+
+    // Click on Search tab
+    const searchTab = screen.getByText("Search");
+    await user.click(searchTab);
+
+    // Verify we're in search mode (SearchItemsForm should be rendered)
+    await waitFor(() => {
+      const searchInput = screen.queryByPlaceholderText(/search/i);
+      expect(searchInput).not.toBeNull();
+    });
+  });
+
+  it("should handle servings input and save diary entry", async () => {
+    const user = await import("@testing-library/user-event").then((m) =>
+      m.default.setup(),
+    );
+    let createEntryCalled = false;
+
+    // Mock GraphQL responses
+    server.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const query = body.query || "";
+
+        // Mock GetRecentEntryItems query with one item
+        if (query.includes("GetRecentEntryItems")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_diary_entry_recent: [
+                {
+                  consumed_at: "2024-01-24T08:00:00Z",
+                  nutrition_item: { id: 5, description: "Test Food" },
+                  recipe: null,
+                },
+              ],
+            },
+          });
+        }
+
+        // Mock GetEntriesAroundTime query
+        if (query.includes("GetEntriesAroundTime")) {
+          return HttpResponse.json({
+            data: { food_diary_diary_entry: [] },
+          });
+        }
+
+        // Mock CreateDiaryEntry mutation
+        if (query.includes("CreateDiaryEntry")) {
+          createEntryCalled = true;
+          const { attrs } = body.variables;
+          expect(attrs.servings).toBe(2.5);
+          expect(attrs.nutrition_item_id).toBe(5);
+          return HttpResponse.json({
+            data: {
+              insert_food_diary_diary_entry_one: { id: 100 },
+            },
+          });
+        }
+
+        return HttpResponse.json({ data: {} });
+      }),
+    );
+
+    render(() => <NewDiaryEntryForm />);
+
+    // Wait for suggestions to load
+    await waitFor(() => {
+      expect(screen.queryByText("Test Food")).not.toBeNull();
+    });
+
+    // Click the ⊕ button on the first item
+    const logButtons = screen.getAllByText("⊕");
+    await user.click(logButtons[0]);
+
+    // Wait for the logging dialog to appear
+    await waitFor(() => {
+      const saveButton = screen.queryByText("Save");
+      expect(saveButton).not.toBeNull();
+    });
+
+    // Change servings value
+    const servingsInput = screen.getByRole("spinbutton") as HTMLInputElement;
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "2.5");
+
+    // Click Save button
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Verify the mutation was called
+    await waitFor(() => {
+      expect(createEntryCalled).toBe(true);
+    });
+  });
+
+  it("should handle saving recipe entry", async () => {
+    const user = await import("@testing-library/user-event").then((m) =>
+      m.default.setup(),
+    );
+    let createEntryCalled = false;
+
+    // Mock GraphQL responses
+    server.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const query = body.query || "";
+
+        // Mock GetRecentEntryItems query with a recipe
+        if (query.includes("GetRecentEntryItems")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_diary_entry_recent: [
+                {
+                  consumed_at: "2024-01-24T08:00:00Z",
+                  nutrition_item: null,
+                  recipe: { id: 3, name: "Test Recipe" },
+                },
+              ],
+            },
+          });
+        }
+
+        // Mock GetEntriesAroundTime query
+        if (query.includes("GetEntriesAroundTime")) {
+          return HttpResponse.json({
+            data: { food_diary_diary_entry: [] },
+          });
+        }
+
+        // Mock CreateDiaryEntry mutation for recipe
+        if (query.includes("CreateDiaryEntry")) {
+          createEntryCalled = true;
+          const { attrs } = body.variables;
+          expect(attrs.servings).toBe(1);
+          expect(attrs.recipe_id).toBe(3);
+          return HttpResponse.json({
+            data: {
+              insert_food_diary_diary_entry_one: { id: 101 },
+            },
+          });
+        }
+
+        return HttpResponse.json({ data: {} });
+      }),
+    );
+
+    render(() => <NewDiaryEntryForm />);
+
+    // Wait for suggestions to load
+    await waitFor(() => {
+      expect(screen.queryByText("Test Recipe")).not.toBeNull();
+    });
+
+    // Click the ⊕ button on the recipe
+    const logButtons = screen.getAllByText("⊕");
+    await user.click(logButtons[0]);
+
+    // Wait for the logging dialog to appear
+    await waitFor(() => {
+      const saveButton = screen.queryByText("Save");
+      expect(saveButton).not.toBeNull();
+    });
+
+    // Click Save button (servings is already 1)
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Verify the mutation was called
+    await waitFor(() => {
+      expect(createEntryCalled).toBe(true);
+    });
+  });
 });
