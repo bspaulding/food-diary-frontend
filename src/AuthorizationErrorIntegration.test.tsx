@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, waitFor } from "@solidjs/testing-library";
+import { http, HttpResponse } from "msw";
+import { server } from "./test-setup";
 import createAuthorizedResource from "./createAuthorizedResource";
-import { fetchEntries, AuthorizationError } from "./Api";
+import { fetchEntries } from "./Api";
 import { useAuth } from "./Auth0";
 import { Component, createSignal } from "solid-js";
 
@@ -21,24 +23,15 @@ vi.mock("./Auth0", () => {
 });
 
 describe("Authorization Error Integration", () => {
-  let fetchSpy: any;
-
-  beforeEach(() => {
-    fetchSpy = vi.spyOn(global, "fetch");
-  });
-
-  afterEach(() => {
-    fetchSpy.mockRestore();
-    vi.clearAllMocks();
-  });
-
   it("should call logout when createAuthorizedResource encounters a 401 error", async () => {
-    // Mock fetch to return 401
-    fetchSpy.mockResolvedValue({
-      ok: false,
-      status: 401,
-      json: async () => ({ error: "Unauthorized" }),
-    });
+    // Mock GraphQL endpoint to return 401
+    server.use(
+      http.post("/api/v1/graphql", () => {
+        return new HttpResponse(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+        });
+      }),
+    );
 
     const TestComponent: Component = () => {
       const [data] = createAuthorizedResource((token: string) =>
@@ -65,12 +58,14 @@ describe("Authorization Error Integration", () => {
   });
 
   it("should call logout when createAuthorizedResource encounters a 403 error", async () => {
-    // Mock fetch to return 403
-    fetchSpy.mockResolvedValue({
-      ok: false,
-      status: 403,
-      json: async () => ({ error: "Forbidden" }),
-    });
+    // Mock GraphQL endpoint to return 403
+    server.use(
+      http.post("/api/v1/graphql", () => {
+        return new HttpResponse(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+        });
+      }),
+    );
 
     const TestComponent: Component = () => {
       const [data] = createAuthorizedResource((token: string) =>
