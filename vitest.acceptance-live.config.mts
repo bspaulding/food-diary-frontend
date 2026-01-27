@@ -17,11 +17,7 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles: ["./src/test-setup-browser-live.ts"],
-    include: [
-      "src/acceptance.test.tsx",
-      "src/acceptance-add-recipe.test.tsx",
-      "src/acceptance-add-entry.test.tsx",
-    ],
+    include: ["src/acceptance-live-e2e.test.tsx"],
     browser: {
       enabled: true,
       name: "chromium",
