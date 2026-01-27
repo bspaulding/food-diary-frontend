@@ -266,7 +266,7 @@ export default DiaryList;
 function removeEntry(
   entry: DiaryEntry,
   entriesQuery: GetEntriesQueryResponse,
-  mutate: Setter<GetEntriesQueryResponse>,
+  mutate: Setter<GetEntriesQueryResponse | undefined>,
 ) {
   mutate({
     ...entriesQuery,
@@ -282,7 +282,7 @@ async function deleteEntry(
   accessToken: Accessor<string>,
   entry: DiaryEntry,
   entriesQuery: GetEntriesQueryResponse,
-  mutate: Setter<GetEntriesQueryResponse>,
+  mutate: Setter<GetEntriesQueryResponse | undefined>,
 ) {
   try {
     removeEntry(entry, entriesQuery, mutate);
