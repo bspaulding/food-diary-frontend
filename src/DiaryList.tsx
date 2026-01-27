@@ -1,18 +1,12 @@
 import type { Accessor, Component, Setter } from "solid-js";
 import { Index, Show } from "solid-js";
-import type { Auth0Client } from "@auth0/auth0-spa-js";
 import type {
   DiaryEntry,
   GetEntriesQueryResponse,
   MacroKey,
   RecipeWithItems,
 } from "./Api";
-import {
-  fetchEntries,
-  deleteDiaryEntry,
-  fetchWeeklyStats,
-  AuthorizationError,
-} from "./Api";
+import { fetchEntries, deleteDiaryEntry, fetchWeeklyStats } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
@@ -80,7 +74,7 @@ const EntryMacro: Component<{
 );
 
 const DiaryList: Component = () => {
-  const [{ accessToken, auth0 }] = useAuth();
+  const [{ accessToken }] = useAuth();
   const [getEntriesQuery, { mutate }] = createAuthorizedResource(
     (token: string) => fetchEntries(token),
   );
@@ -237,7 +231,6 @@ const DiaryList: Component = () => {
                               onClick={() =>
                                 deleteEntry(
                                   accessToken,
-                                  auth0,
                                   entry(),
                                   getEntriesQuery() as GetEntriesQueryResponse,
                                   mutate,
@@ -287,7 +280,6 @@ function removeEntry(
 }
 async function deleteEntry(
   accessToken: Accessor<string>,
-  auth0: Accessor<Auth0Client | undefined>,
   entry: DiaryEntry,
   entriesQuery: GetEntriesQueryResponse,
   mutate: Setter<GetEntriesQueryResponse | undefined>,
@@ -299,14 +291,6 @@ async function deleteEntry(
       mutate(entriesQuery);
     }
   } catch (e) {
-    if (e instanceof AuthorizationError) {
-      const client = auth0();
-      if (client) {
-        await client.logout({
-          returnTo: window.location.origin,
-        });
-      }
-    }
     console.error("Failed to delete entry: ", e);
   }
 }

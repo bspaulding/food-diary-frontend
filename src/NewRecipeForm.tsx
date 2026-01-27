@@ -1,9 +1,8 @@
 import type { Component } from "solid-js";
 import { createSignal, Index } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import type { Auth0Client } from "@auth0/auth0-spa-js";
 import type { RecipeAttrs, Recipe } from "./Api";
-import { createRecipe, updateRecipe, AuthorizationError } from "./Api";
+import { createRecipe, updateRecipe } from "./Api";
 import SearchItemsForm, { ItemsQueryType } from "./SearchItemsForm";
 import { useAuth } from "./Auth0";
 import ButtonLink from "./ButtonLink";
@@ -13,7 +12,7 @@ type Props = {
 };
 
 const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
-  const [{ accessToken, auth0 }] = useAuth();
+  const [{ accessToken }] = useAuth();
   const [input, setInput] = createSignal<Recipe>(
     initialRecipe || {
       id: 0,
@@ -133,32 +132,20 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }) => {
             class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
             onClick={async (event) => {
               event.preventDefault();
-              try {
-                if (input().id) {
-                  const response = await updateRecipe(accessToken(), input());
-                  const id = response?.data?.update_food_diary_recipe_by_pk?.id;
-                  if (id) {
-                    navigate(`/recipe/${id}`);
-                  }
-                } else {
-                  const { id, ...attrs } = input();
-                  const response = await createRecipe(accessToken(), attrs);
-                  const responseId =
-                    response?.data?.insert_food_diary_recipe_one?.id;
-                  if (responseId) {
-                    navigate(`/recipe/${responseId}`);
-                  }
+              if (input().id) {
+                const response = await updateRecipe(accessToken(), input());
+                const id = response?.data?.update_food_diary_recipe_by_pk?.id;
+                if (id) {
+                  navigate(`/recipe/${id}`);
                 }
-              } catch (error) {
-                if (error instanceof AuthorizationError) {
-                  const client = auth0();
-                  if (client) {
-                    await client.logout({
-                      returnTo: window.location.origin,
-                    });
-                  }
+              } else {
+                const { id, ...attrs } = input();
+                const response = await createRecipe(accessToken(), attrs);
+                const responseId =
+                  response?.data?.insert_food_diary_recipe_one?.id;
+                if (responseId) {
+                  navigate(`/recipe/${responseId}`);
                 }
-                throw error;
               }
               return false;
             }}

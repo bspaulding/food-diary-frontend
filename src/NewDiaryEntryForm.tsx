@@ -1,6 +1,5 @@
 import type { Component } from "solid-js";
 import { createSignal, Show } from "solid-js";
-import type { Auth0Client } from "@auth0/auth0-spa-js";
 import {
   fetchRecentEntries,
   fetchEntriesAroundTime,
@@ -8,7 +7,6 @@ import {
   SearchNutritionItem,
   SearchRecipe,
   CreateDiaryEntryInput,
-  AuthorizationError,
 } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
@@ -111,7 +109,7 @@ export const LoggableItem: Component<{
   recipe?: SearchRecipe;
   nutritionItem?: SearchNutritionItem;
 }> = ({ recipe, nutritionItem }) => {
-  const [{ accessToken, auth0 }] = useAuth();
+  const [{ accessToken }] = useAuth();
   const [logging, setLogging] = createSignal(false);
   const [servings, setServings] = createSignal(1);
   const [created, setCreated] = createSignal(false);
@@ -161,24 +159,11 @@ export const LoggableItem: Component<{
                     nutrition_item_id: nutritionItem!.id,
                   };
               setSaving(true);
-              try {
-                await createDiaryEntry(accessToken(), entry);
-                setSaving(false);
-                setCreated(true);
-                setTimeout(() => setCreated(false), 1000);
-                setLogging(false);
-              } catch (error) {
-                setSaving(false);
-                if (error instanceof AuthorizationError) {
-                  const client = auth0();
-                  if (client) {
-                    await client.logout({
-                      returnTo: window.location.origin,
-                    });
-                  }
-                }
-                throw error;
-              }
+              await createDiaryEntry(accessToken(), entry);
+              setSaving(false);
+              setCreated(true);
+              setTimeout(() => setCreated(false), 1000);
+              setLogging(false);
             }}
           >
             Save
