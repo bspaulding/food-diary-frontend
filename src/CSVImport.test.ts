@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCSV, rowToEntry } from "./CSVImport";
-import { isRight } from "./Either";
+import { isRight, isLeft } from "./Either";
 
 describe("parseCSV", function () {
   const testCSV = `Date,Time,Consumed At,Description,Servings,Calories,Total Fat (g),Saturated Fat (g),Trans Fat (g),Polyunsaturated Fat (g),Monounsaturated Fat (g),Cholesterol (mg),Sodium (mg),Total Carbohydrate (g),Dietary Fiber (g),Total Sugars (g),Added Sugars (g),Protein (g),,Total Calories,Total Fat (g),Saturated Fat (g),Trans Fat (g),Polyunsaturated Fat (g),Monounsaturated Fat (g),Cholesterol (mg),Sodium (mg),Total Carbohydrate (g),Dietary Fiber (g),Total Sugars (g),Added Sugars (g),Protein (g)
@@ -358,5 +358,43 @@ describe("parseCSV", function () {
     });
     const rights = entries.map(isRight);
     expect(rights.length).toBe(324);
+  });
+
+  it("should return Left when Consumed At date is invalid", () => {
+    const row = {
+      "Consumed At": "invalid-date",
+      "Description": "Test Food",
+      "Servings": "1",
+      "Calories": "100",
+      "Total Fat (g)": "5",
+      "Saturated Fat (g)": "1",
+      "Trans Fat (g)": "0",
+      "Polyunsaturated Fat (g)": "0.5",
+      "Monounsaturated Fat (g)": "1",
+      "Cholesterol (mg)": "0",
+      "Sodium (mg)": "150",
+      "Total Carbohydrate (g)": "20",
+      "Dietary Fiber (g)": "2",
+      "Total Sugars (g)": "5",
+      "Added Sugars (g)": "3",
+      "Protein (g)": "4",
+    };
+
+    const result = rowToEntry(row);
+    expect(isLeft(result)).toBe(true);
+    if (isLeft(result)) {
+      expect(result.value).toEqual({ error: "Invalid Consumed At Date" });
+    }
+  });
+
+  it("should return Left when exception is thrown during parsing", () => {
+    const row = null as any; // This will cause an exception when accessing properties
+
+    const result = rowToEntry(row);
+    expect(isLeft(result)).toBe(true);
+    if (isLeft(result)) {
+      expect(result.value).toHaveProperty("error");
+      expect(result.value).toHaveProperty("row");
+    }
   });
 });

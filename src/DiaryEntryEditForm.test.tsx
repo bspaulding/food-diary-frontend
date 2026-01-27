@@ -329,4 +329,106 @@ describe("DiaryEntryEditForm", () => {
 
     unmount();
   });
+
+  it("should show error messages when update fails", async () => {
+    const user = userEvent.setup();
+
+    // Mock the GraphQL endpoint
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = await request.json();
+        const query = (body as any).query;
+
+        // Handle GetDiaryEntry query
+        if (query.includes("GetDiaryEntry")) {
+          return HttpResponse.json(mockDiaryEntry);
+        }
+
+        // Handle UpdateDiaryEntry mutation with error
+        if (query.includes("UpdateDiaryEntry")) {
+          return HttpResponse.json({
+            errors: [
+              { message: "Database error" },
+              { message: "Validation failed" },
+            ],
+          });
+        }
+
+        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+      }),
+    );
+
+    const { unmount } = render(() => <DiaryEntryEditForm />);
+
+    // Wait for the form to load with data
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Servings")).not.toBeNull();
+    });
+
+    // Change servings
+    const servingsInput = screen.getByLabelText("Servings") as HTMLInputElement;
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "3");
+
+    // Click the save button
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Check that errors are displayed
+    await waitFor(() => {
+      const errorText = screen.getByText(/Database error/);
+      expect(errorText).toBeTruthy();
+    });
+
+    unmount();
+  });
+
+  it("should handle exception during save", async () => {
+    const user = userEvent.setup();
+    const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+    // Mock the GraphQL endpoint to throw exception
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = await request.json();
+        const query = (body as any).query;
+
+        // Handle GetDiaryEntry query
+        if (query.includes("GetDiaryEntry")) {
+          return HttpResponse.json(mockDiaryEntry);
+        }
+
+        // Handle UpdateDiaryEntry mutation by throwing network error
+        if (query.includes("UpdateDiaryEntry")) {
+          return HttpResponse.error();
+        }
+
+        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+      }),
+    );
+
+    const { unmount } = render(() => <DiaryEntryEditForm />);
+
+    // Wait for the form to load
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Servings")).not.toBeNull();
+    });
+
+    // Change servings
+    const servingsInput = screen.getByLabelText("Servings") as HTMLInputElement;
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "4");
+
+    // Click the save button
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Wait for the error to be logged
+    await waitFor(() => {
+      expect(consoleDebugSpy).toHaveBeenCalled();
+    });
+
+    consoleDebugSpy.mockRestore();
+    unmount();
+  });
 });
