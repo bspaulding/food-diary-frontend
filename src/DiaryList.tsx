@@ -6,7 +6,12 @@ import type {
   MacroKey,
   RecipeWithItems,
 } from "./Api";
-import { fetchEntries, deleteDiaryEntry, fetchWeeklyStats } from "./Api";
+import {
+  fetchEntries,
+  deleteDiaryEntry,
+  fetchWeeklyStats,
+  AuthorizationError,
+} from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
@@ -74,7 +79,7 @@ const EntryMacro: Component<{
 );
 
 const DiaryList: Component = () => {
-  const [{ accessToken }] = useAuth();
+  const [{ accessToken, auth0 }] = useAuth();
   const [getEntriesQuery, { mutate }] = createAuthorizedResource(
     (token: string) => fetchEntries(token),
   );
@@ -231,6 +236,7 @@ const DiaryList: Component = () => {
                               onClick={() =>
                                 deleteEntry(
                                   accessToken,
+                                  auth0,
                                   entry(),
                                   getEntriesQuery() as GetEntriesQueryResponse,
                                   mutate,
@@ -280,6 +286,7 @@ function removeEntry(
 }
 async function deleteEntry(
   accessToken: Accessor<string>,
+  auth0: Accessor<any>,
   entry: DiaryEntry,
   entriesQuery: GetEntriesQueryResponse,
   mutate: Setter<GetEntriesQueryResponse | undefined>,
@@ -291,6 +298,14 @@ async function deleteEntry(
       mutate(entriesQuery);
     }
   } catch (e) {
+    if (e instanceof AuthorizationError) {
+      const client = auth0();
+      if (client) {
+        await client.logout({
+          returnTo: window.location.origin,
+        });
+      }
+    }
     console.error("Failed to delete entry: ", e);
   }
 }

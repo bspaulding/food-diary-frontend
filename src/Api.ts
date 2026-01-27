@@ -1,5 +1,37 @@
 const host = "/api/v1/graphql";
 
+/**
+ * Custom error class for authorization failures (401/403 responses)
+ */
+export class AuthorizationError extends Error {
+  constructor(message: string = "Authorization failed") {
+    super(message);
+    this.name = "AuthorizationError";
+  }
+}
+
+/**
+ * Helper function to handle authorization errors in API calls.
+ * This should be used to wrap API calls that are not using createAuthorizedResource.
+ *
+ * @param apiCall - The API call function to execute
+ * @param onAuthError - Optional callback to handle authorization errors (e.g., logout)
+ * @returns The result of the API call
+ */
+export async function handleAuthError<T>(
+  apiCall: () => Promise<T>,
+  onAuthError?: () => void | Promise<void>,
+): Promise<T> {
+  try {
+    return await apiCall();
+  } catch (error) {
+    if (error instanceof AuthorizationError && onAuthError) {
+      await onAuthError();
+    }
+    throw error;
+  }
+}
+
 const getEntriesQuery = `
 fragment Macros on food_diary_nutrition_item {
 	total_fat_grams
@@ -24,13 +56,27 @@ async function fetchQuery(
   query: string,
   variables: object = {},
 ) {
-  return await fetch(`${host}`, {
+  const response = await fetch(`${host}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ query, variables }),
   });
+
+  // Check for authorization errors (401 Unauthorized or 403 Forbidden)
+  if (response.status === 401 || response.status === 403) {
+    throw new AuthorizationError("Authorization failed");
+  }
+
+  // Check for other HTTP errors
+  if (!response.ok) {
+    throw new Error(
+      `API request failed: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return response;
 }
 
 // Macro nutrient keys that can be accessed on nutrition items

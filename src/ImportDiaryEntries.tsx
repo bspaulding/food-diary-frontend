@@ -5,7 +5,7 @@ import type { NewDiaryEntry } from "./Api";
 import type { Either, Left } from "./Either";
 import { Right, isRight, isLeft } from "./Either";
 import { useAuth } from "./Auth0";
-import { insertDiaryEntries } from "./Api";
+import { insertDiaryEntries, AuthorizationError } from "./Api";
 import ButtonLink from "./ButtonLink";
 import { parseCSV, rowToEntry } from "./CSVImport";
 
@@ -30,7 +30,7 @@ const ImportDiaryEntries: Component = () => {
     lefts: object[];
     rights: NewDiaryEntry[];
   }>({ lefts: [], rights: [] });
-  const [{ accessToken }] = useAuth();
+  const [{ accessToken, auth0 }] = useAuth();
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
   const [importError, setImportError] = createSignal<string | null>(null);
@@ -80,6 +80,14 @@ const ImportDiaryEntries: Component = () => {
     } catch (error: unknown) {
       console.error("CSV import failed:", error);
       setSaving(false);
+      if (error instanceof AuthorizationError) {
+        const client = auth0();
+        if (client) {
+          await client.logout({
+            returnTo: window.location.origin,
+          });
+        }
+      }
       const message =
         error instanceof Error
           ? error.message

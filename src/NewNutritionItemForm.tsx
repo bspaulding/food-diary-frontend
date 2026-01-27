@@ -3,7 +3,11 @@ import { createSignal, Show } from "solid-js";
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
 import type { NutritionItem, NutritionItemAttrs } from "./Api";
-import { createNutritionItem, updateNutritionItem } from "./Api";
+import {
+  createNutritionItem,
+  updateNutritionItem,
+  AuthorizationError,
+} from "./Api";
 import { useAuth } from "./Auth0";
 import { accessorsToObject } from "./Util";
 import styles from "./NewNutritionItemForm.module.css";
@@ -33,7 +37,7 @@ const NewNutritionItemForm: Component<Props> = ({
   onSaved,
   initialItem,
 }: Props) => {
-  const [{ accessToken }] = useAuth();
+  const [{ accessToken, auth0 }] = useAuth();
   const [disabled, setDisabled] = createSignal(false);
   const [showCameraModal, setShowCameraModal] = createSignal(false);
   const navigate = useNavigate();
@@ -312,7 +316,7 @@ const NewNutritionItemForm: Component<Props> = ({
             disabled={disabled()}
             onClick={async () => {
               const itemData = item();
-              const id = await saveItem(accessToken(), setDisabled, {
+              const id = await saveItem(accessToken(), auth0(), setDisabled, {
                 ...itemData,
                 id: itemData.id || 0,
               } as NutritionItem);
@@ -333,17 +337,27 @@ export default NewNutritionItemForm;
 
 const saveItem = async (
   accessToken: string,
+  auth0: any,
   setLoading: Setter<boolean>,
   item: NutritionItem,
 ) => {
   setLoading(true);
-  if (item.id) {
-    const response = await updateNutritionItem(accessToken, item);
-    const id = response.data?.update_food_diary_nutrition_item_by_pk.id;
-    return id;
-  } else {
-    const response = await createNutritionItem(accessToken, item);
-    const id = response.data?.insert_food_diary_nutrition_item_one.id;
-    return id;
+  try {
+    if (item.id) {
+      const response = await updateNutritionItem(accessToken, item);
+      const id = response.data?.update_food_diary_nutrition_item_by_pk.id;
+      return id;
+    } else {
+      const response = await createNutritionItem(accessToken, item);
+      const id = response.data?.insert_food_diary_nutrition_item_one.id;
+      return id;
+    }
+  } catch (error) {
+    if (error instanceof AuthorizationError && auth0) {
+      await auth0.logout({
+        returnTo: window.location.origin,
+      });
+    }
+    throw error;
   }
 };
