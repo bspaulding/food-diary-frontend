@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
+import { worker } from "./test-worker-ref";
 import App from "./App";
 import DiaryList from "./DiaryList";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
@@ -69,8 +70,8 @@ describe("Add New Entry Flow Acceptance Test", () => {
     // Wait for search results
     await waitFor(
       () => {
-        const bananaResult = screen.queryByText(/Banana/i);
-        expect(bananaResult).not.toBeNull();
+        const logButtons = screen.queryAllByText("⊕");
+        expect(logButtons.length).toBeGreaterThan(0);
       },
       { timeout: 5000 },
     );
@@ -79,10 +80,12 @@ describe("Add New Entry Flow Acceptance Test", () => {
     const logButtons = screen.getAllByText("⊕");
     expect(logButtons.length).toBeGreaterThan(0);
 
-    // Verify the search found the expected items
-    expect(screen.getByText("Banana")).toBeTruthy();
-    expect(screen.getByText("Apple")).toBeTruthy();
-    expect(screen.getByText("Fruit Salad")).toBeTruthy();
+    // If using mock backend, verify specific mock data
+    if (worker !== undefined) {
+      expect(screen.getByText("Banana")).toBeTruthy();
+      expect(screen.getByText("Apple")).toBeTruthy();
+      expect(screen.getByText("Fruit Salad")).toBeTruthy();
+    }
 
     // Note: Due to SolidJS reactivity limitations in browser tests, we cannot test
     // the clicking and logging interaction. The components work correctly in the app.

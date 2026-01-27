@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
-import { worker } from "./test-setup-browser";
+import { worker } from "./test-worker-ref";
 import App from "./App";
 import DiaryList from "./DiaryList";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
@@ -34,23 +34,33 @@ describe("Browser Acceptance Tests", () => {
       </Router>
     ));
 
-    // Wait for the page to load
+    // Wait for the page to load - check for action buttons which should always be present
     await waitFor(
       () => {
-        const banana = screen.queryByText(/Banana/i);
-        expect(banana).not.toBeNull();
+        const addEntryButton = screen.queryByText("Add New Entry");
+        expect(addEntryButton).not.toBeNull();
       },
       { timeout: 5000 },
     );
-
-    // Verify diary list is displayed
-    expect(screen.getByText(/Banana/i)).toBeTruthy();
-    expect(screen.getByText(/105 kcal/i)).toBeTruthy();
 
     // Verify action buttons are present
     expect(screen.getByText("Add New Entry")).toBeTruthy();
     expect(screen.getByText("Add Item")).toBeTruthy();
     expect(screen.getByText("Add Recipe")).toBeTruthy();
+
+    // If using mock backend (worker is defined and not undefined), verify mock data is displayed
+    if (worker !== undefined) {
+      // Wait for mock data to load
+      await waitFor(
+        () => {
+          const banana = screen.queryByText(/Banana/i);
+          expect(banana).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
+      expect(screen.getByText(/Banana/i)).toBeTruthy();
+      expect(screen.getByText(/105 kcal/i)).toBeTruthy();
+    }
   });
 
   it("should display weekly calorie summary stats", async () => {
@@ -60,11 +70,11 @@ describe("Browser Acceptance Tests", () => {
       </Router>
     ));
 
-    // Wait for the page to load by checking for entries first
+    // Wait for the page to load by checking for action buttons
     await waitFor(
       () => {
-        const banana = screen.queryByText(/Banana/i);
-        expect(banana).not.toBeNull();
+        const addEntryButton = screen.queryByText("Add New Entry");
+        expect(addEntryButton).not.toBeNull();
       },
       { timeout: 5000 },
     );
@@ -82,11 +92,16 @@ describe("Browser Acceptance Tests", () => {
     expect(screen.getByText(/LAST 7 DAYS/i)).toBeTruthy();
     expect(screen.getByText(/4 WEEK AVG/i)).toBeTruthy();
 
-    // Verify the weekly stats values are displayed with kcal/day units
-    // The values are now averages per day, not totals
-    // Both Last 7 Days and 4 Week Avg show 300 kcal/day in the mock data
-    const kcalElements = screen.getAllByText(/300 kcal\/day/);
-    expect(kcalElements).toHaveLength(2);
+    // If using mock backend, verify specific mock values
+    if (worker !== undefined) {
+      // Both Last 7 Days and 4 Week Avg show 300 kcal/day in the mock data
+      const kcalElements = screen.getAllByText(/300 kcal\/day/);
+      expect(kcalElements).toHaveLength(2);
+    } else {
+      // For live backend, just verify that stats are displayed with kcal/day unit
+      const kcalElements = screen.getAllByText(/\d+ kcal\/day/);
+      expect(kcalElements.length).toBeGreaterThanOrEqual(2);
+    }
   });
 
   it("should complete Add Item flow - create new item and log it", async () => {

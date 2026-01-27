@@ -2,6 +2,7 @@ import { beforeAll, afterEach, afterAll } from "vitest";
 import { http, HttpResponse } from "msw";
 import { setupWorker } from "msw/browser";
 import { calculateFourWeeksDays } from "./WeeklyStatsCalculations";
+import { setWorker } from "./test-worker-ref";
 
 // Mock data for tests - defined here so handlers can access them
 const mockNutritionItems = [
@@ -197,6 +198,8 @@ beforeAll(async () => {
     onUnhandledRequest: "error",
     quiet: false,
   });
+  // Set the worker reference for tests to use
+  setWorker(worker);
 });
 
 afterEach(() => {

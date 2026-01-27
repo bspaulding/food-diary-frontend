@@ -1,0 +1,67 @@
+name: Acceptance Tests - Live Backend
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: "*"
+
+jobs:
+  test-live-backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      graphql-engine:
+        image: ghcr.io/bspaulding/food-diary-graphql-engine:latest
+        env:
+          HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+          PG_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+          HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
+          HASURA_GRAPHQL_DEV_MODE: "true"
+          HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+          HASURA_GRAPHQL_ADMIN_SECRET: adminsecret
+          HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
+          HASURA_GRAPHQL_JWT_SECRET: ${{ secrets.HASURA_GRAPHQL_JWT_SECRET }}
+          HASURA_GRAPHQL_ENABLE_TELEMETRY: "false"
+        ports:
+          - 8080:8080
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+
+      - name: Wait for GraphQL Engine
+        run: |
+          echo "Waiting for GraphQL engine to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/healthz 2>/dev/null; then
+              echo "GraphQL engine is ready!"
+              exit 0
+            fi
+            echo "Attempt $i: GraphQL engine not ready yet, waiting..."
+            sleep 2
+          done
+          echo "GraphQL engine failed to start"
+          exit 1
+
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium
+
+      - name: Run Acceptance Tests Against Live Backend
+        run: npm run test:acceptance:live -- --run
+        env:
+          TZ: America/Los_Angeles
+          VITE_API_URL: http://localhost:8080
