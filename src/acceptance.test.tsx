@@ -48,10 +48,18 @@ describe("Browser Acceptance Tests", () => {
     expect(screen.getByText("Add Item")).toBeTruthy();
     expect(screen.getByText("Add Recipe")).toBeTruthy();
     
-    // If using mock backend, verify mock data is displayed
-    if (worker) {
-      expect(screen.queryByText(/Banana/i)).toBeTruthy();
-      expect(screen.queryByText(/105 kcal/i)).toBeTruthy();
+    // If using mock backend (worker is defined and not undefined), verify mock data is displayed
+    if (worker !== undefined) {
+      // Wait for mock data to load
+      await waitFor(
+        () => {
+          const banana = screen.queryByText(/Banana/i);
+          expect(banana).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
+      expect(screen.getByText(/Banana/i)).toBeTruthy();
+      expect(screen.getByText(/105 kcal/i)).toBeTruthy();
     }
   });
 
@@ -85,7 +93,7 @@ describe("Browser Acceptance Tests", () => {
     expect(screen.getByText(/4 WEEK AVG/i)).toBeTruthy();
 
     // If using mock backend, verify specific mock values
-    if (worker) {
+    if (worker !== undefined) {
       // Both Last 7 Days and 4 Week Avg show 300 kcal/day in the mock data
       const kcalElements = screen.getAllByText(/300 kcal\/day/);
       expect(kcalElements).toHaveLength(2);

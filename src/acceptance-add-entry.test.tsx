@@ -81,7 +81,7 @@ describe("Add New Entry Flow Acceptance Test", () => {
     expect(logButtons.length).toBeGreaterThan(0);
 
     // If using mock backend, verify specific mock data
-    if (worker) {
+    if (worker !== undefined) {
       expect(screen.getByText("Banana")).toBeTruthy();
       expect(screen.getByText("Apple")).toBeTruthy();
       expect(screen.getByText("Fruit Salad")).toBeTruthy();
