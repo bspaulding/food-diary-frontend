@@ -1,5 +1,6 @@
 import type { Component } from "solid-js";
 import { createSignal, Show } from "solid-js";
+import type { Auth0Client } from "@auth0/auth0-spa-js";
 import {
   fetchRecentEntries,
   fetchEntriesAroundTime,

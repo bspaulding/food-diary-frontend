@@ -1,6 +1,7 @@
 import type { Component } from "solid-js";
 import { createSignal, Index, Show } from "solid-js";
 import { format, parseISO } from "date-fns";
+import type { Auth0Client } from "@auth0/auth0-spa-js";
 import type { NewDiaryEntry } from "./Api";
 import type { Either, Left } from "./Either";
 import { Right, isRight, isLeft } from "./Either";

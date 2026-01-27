@@ -10,28 +10,6 @@ export class AuthorizationError extends Error {
   }
 }
 
-/**
- * Helper function to handle authorization errors in API calls.
- * This should be used to wrap API calls that are not using createAuthorizedResource.
- *
- * @param apiCall - The API call function to execute
- * @param onAuthError - Optional callback to handle authorization errors (e.g., logout)
- * @returns The result of the API call
- */
-export async function handleAuthError<T>(
-  apiCall: () => Promise<T>,
-  onAuthError?: () => void | Promise<void>,
-): Promise<T> {
-  try {
-    return await apiCall();
-  } catch (error) {
-    if (error instanceof AuthorizationError && onAuthError) {
-      await onAuthError();
-    }
-    throw error;
-  }
-}
-
 const getEntriesQuery = `
 fragment Macros on food_diary_nutrition_item {
 	total_fat_grams

@@ -1,6 +1,7 @@
 import type { Component } from "solid-js";
 import { createSignal, Index } from "solid-js";
 import { useNavigate } from "@solidjs/router";
+import type { Auth0Client } from "@auth0/auth0-spa-js";
 import type { RecipeAttrs, Recipe } from "./Api";
 import { createRecipe, updateRecipe, AuthorizationError } from "./Api";
 import SearchItemsForm, { ItemsQueryType } from "./SearchItemsForm";

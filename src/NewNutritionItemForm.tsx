@@ -2,6 +2,7 @@ import type { Component, Accessor, Setter } from "solid-js";
 import { createSignal, Show } from "solid-js";
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
+import type { Auth0Client } from "@auth0/auth0-spa-js";
 import type { NutritionItem, NutritionItemAttrs } from "./Api";
 import {
   createNutritionItem,
@@ -337,7 +338,7 @@ export default NewNutritionItemForm;
 
 const saveItem = async (
   accessToken: string,
-  auth0: any,
+  auth0: Auth0Client | undefined,
   setLoading: Setter<boolean>,
   item: NutritionItem,
 ) => {

@@ -1,5 +1,6 @@
 import type { Accessor, Component, Setter } from "solid-js";
 import { Index, Show } from "solid-js";
+import type { Auth0Client } from "@auth0/auth0-spa-js";
 import type {
   DiaryEntry,
   GetEntriesQueryResponse,
@@ -286,7 +287,7 @@ function removeEntry(
 }
 async function deleteEntry(
   accessToken: Accessor<string>,
-  auth0: Accessor<any>,
+  auth0: Accessor<Auth0Client | undefined>,
   entry: DiaryEntry,
   entriesQuery: GetEntriesQueryResponse,
   mutate: Setter<GetEntriesQueryResponse | undefined>,
