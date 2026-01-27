@@ -1,11 +1,12 @@
 import { beforeAll, afterEach, afterAll } from "vitest";
+import { setWorker } from "./test-worker-ref";
 
 // No MSW setup for live backend tests
-// Export undefined worker to maintain compatibility with mock tests
-export const worker = undefined;
+// Set worker to undefined to signal that we're in live mode
 
 beforeAll(async () => {
   // Tests will use real backend via proxy
+  setWorker(undefined);
   console.log("Running acceptance tests against live backend");
 });
 

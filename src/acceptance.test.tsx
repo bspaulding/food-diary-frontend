@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
-import { worker } from "./test-setup-browser";
+import { worker } from "./test-worker-ref";
 import App from "./App";
 import DiaryList from "./DiaryList";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";

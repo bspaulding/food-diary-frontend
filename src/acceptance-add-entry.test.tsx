@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
-import { worker } from "./test-setup-browser";
+import { worker } from "./test-worker-ref";
 import App from "./App";
 import DiaryList from "./DiaryList";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
@@ -65,7 +65,7 @@ describe("Add New Entry Flow Acceptance Test", () => {
     const searchInput = screen.getByPlaceholderText(
       /Search Previous Items/i,
     ) as HTMLInputElement;
-    await user.type(searchInput, "test");
+    await user.type(searchInput, "Banana");
 
     // Wait for search results
     await waitFor(
