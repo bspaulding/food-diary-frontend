@@ -9,6 +9,7 @@
     "serve": "vite preview",
     "test": "vitest",
     "test:acceptance": "vitest --config vitest.acceptance.config.mts",
+    "test:acceptance:live": "vitest --config vitest.acceptance-live.config.mts",
     "prettier": "./node_modules/.bin/prettier",
     "prettier:check": "prettier --check .",
     "prettier:format": "prettier --write ."
