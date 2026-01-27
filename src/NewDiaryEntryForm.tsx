@@ -36,11 +36,15 @@ interface RecentEntry {
 }
 
 interface GetRecentEntriesResponse {
-  food_diary_diary_entry_recent: RecentEntry[];
+  data: {
+    food_diary_diary_entry_recent: RecentEntry[];
+  };
 }
 
 interface GetEntriesAroundTimeResponse {
-  food_diary_diary_entry: RecentEntry[];
+  data: {
+    food_diary_diary_entry: RecentEntry[];
+  };
 }
 
 const NewDiaryEntryForm: Component<Props> = ({ onSubmit }: Props) => {

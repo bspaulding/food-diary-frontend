@@ -1,7 +1,7 @@
 import type { Component } from "solid-js";
 import { createSignal, Index } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import type { RecipeAttrs, Recipe, SearchNutritionItem } from "./Api";
+import type { Recipe, SearchNutritionItem } from "./Api";
 import { createRecipe, updateRecipe } from "./Api";
 import SearchItemsForm, { ItemsQueryType } from "./SearchItemsForm";
 import { useAuth } from "./Auth0";
