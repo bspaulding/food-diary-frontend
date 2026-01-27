@@ -1,20 +1,39 @@
 # Browser Acceptance Tests
 
-This directory contains browser-driven acceptance tests using Vitest in browser mode.
+This directory contains browser-driven acceptance tests using Vitest in browser mode. The tests can run in two modes:
+
+1. **Mock Backend Mode** - Uses Mock Service Worker (MSW) to intercept and mock API requests
+2. **Live Backend Mode** - Runs tests against an actual GraphQL backend instance
 
 ## Running the Tests
+
+### Mock Backend Tests
 
 ```bash
 npm run test:acceptance
 ```
 
+### Live Backend Tests
+
+```bash
+npm run test:acceptance:live
+```
+
+Note: Live backend tests require a running GraphQL backend at the URL specified in `VITE_API_URL` environment variable (defaults to `http://localhost:8080`).
+
 ## Test Structure
 
-The acceptance tests are located in `src/acceptance.test.tsx` and use:
+The acceptance tests are located in:
+
+- `src/acceptance.test.tsx` - Main acceptance tests
+- `src/acceptance-add-entry.test.tsx` - Add entry flow tests
+- `src/acceptance-add-recipe.test.tsx` - Add recipe flow tests
+
+All tests use:
 
 - **Vitest Browser Mode**: Tests run in a real Chromium browser via Playwright
 - **@solidjs/testing-library**: For rendering and querying Solid components
-- **Mock Service Worker (MSW)**: API requests are intercepted using MSW in browser mode
+- **Mock Service Worker (MSW)**: API requests are intercepted in mock mode (conditionally enabled)
 
 ## Test Coverage
 
@@ -32,12 +51,26 @@ The acceptance tests are located in `src/acceptance.test.tsx` and use:
 
 ## Configuration
 
-- `vitest.acceptance.config.mts` - Separate Vitest config for browser tests
+### Mock Backend Mode
+
+- `vitest.acceptance.config.mts` - Vitest config for mock backend tests
 - `src/test-setup-browser.ts` - Test setup with MSW browser worker
 - Browser: Chromium (via Playwright)
 - Headless mode: Enabled
 
-## Mocking Strategy
+### Live Backend Mode
+
+- `vitest.acceptance-live.config.mts` - Vitest config for live backend tests
+- `src/test-setup-browser-live.ts` - Test setup without MSW (uses real backend)
+- Browser: Chromium (via Playwright)
+- Headless mode: Enabled
+
+Tests automatically adapt their assertions based on whether MSW is active:
+
+- **With MSW** (mock mode): Verifies specific mock data is displayed
+- **Without MSW** (live mode): Verifies page structure and components load correctly
+
+## Mocking Strategy (Mock Backend Mode Only)
 
 ### Authentication
 
@@ -68,12 +101,28 @@ export const worker = setupWorker(
 
 ## CI Integration
 
-The acceptance tests are integrated into the CI workflow (`.github/workflows/ci.yml`) and run on every push and pull request. The workflow:
+The acceptance tests run in parallel in GitHub Actions:
+
+### Mock Backend Tests (`.github/workflows/ci.yml`)
+
+Runs acceptance tests with MSW mocking API requests:
 
 1. Installs dependencies with `npm ci`
-2. Runs unit tests with `npm test`
-3. Installs Playwright browsers
-4. Runs acceptance tests with `npm run test:acceptance`
+2. Installs Playwright browsers
+3. Runs `npm run test:acceptance`
+
+### Live Backend Tests (`.github/workflows/acceptance-tests-live.yml`)
+
+Runs acceptance tests against actual backend services:
+
+1. Starts PostgreSQL service container
+2. Starts GraphQL engine backend container (ghcr.io/bspaulding/food-diary-graphql-engine)
+3. Installs dependencies with `npm ci`
+4. Waits for backend services to be ready
+5. Installs Playwright browsers
+6. Runs `npm run test:acceptance:live` with `VITE_API_URL=http://localhost:8080`
+
+Both test suites run in parallel for faster CI feedback.
 
 ## Known Issues
 
