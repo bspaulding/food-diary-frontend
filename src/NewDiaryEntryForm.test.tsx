@@ -1,8 +1,23 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { http, HttpResponse } from "msw";
+import type { HttpRequestResolverExtras } from "msw";
 import { server } from "./test-setup";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
+
+interface GraphQLRequest {
+  query: string;
+}
+
+function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  const record = obj as Record<string, unknown>;
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "query" in record &&
+    typeof record.query === "string"
+  );
+}
 
 // Mock Auth0 - simulate logged in user
 vi.mock("./Auth0", () => ({
@@ -23,9 +38,12 @@ describe("NewDiaryEntryForm", () => {
   it("should display time-based suggestions when available", async () => {
     // Mock GraphQL responses
     server.use(
-      http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+      http.post("*/api/v1/graphql", async ({ request }: HttpRequestResolverExtras<Record<string, never>>): Promise<Response> => {
+        const body: unknown = await request.json();
+        if (!isGraphQLRequest(body)) {
+          return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+        }
+        const query: string = body.query || "";
 
         // Mock GetEntriesAroundTime query (time-based suggestions)
         if (query.includes("GetEntriesAroundTime")) {
@@ -97,9 +115,12 @@ describe("NewDiaryEntryForm", () => {
   it("should not display time-based header when no time-based suggestions", async () => {
     // Mock GraphQL responses
     server.use(
-      http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+      http.post("*/api/v1/graphql", async ({ request }: HttpRequestResolverExtras<Record<string, never>>): Promise<Response> => {
+        const body: unknown = await request.json();
+        if (!isGraphQLRequest(body)) {
+          return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+        }
+        const query: string = body.query || "";
 
         // Mock GetEntriesAroundTime query - empty response
         if (query.includes("GetEntriesAroundTime")) {

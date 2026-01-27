@@ -1,9 +1,42 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, type HttpResponseResolver } from "msw";
 import { server } from "./test-setup";
 import DiaryEntryEditForm from "./DiaryEntryEditForm";
+
+interface GraphQLRequest {
+  query: string;
+  variables?: Record<string, unknown>;
+}
+
+interface CapturedRequest extends GraphQLRequest {
+  variables: {
+    id: number;
+    attrs: {
+      servings: number;
+      consumed_at: string;
+    };
+  };
+}
+
+function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  const record = obj as Record<string, unknown>;
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "query" in record &&
+    typeof record.query === "string"
+  );
+}
+
+function isCapturedRequest(obj: unknown): obj is CapturedRequest {
+  return (
+    isGraphQLRequest(obj) &&
+    "variables" in obj &&
+    typeof (obj as { variables: unknown }).variables === "object"
+  );
+}
 
 // Mock Auth0
 vi.mock("./Auth0", () => ({
@@ -11,10 +44,18 @@ vi.mock("./Auth0", () => ({
 }));
 
 // Mock router hooks
-vi.mock("@solidjs/router", async () => {
-  const actual = await vi.importActual("@solidjs/router");
+vi.mock("@solidjs/router", async (): Promise<{
+  useParams: () => { id: string };
+  useNavigate: () => ReturnType<typeof vi.fn>;
+  [key: string]: unknown;
+}> => {
+  const actual: unknown = await vi.importActual("@solidjs/router");
+  interface RouterModule {
+    [key: string]: unknown;
+  }
+  const actualModule = actual as RouterModule;
   return {
-    ...actual,
+    ...actualModule,
     useParams: () => ({ id: "1" }),
     useNavigate: () => vi.fn(),
   };
@@ -46,35 +87,40 @@ describe("DiaryEntryEditForm", () => {
   });
 
   it("should send updated servings value to the backend when only servings is changed", async () => {
-    let capturedRequest: any = null;
+    let capturedRequest: CapturedRequest | null = null;
     const user = userEvent.setup();
 
     // Mock the GraphQL endpoint
-    server.use(
-      http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
-        const query = (body as any).query;
+    const handler: HttpResponseResolver = async ({ request }) => {
+      const body: unknown = await request.json();
+      if (!isGraphQLRequest(body)) {
+        return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+      }
+      const query: string = body.query;
 
-        // Handle GetDiaryEntry query
-        if (query.includes("GetDiaryEntry")) {
-          return HttpResponse.json(mockDiaryEntry);
-        }
+      // Handle GetDiaryEntry query
+      if (query.includes("GetDiaryEntry")) {
+        return HttpResponse.json(mockDiaryEntry);
+      }
 
-        // Handle UpdateDiaryEntry mutation
-        if (query.includes("UpdateDiaryEntry")) {
+      // Handle UpdateDiaryEntry mutation
+      if (query.includes("UpdateDiaryEntry")) {
+        if (isCapturedRequest(body)) {
           capturedRequest = body;
-          return HttpResponse.json({
-            data: {
-              update_food_diary_diary_entry_by_pk: {
-                id: 1,
-              },
-            },
-          });
         }
+        return HttpResponse.json({
+          data: {
+            update_food_diary_diary_entry_by_pk: {
+              id: 1,
+            },
+          },
+        });
+      }
 
-        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
-      }),
-    );
+      return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+    };
+
+    server.use(http.post("/api/v1/graphql", handler));
 
     // Render the component
     const { unmount } = render(() => <DiaryEntryEditForm />);
@@ -108,45 +154,53 @@ describe("DiaryEntryEditForm", () => {
     );
 
     // Verify the mutation contains the correct variables
-    expect(capturedRequest.variables.id).toBe(1);
-    expect(capturedRequest.variables.attrs.servings).toBe(2);
-    expect(capturedRequest.variables.attrs.consumed_at).toBe(
-      "2022-08-28T14:30:00Z",
-    );
+    expect(capturedRequest).not.toBeNull();
+    if (capturedRequest) {
+      expect(capturedRequest.variables.id).toBe(1);
+      expect(capturedRequest.variables.attrs.servings).toBe(2);
+      expect(capturedRequest.variables.attrs.consumed_at).toBe(
+        "2022-08-28T14:30:00Z",
+      );
+    }
 
     unmount();
   });
 
   it("should send both servings and consumed_at when both are changed", async () => {
-    let capturedRequest: any = null;
+    let capturedRequest: CapturedRequest | null = null;
     const user = userEvent.setup();
 
     // Mock the GraphQL endpoint
-    server.use(
-      http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
-        const query = (body as any).query;
+    const handler: HttpResponseResolver = async ({ request }) => {
+      const body: unknown = await request.json();
+      if (!isGraphQLRequest(body)) {
+        return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+      }
+      const query: string = body.query;
 
-        // Handle GetDiaryEntry query
-        if (query.includes("GetDiaryEntry")) {
-          return HttpResponse.json(mockDiaryEntry);
-        }
+      // Handle GetDiaryEntry query
+      if (query.includes("GetDiaryEntry")) {
+        return HttpResponse.json(mockDiaryEntry);
+      }
 
-        // Handle UpdateDiaryEntry mutation
-        if (query.includes("UpdateDiaryEntry")) {
+      // Handle UpdateDiaryEntry mutation
+      if (query.includes("UpdateDiaryEntry")) {
+        if (isCapturedRequest(body)) {
           capturedRequest = body;
-          return HttpResponse.json({
-            data: {
-              update_food_diary_diary_entry_by_pk: {
-                id: 1,
-              },
-            },
-          });
         }
+        return HttpResponse.json({
+          data: {
+            update_food_diary_diary_entry_by_pk: {
+              id: 1,
+            },
+          },
+        });
+      }
 
-        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
-      }),
-    );
+      return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+    };
+
+    server.use(http.post("/api/v1/graphql", handler));
 
     // Render the component
     const { unmount } = render(() => <DiaryEntryEditForm />);
@@ -185,43 +239,51 @@ describe("DiaryEntryEditForm", () => {
     );
 
     // Verify the mutation contains both updated values
-    expect(capturedRequest.variables.id).toBe(1);
-    expect(capturedRequest.variables.attrs.servings).toBe(3);
-    expect(capturedRequest.variables.attrs.consumed_at).toContain("2022-08-29");
+    expect(capturedRequest).not.toBeNull();
+    if (capturedRequest) {
+      expect(capturedRequest.variables.id).toBe(1);
+      expect(capturedRequest.variables.attrs.servings).toBe(3);
+      expect(capturedRequest.variables.attrs.consumed_at).toContain("2022-08-29");
+    }
 
     unmount();
   });
 
   it("should handle updating servings to 0", async () => {
-    let capturedRequest: any = null;
+    let capturedRequest: CapturedRequest | null = null;
     const user = userEvent.setup();
 
     // Mock the GraphQL endpoint
-    server.use(
-      http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
-        const query = (body as any).query;
+    const handler: HttpResponseResolver = async ({ request }) => {
+      const body: unknown = await request.json();
+      if (!isGraphQLRequest(body)) {
+        return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+      }
+      const query: string = body.query;
 
-        // Handle GetDiaryEntry query
-        if (query.includes("GetDiaryEntry")) {
-          return HttpResponse.json(mockDiaryEntry);
-        }
+      // Handle GetDiaryEntry query
+      if (query.includes("GetDiaryEntry")) {
+        return HttpResponse.json(mockDiaryEntry);
+      }
 
-        // Handle UpdateDiaryEntry mutation
-        if (query.includes("UpdateDiaryEntry")) {
+      // Handle UpdateDiaryEntry mutation
+      if (query.includes("UpdateDiaryEntry")) {
+        if (isCapturedRequest(body)) {
           capturedRequest = body;
-          return HttpResponse.json({
-            data: {
-              update_food_diary_diary_entry_by_pk: {
-                id: 1,
-              },
-            },
-          });
         }
+        return HttpResponse.json({
+          data: {
+            update_food_diary_diary_entry_by_pk: {
+              id: 1,
+            },
+          },
+        });
+      }
 
-        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
-      }),
-    );
+      return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+    };
+
+    server.use(http.post("/api/v1/graphql", handler));
 
     // Render the component
     const { unmount } = render(() => <DiaryEntryEditForm />);
@@ -253,41 +315,49 @@ describe("DiaryEntryEditForm", () => {
     );
 
     // Verify the request includes servings as 0, not the original value
-    expect(capturedRequest.variables.attrs.servings).toBe(0);
+    expect(capturedRequest).not.toBeNull();
+    if (capturedRequest) {
+      expect(capturedRequest.variables.attrs.servings).toBe(0);
+    }
 
     unmount();
   });
 
   it("should send fractional servings value to the backend", async () => {
-    let capturedRequest: any = null;
+    let capturedRequest: CapturedRequest | null = null;
     const user = userEvent.setup();
 
     // Mock the GraphQL endpoint
-    server.use(
-      http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
-        const query = (body as any).query;
+    const handler: HttpResponseResolver = async ({ request }) => {
+      const body: unknown = await request.json();
+      if (!isGraphQLRequest(body)) {
+        return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+      }
+      const query: string = body.query;
 
-        // Handle GetDiaryEntry query
-        if (query.includes("GetDiaryEntry")) {
-          return HttpResponse.json(mockDiaryEntry);
-        }
+      // Handle GetDiaryEntry query
+      if (query.includes("GetDiaryEntry")) {
+        return HttpResponse.json(mockDiaryEntry);
+      }
 
-        // Handle UpdateDiaryEntry mutation
-        if (query.includes("UpdateDiaryEntry")) {
+      // Handle UpdateDiaryEntry mutation
+      if (query.includes("UpdateDiaryEntry")) {
+        if (isCapturedRequest(body)) {
           capturedRequest = body;
-          return HttpResponse.json({
-            data: {
-              update_food_diary_diary_entry_by_pk: {
-                id: 1,
-              },
-            },
-          });
         }
+        return HttpResponse.json({
+          data: {
+            update_food_diary_diary_entry_by_pk: {
+              id: 1,
+            },
+          },
+        });
+      }
 
-        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
-      }),
-    );
+      return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+    };
+
+    server.use(http.post("/api/v1/graphql", handler));
 
     // Render the component
     const { unmount } = render(() => <DiaryEntryEditForm />);
@@ -321,11 +391,14 @@ describe("DiaryEntryEditForm", () => {
     );
 
     // Verify the mutation contains the fractional value, not rounded down
-    expect(capturedRequest.variables.id).toBe(1);
-    expect(capturedRequest.variables.attrs.servings).toBe(2.5);
-    expect(capturedRequest.variables.attrs.consumed_at).toBe(
-      "2022-08-28T14:30:00Z",
-    );
+    expect(capturedRequest).not.toBeNull();
+    if (capturedRequest) {
+      expect(capturedRequest.variables.id).toBe(1);
+      expect(capturedRequest.variables.attrs.servings).toBe(2.5);
+      expect(capturedRequest.variables.attrs.consumed_at).toBe(
+        "2022-08-28T14:30:00Z",
+      );
+    }
 
     unmount();
   });

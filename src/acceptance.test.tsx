@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
+import type { Component } from "solid-js";
 import { worker } from "./test-setup-browser";
 import App from "./App";
 import DiaryList from "./DiaryList";
@@ -97,9 +98,9 @@ describe("Browser Acceptance Tests", () => {
         <Route path="/" component={DiaryList} />
         <Route
           path="/nutrition_item/new"
-          component={NewNutritionItemForm as any}
+          component={NewNutritionItemForm as Component}
         />
-        <Route path="/diary_entry/new" component={NewDiaryEntryForm as any} />
+        <Route path="/diary_entry/new" component={NewDiaryEntryForm as Component} />
       </Router>
     ));
 
@@ -125,20 +126,26 @@ describe("Browser Acceptance Tests", () => {
     );
 
     // Fill in the nutrition item form
-    const descriptionInput = document.querySelector(
+    const descriptionInput: HTMLInputElement | null = document.querySelector(
       'input[name="description"]',
-    ) as HTMLInputElement;
-    await user.type(descriptionInput, "Test Protein Bar");
+    );
+    if (descriptionInput) {
+      await user.type(descriptionInput, "Test Protein Bar");
+    }
 
-    const caloriesInput = document.querySelector(
+    const caloriesInput: HTMLInputElement | null = document.querySelector(
       'input[name="calories"]',
-    ) as HTMLInputElement;
-    await user.type(caloriesInput, "200");
+    );
+    if (caloriesInput) {
+      await user.type(caloriesInput, "200");
+    }
 
-    const proteinInput = document.querySelector(
+    const proteinInput: HTMLInputElement | null = document.querySelector(
       'input[name="protein-grams"]',
-    ) as HTMLInputElement;
-    await user.type(proteinInput, "20");
+    );
+    if (proteinInput) {
+      await user.type(proteinInput, "20");
+    }
 
     // Submit the form
     const saveButton = screen.getByText(/Save/i);

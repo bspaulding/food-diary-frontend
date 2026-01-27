@@ -1,7 +1,22 @@
 import { beforeAll, afterEach, afterAll } from "vitest";
 import { http, HttpResponse } from "msw";
+import type { HttpRequestResolverExtras } from "msw";
 import { setupWorker } from "msw/browser";
 import { calculateFourWeeksDays } from "./WeeklyStatsCalculations";
+
+interface GraphQLRequest {
+  query: string;
+}
+
+function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  const record = obj as Record<string, unknown>;
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "query" in record &&
+    typeof record.query === "string"
+  );
+}
 
 // Mock data for tests - defined here so handlers can access them
 const mockNutritionItems = [
@@ -62,9 +77,12 @@ const mockRecentEntries = [
 
 // Setup MSW worker for browser mode with handlers
 export const worker = setupWorker(
-  http.post("*/api/v1/graphql", async ({ request }) => {
-    const body = (await request.json()) as any;
-    const query = body.query || "";
+  http.post("*/api/v1/graphql", async ({ request }: HttpRequestResolverExtras<Record<string, never>>): Promise<Response> => {
+    const body: unknown = await request.json();
+    if (!isGraphQLRequest(body)) {
+      return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
+    }
+    const query: string = body.query || "";
 
     // Handle GetEntries query
     if (query.includes("GetEntries")) {
@@ -186,8 +204,9 @@ export const worker = setupWorker(
 
     // If we reach here, it's an unhandled GraphQL query
     // Throw an error so the test fails
+    const queryPreview: string = query.substring(0, 100);
     console.error("Unhandled GraphQL query:", query);
-    throw new Error(`Unhandled GraphQL query: ${query.substring(0, 100)}`);
+    throw new Error(`Unhandled GraphQL query: ${queryPreview}`);
   }),
 );
 

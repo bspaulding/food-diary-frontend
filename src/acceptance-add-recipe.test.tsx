@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
+import type { Component } from "solid-js";
 import App from "./App";
 import DiaryList from "./DiaryList";
 import NewRecipeForm from "./NewRecipeForm";
@@ -28,7 +29,7 @@ describe("Add Recipe Flow Acceptance Test", () => {
     render(() => (
       <Router root={App}>
         <Route path="/" component={DiaryList} />
-        <Route path="/recipe/new" component={NewRecipeForm as any} />
+        <Route path="/recipe/new" component={NewRecipeForm as Component} />
       </Router>
     ));
 
@@ -56,9 +57,9 @@ describe("Add Recipe Flow Acceptance Test", () => {
     expect(screen.getByText(/New Recipe/i)).toBeTruthy();
 
     // Verify form elements are present
-    const nameInput = document.querySelector(
+    const nameInput: HTMLInputElement | null = document.querySelector(
       'input[name="name"]',
-    ) as HTMLInputElement;
+    );
     expect(nameInput).not.toBeNull();
 
     // Note: Full form interaction could be tested here, but we're keeping it simple

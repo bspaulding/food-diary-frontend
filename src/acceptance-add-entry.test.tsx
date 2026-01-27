@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
+import type { Component } from "solid-js";
 import App from "./App";
 import DiaryList from "./DiaryList";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
@@ -28,7 +29,7 @@ describe("Add New Entry Flow Acceptance Test", () => {
     render(() => (
       <Router root={App}>
         <Route path="/" component={DiaryList} />
-        <Route path="/diary_entry/new" component={NewDiaryEntryForm as any} />
+        <Route path="/diary_entry/new" component={NewDiaryEntryForm as Component} />
       </Router>
     ));
 
