@@ -308,6 +308,7 @@ const NewNutritionItemForm: Component<Props> = ({
         </fieldset>
         <fieldset class="mb-4">
           <button
+            type="button"
             class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
             disabled={disabled()}
             onClick={async (event) => {
