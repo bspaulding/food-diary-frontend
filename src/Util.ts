@@ -5,12 +5,16 @@ type Accessors<T> = {
 export function accessorsToObject<T extends Record<string, unknown>>(
   accessors: Accessors<T>,
 ): T {
-  return Object.entries(accessors).reduce(
-    (acc: Partial<T>, [k, v]: [string, () => unknown]) => ({
-      ...acc,
-      [k]: v(),
-    }),
-    {} as Partial<T>,
+  type AccessorFunc = () => unknown;
+  const entries = Object.entries(accessors) as Array<[string, AccessorFunc]>;
+  return entries.reduce<Partial<T>>(
+    (acc, [k, accessor]) => {
+      return {
+        ...acc,
+        [k]: accessor(),
+      };
+    },
+    {},
   ) as T;
 }
 

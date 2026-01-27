@@ -9,13 +9,11 @@ interface GraphQLRequest {
 }
 
 function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  if (typeof obj !== "object" || obj === null) {
+    return false;
+  }
   const record = obj as Record<string, unknown>;
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "query" in record &&
-    typeof record.query === "string"
-  );
+  return "query" in record && typeof record.query === "string";
 }
 
 // Mock Auth0 - simulate logged in user

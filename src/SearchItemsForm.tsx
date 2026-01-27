@@ -48,7 +48,10 @@ const SearchItemsForm: Component<Props> = (props: Props) => {
         placeholder="Search Previous Items"
         name="entry-item-search"
         onInput={debounce((event: InputEvent): void => {
-          setSearch((event.target as HTMLInputElement).value);
+          const target = event.target;
+          if (target instanceof HTMLInputElement) {
+            setSearch(target.value);
+          }
         }, 500)}
         value={search()}
       />

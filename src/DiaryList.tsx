@@ -228,14 +228,17 @@ const DiaryList: Component = () => {
                             <a href={`/diary_entry/${entry().id}/edit`}>Edit</a>
                             <button
                               class="ml-2"
-                              onClick={() =>
-                                deleteEntry(
-                                  accessToken,
-                                  entry(),
-                                  getEntriesQuery() as GetEntriesQueryResponse,
-                                  mutate,
-                                )
-                              }
+                              onClick={() => {
+                                const entries = getEntriesQuery();
+                                if (entries) {
+                                  deleteEntry(
+                                    accessToken,
+                                    entry(),
+                                    entries as GetEntriesQueryResponse,
+                                    mutate,
+                                  );
+                                }
+                              }}
                             >
                               Delete
                             </button>

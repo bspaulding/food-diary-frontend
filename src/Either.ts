@@ -11,17 +11,11 @@ interface Right<R> {
 export type Either<L, R> = Left<L> | Right<R>;
 
 export function isLeft<L>(val: Either<L, unknown>): val is Left<L> {
-  if ((val as Left<L>).tag === "left") {
-    return true;
-  }
-  return false;
+  return val.tag === "left";
 }
 
 export function isRight<R>(val: Either<unknown, R>): val is Right<R> {
-  if ((val as Right<R>).tag === "right") {
-    return true;
-  }
-  return false;
+  return val.tag === "right";
 }
 
 export function Left<L>(value: L): Left<L> {

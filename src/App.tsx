@@ -9,7 +9,7 @@ type Auth0User = {
 
 const App: Component<ParentProps> = (props: ParentProps) => {
   const [{ user, isAuthenticated, auth0 }] = useAuth();
-  const userObj = (): Auth0User => (user() as Auth0User) || {};
+  const userObj = (): Auth0User => (user() ?? {}) as Auth0User;
 
   return (
     <div class="font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-20">

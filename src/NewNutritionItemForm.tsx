@@ -84,8 +84,8 @@ const NewNutritionItemForm: Component<Props> = ({
     initialItem?.proteinGrams || 0,
   );
 
-  const item = (): NutritionItem =>
-    accessorsToObject({
+  const item = (): NutritionItem => {
+    const result = accessorsToObject({
       id,
       description,
       calories,
@@ -101,7 +101,9 @@ const NewNutritionItemForm: Component<Props> = ({
       totalSugarsGrams,
       addedSugarsGrams,
       proteinGrams,
-    }) as NutritionItem;
+    });
+    return result as NutritionItem;
+  };
 
   const handleImport = (nutritionData: Partial<NutritionItemAttrs>): void => {
     if (nutritionData.description !== undefined)

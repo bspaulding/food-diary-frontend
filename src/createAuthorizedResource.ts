@@ -36,42 +36,39 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
   fetcher?: AuthorizedResourceFetcher<S, T> | ResourceOptions<T, true>,
   options: Record<string, unknown> = {},
 ): ResourceReturn<T, R> {
-  let finalSource: ResourceSource<any> | true = true;
-  let finalFetcher: AuthorizedResourceFetcher<any, T>;
-  let finalOptions: ResourceOptions<T, any> = options as ResourceOptions<
-    T,
-    any
-  >;
+  let finalSource: ResourceSource<S> | true = true;
+  let finalFetcher: AuthorizedResourceFetcher<S, T>;
+  let finalOptions: ResourceOptions<T, S> = options as ResourceOptions<T, S>;
 
   if (arguments.length === 2) {
     if (typeof fetcher === "object") {
-      finalOptions = fetcher as ResourceOptions<T, any>;
-      finalFetcher = source as AuthorizedResourceFetcher<any, T>;
-      finalSource = true;
+      finalOptions = fetcher as ResourceOptions<T, true>;
+      finalFetcher = source as AuthorizedResourceFetcher<true, T>;
+      finalSource = true as true;
     } else {
-      finalSource = source as ResourceSource<any>;
-      finalFetcher = fetcher as AuthorizedResourceFetcher<any, T>;
+      finalSource = source as ResourceSource<S>;
+      finalFetcher = fetcher as AuthorizedResourceFetcher<S, T>;
     }
   } else if (arguments.length === 1) {
-    finalFetcher = source as AuthorizedResourceFetcher<any, T>;
-    finalSource = true;
+    finalFetcher = source as AuthorizedResourceFetcher<true, T>;
+    finalSource = true as true;
   } else {
-    finalSource = source as ResourceSource<any>;
-    finalFetcher = fetcher as AuthorizedResourceFetcher<any, T>;
+    finalSource = source as ResourceSource<S>;
+    finalFetcher = fetcher as AuthorizedResourceFetcher<S, T>;
   }
   const [{ accessToken, auth0 }] = useAuth();
-  const tokenizedSource: () => { accessToken: string; source: any } = () => ({
+  const tokenizedSource: () => { accessToken: string; source: S | true } = () => ({
     accessToken: accessToken(),
     source:
       finalSource === true
-        ? (finalSource as true)
-        : (finalSource as () => any)(),
+        ? (true as true)
+        : (finalSource as () => S)(),
   });
   return createResource(
     tokenizedSource,
-    async ({ accessToken, source }: { accessToken: string; source: any }) => {
+    async ({ accessToken, source }: { accessToken: string; source: S | true }) => {
       try {
-        return await finalFetcher(accessToken, source as any);
+        return await finalFetcher(accessToken, source as S);
       } catch (error) {
         // If we get an authorization error, log out the user
         if (error instanceof AuthorizationError) {
@@ -86,7 +83,7 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
         throw error;
       }
     },
-    finalOptions as ResourceOptions<T, any>,
+    finalOptions,
   ) as ResourceReturn<T, R>;
 }
 

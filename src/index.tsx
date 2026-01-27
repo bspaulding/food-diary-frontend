@@ -43,5 +43,11 @@ render(
       <Route path="/recipe/:id/edit" component={RecipeEdit} />
     </Router>
   ),
-  document.getElementById("root")!,
+  (() => {
+    const rootElement = document.getElementById("root");
+    if (!rootElement) {
+      throw new Error("Root element not found");
+    }
+    return rootElement;
+  })(),
 );

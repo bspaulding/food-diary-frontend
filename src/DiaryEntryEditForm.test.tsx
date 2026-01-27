@@ -21,21 +21,19 @@ interface CapturedRequest extends GraphQLRequest {
 }
 
 function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  if (typeof obj !== "object" || obj === null) {
+    return false;
+  }
   const record = obj as Record<string, unknown>;
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "query" in record &&
-    typeof record.query === "string"
-  );
+  return "query" in record && typeof record.query === "string";
 }
 
 function isCapturedRequest(obj: unknown): obj is CapturedRequest {
-  return (
-    isGraphQLRequest(obj) &&
-    "variables" in obj &&
-    typeof (obj as { variables: unknown }).variables === "object"
-  );
+  if (!isGraphQLRequest(obj)) {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  return "variables" in record && typeof record.variables === "object";
 }
 
 // Mock Auth0
@@ -52,6 +50,9 @@ vi.mock("@solidjs/router", async (): Promise<{
   const actual: unknown = await vi.importActual("@solidjs/router");
   interface RouterModule {
     [key: string]: unknown;
+  }
+  if (typeof actual !== "object" || actual === null) {
+    return {};
   }
   const actualModule = actual as RouterModule;
   return {

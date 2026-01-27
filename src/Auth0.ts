@@ -4,8 +4,8 @@ import { useNavigate } from "@solidjs/router";
 
 async function configureAuth0Client() {
   return await createAuth0Client({
-    domain: import.meta.env.VITE_AUTH0_DOMAIN,
-    client_id: import.meta.env.VITE_AUTH0_CLIENT_ID,
+    domain: import.meta.env.VITE_AUTH0_DOMAIN as string,
+    client_id: import.meta.env.VITE_AUTH0_CLIENT_ID as string,
     audience: "https://direct-satyr-14.hasura.app/v1/graphql",
     redirect_uri: `${location.protocol}//${location.host}/auth/callback`,
     cacheLocation: "localstorage",

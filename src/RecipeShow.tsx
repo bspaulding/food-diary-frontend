@@ -40,9 +40,10 @@ const RecipeShow: Component = () => {
   });
 
   const caloriesPerServing = createMemo((): number => {
+    const totalServings = recipe().total_servings;
     const servings: number =
-      recipe().total_servings && recipe().total_servings! > 0
-        ? recipe().total_servings!
+      totalServings !== undefined && totalServings !== null && totalServings > 0
+        ? totalServings
         : 1;
     return totalCalories() / servings;
   });
@@ -57,7 +58,10 @@ const RecipeShow: Component = () => {
       <Show when={itemLoaded()}>
         <LoggableItem
           recipe={
-            { id: recipe().id as number, name: "Log It" } as {
+            {
+              id: recipe().id !== undefined && recipe().id !== null ? recipe().id : 0,
+              name: "Log It",
+            } as {
               id: number;
               name: string;
             }

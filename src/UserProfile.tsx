@@ -12,7 +12,7 @@ type Auth0User = {
 
 const UserProfile: Component = () => {
   const [{ user, isAuthenticated, auth0, accessToken }] = useAuth();
-  const userObj = (): Auth0User => (user() as Auth0User) || {};
+  const userObj = (): Auth0User => (user() ?? {}) as Auth0User;
   return (
     <div class="flex flex-col items-center">
       <img

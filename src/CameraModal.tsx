@@ -117,7 +117,10 @@ const CameraModal: Component<Props> = (props: Props) => {
   );
 
   const handleFileSelect = async (event: Event): Promise<void> => {
-    const input: HTMLInputElement = event.target as HTMLInputElement;
+    const input: HTMLInputElement | null = event.target instanceof HTMLInputElement ? event.target : null;
+    if (!input) {
+      return;
+    }
     const file: File | undefined = input.files?.[0];
 
     if (!file) {
@@ -150,7 +153,11 @@ const CameraModal: Component<Props> = (props: Props) => {
         const reader: FileReader = new FileReader();
 
         reader.onload = (e: ProgressEvent<FileReader>): void => {
-          const dataUrl: string = e.target?.result as string;
+          const dataUrl: string | undefined = typeof e.target?.result === 'string' ? e.target.result : undefined;
+          if (!dataUrl) {
+            reject(new Error("Failed to read file as data URL"));
+            return;
+          }
 
           // Create an img element with the data URL
           const img: HTMLImageElement = new Image();
@@ -199,7 +206,7 @@ const CameraModal: Component<Props> = (props: Props) => {
                 JPEG_QUALITY,
               );
             } catch (err: unknown) {
-              reject(err as Error);
+              reject(err instanceof Error ? err : new Error(String(err)));
             }
           };
 
@@ -237,7 +244,10 @@ const CameraModal: Component<Props> = (props: Props) => {
         while (i < times) {
           try {
             result = await fn();
-            return result as Response;
+            if (result instanceof Response) {
+              return result;
+            }
+            throw new Error("Expected Response object");
           } catch (e: unknown) {
             result = e;
           }
@@ -247,7 +257,7 @@ const CameraModal: Component<Props> = (props: Props) => {
           throw new Error(`Too many retries. Last result was ${result}.`);
         }
 
-        return result as Response;
+        throw new Error("Retry logic error");
       }
 
       const response: Response = await retry(3, async (): Promise<Response> => {
@@ -313,7 +323,12 @@ const CameraModal: Component<Props> = (props: Props) => {
       // Convert canvas to blob
       const blob: Blob = await new Promise<Blob>(
         (resolve: (value: Blob) => void, reject: (reason: Error) => void) => {
-          canvasRef!.toBlob(
+          const canvas: HTMLCanvasElement | undefined = canvasRef;
+          if (!canvas) {
+            reject(new Error("Canvas ref not available"));
+            return;
+          }
+          canvas.toBlob(
             (blob: Blob | null): void => {
               if (blob) {
                 resolve(blob);
@@ -407,7 +422,7 @@ const CameraModal: Component<Props> = (props: Props) => {
             <p class="text-red-500 text-center px-4">{error()}</p>
           ) : capturedImageUrl() ? (
             <img
-              src={capturedImageUrl()!}
+              src={capturedImageUrl() ?? ""}
               class="max-w-full max-h-full object-contain"
             />
           ) : mode() === "camera" ? (

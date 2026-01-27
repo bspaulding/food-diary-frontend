@@ -19,8 +19,8 @@ function readFile(file: File): Promise<string> {
     (resolve: (value: string) => void, reject: (reason?: unknown) => void) => {
       const reader: FileReader = new FileReader();
       reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
-        if (event.target) {
-          resolve(event.target.result as string);
+        if (event.target && typeof event.target.result === 'string') {
+          resolve(event.target.result);
         } else {
           reject(new Error("Failed to read file"));
         }
@@ -43,8 +43,11 @@ const ImportDiaryEntries: Component = () => {
   const [importError, setImportError] = createSignal<string | null>(null);
 
   const fileChanged = async (event: Event): Promise<void> => {
-    const file: File | undefined = (event.target as HTMLInputElement)
-      .files?.[0];
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) {
+      return;
+    }
+    const file: File | undefined = target.files?.[0];
     if (!file) return;
     setImportError(null);
     try {

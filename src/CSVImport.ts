@@ -66,6 +66,6 @@ export function rowToEntry(
       },
     });
   } catch (e: unknown) {
-    return Left({ error: e as Error, row });
+    return Left({ error: e instanceof Error ? e : new Error(String(e)), row });
   }
 }

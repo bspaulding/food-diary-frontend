@@ -109,14 +109,14 @@ const DiaryEntryEditForm: Component = () => {
                 if (!entry) return;
 
                 const newConsumedAt: string =
-                  consumedAt() !== undefined
+                  consumedAt() !== undefined && consumedAt() !== null
                     ? formatISO(
-                        parse(consumedAt()!, "yyyy-MM-dd'T'HH:mm", new Date()),
+                        parse(consumedAt() ?? "", "yyyy-MM-dd'T'HH:mm", new Date()),
                       )
                     : entry.consumed_at;
 
                 const newServings: number =
-                  servings() !== undefined ? servings()! : entry.servings;
+                  servings() !== undefined && servings() !== null ? servings() ?? entry.servings : entry.servings;
 
                 try {
                   const response: GraphQLResponse<unknown> =

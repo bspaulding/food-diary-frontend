@@ -178,10 +178,15 @@ export const LoggableItem: Component<{
                     servings: servings(),
                     recipe_id: recipe.id,
                   }
-                : {
-                    servings: servings(),
-                    nutrition_item_id: nutritionItem!.id,
-                  };
+                : nutritionItem
+                  ? {
+                      servings: servings(),
+                      nutrition_item_id: nutritionItem.id,
+                    }
+                  : null;
+              if (!entry) {
+                return;
+              }
               setSaving(true);
               await createDiaryEntry(accessToken(), entry);
               setSaving(false);

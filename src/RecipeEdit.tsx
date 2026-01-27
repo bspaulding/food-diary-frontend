@@ -23,7 +23,7 @@ const RecipeEdit: Component = () => {
 
   return (
     <Show when={recipe().id}>
-      <NewRecipeForm initialRecipe={recipe() as Recipe} />
+      <NewRecipeForm initialRecipe={recipe() as Recipe & RecipeQueryResult} />
     </Show>
   );
 };
