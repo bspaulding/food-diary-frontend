@@ -1,13 +1,13 @@
-import { defineConfig } from "vite";
+import { defineConfig, UserConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import tailwindcss from "@tailwindcss/vite";
 import Terminal from "vite-plugin-terminal";
 
-const useLocalHasura = process.env.FOOD_DIARY_USE_LOCAL_HASURA === "true";
+const useLocalHasura: boolean = process.env.FOOD_DIARY_USE_LOCAL_HASURA === "true";
 console.log({ useLocalHasura });
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }: { mode: string }): UserConfig => ({
   plugins: [
     tailwindcss(),
     solidPlugin(),
@@ -24,12 +24,12 @@ export default defineConfig(({ mode }) => ({
           ? "http://localhost:8080/"
           : "https://food-diary.motingo.com/api/",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        rewrite: (path: string) => path.replace(/^\/api/, ""),
       },
       "/labeller": {
         target: "https://food-diary.motingo.com/labeller/",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/labeller/, ""),
+        rewrite: (path: string) => path.replace(/^\/labeller/, ""),
       },
     },
   },

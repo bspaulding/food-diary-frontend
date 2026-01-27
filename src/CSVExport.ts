@@ -42,15 +42,17 @@ const headerKeyMap: Record<string, string[]> = {
   "Protein (g)": ["nutrition_item", "protein_grams"],
 };
 
-export function entriesToCsv(entries: any[]): string {
+type EntryRecord = Record<string, any>;
+
+export function entriesToCsv(entries: EntryRecord[]): string {
   return stringsToCsv([
     header,
-    ...entries.flatMap((entry: any) => {
+    ...entries.flatMap((entry: EntryRecord) => {
       if (entry.nutrition_item) {
         return [
-          header.map((key) => {
-            const consumedAt = parseISO(
-              getPath(headerKeyMap["Consumed At"], entry),
+          header.map((key: string): string => {
+            const consumedAt: Date = parseISO(
+              String(getPath(headerKeyMap["Consumed At"], entry)),
             );
             switch (key) {
               case "Date":
@@ -60,15 +62,15 @@ export function entriesToCsv(entries: any[]): string {
               case "Consumed At":
                 return formatISO(consumedAt);
               default:
-                return getPath(headerKeyMap[key], entry);
+                return String(getPath(headerKeyMap[key], entry));
             }
           }),
         ];
       } else {
-        return entry.recipe.recipe_items.map((recipe_item: any) => {
-          return header.map((key) => {
-            const consumedAt = parseISO(
-              getPath(headerKeyMap["Consumed At"], entry),
+        return entry.recipe.recipe_items.map((recipe_item: EntryRecord) => {
+          return header.map((key: string): string => {
+            const consumedAt: Date = parseISO(
+              String(getPath(headerKeyMap["Consumed At"], entry)),
             );
             switch (key) {
               case "Date":
@@ -78,12 +80,12 @@ export function entriesToCsv(entries: any[]): string {
               case "Consumed At":
                 return formatISO(consumedAt);
               case "Servings":
-                return entry.servings * recipe_item.servings;
+                return String(entry.servings * recipe_item.servings);
               case "Description":
-                const itemName = getPath(headerKeyMap[key], recipe_item);
+                const itemName: string = String(getPath(headerKeyMap[key], recipe_item));
                 return `${entry.recipe.name} - ${itemName}`;
               default:
-                return getPath(headerKeyMap[key], recipe_item);
+                return String(getPath(headerKeyMap[key], recipe_item));
             }
           });
         });
@@ -94,13 +96,13 @@ export function entriesToCsv(entries: any[]): string {
 
 function stringsToCsv(rows: string[][]): string {
   return rows
-    .map((row, rowIndex) => {
+    .map((row: string[], rowIndex: number) => {
       return row
-        .map((cell, cellIndex) => {
+        .map((cell: string, cellIndex: number) => {
           // Quote the Description field in data rows (not in header row)
           if (rowIndex > 0 && cellIndex === DESCRIPTION_COLUMN_INDEX) {
             // Escape double quotes by doubling them (CSV RFC 4180)
-            const escapedCell = String(cell).replace(/"/g, '""');
+            const escapedCell: string = String(cell).replace(/"/g, '""');
             return `"${escapedCell}"`;
           }
           return `${cell}`;
@@ -111,6 +113,6 @@ function stringsToCsv(rows: string[][]): string {
     .trim();
 }
 
-function getPath(path: string[], x: any): any {
-  return path.reduce((x: any, k) => x[k], x);
+function getPath(path: string[], x: EntryRecord): string | number {
+  return path.reduce((acc: any, k: string) => acc[k], x) as string | number;
 }

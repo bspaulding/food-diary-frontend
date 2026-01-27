@@ -10,14 +10,14 @@ interface Right<R> {
 
 export type Either<L, R> = Left<L> | Right<R>;
 
-export function isLeft<L>(val: any): val is Left<L> {
+export function isLeft<L>(val: Either<L, unknown>): val is Left<L> {
   if ((val as Left<L>).tag === "left") {
     return true;
   }
   return false;
 }
 
-export function isRight<R>(val: any): val is Right<R> {
+export function isRight<R>(val: Either<unknown, R>): val is Right<R> {
   if ((val as Right<R>).tag === "right") {
     return true;
   }
@@ -33,7 +33,7 @@ export function Right<R>(value: R): Right<R> {
 }
 
 export function split<L, R>(es: Either<L, R>[]): { lefts: L[]; rights: R[] } {
-  const lefts = es.filter(isLeft).map((e) => e.value) as L[];
-  const rights = es.filter(isRight).map((e) => e.value) as R[];
+  const lefts: L[] = es.filter((e): e is Left<L> => isLeft<L>(e)).map((e: Left<L>) => e.value);
+  const rights: R[] = es.filter((e): e is Right<R> => isRight<R>(e)).map((e: Right<R>) => e.value);
   return { lefts, rights };
 }

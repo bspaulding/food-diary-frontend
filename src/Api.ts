@@ -324,7 +324,7 @@ function camelToSnakeCase(s: string): string {
 
 function objectToSnakeCaseKeys(o: object): object {
   return Object.entries(o).reduce(
-    (acc, [k, v]) => ({ ...acc, [camelToSnakeCase(k)]: v }),
+    (acc: object, [k, v]: [string, unknown]) => ({ ...acc, [camelToSnakeCase(k)]: v }),
     {},
   );
 }

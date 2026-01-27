@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { http, HttpResponse } from "msw";
-import type { HttpRequestResolverExtras } from "msw";
 import { server } from "./test-setup";
 import NewDiaryEntryForm from "./NewDiaryEntryForm";
 
@@ -38,7 +37,7 @@ describe("NewDiaryEntryForm", () => {
   it("should display time-based suggestions when available", async () => {
     // Mock GraphQL responses
     server.use(
-      http.post("*/api/v1/graphql", async ({ request }: HttpRequestResolverExtras<Record<string, never>>): Promise<Response> => {
+      http.post("*/api/v1/graphql", async ({ request }): Promise<Response> => {
         const body: unknown = await request.json();
         if (!isGraphQLRequest(body)) {
           return HttpResponse.json({ errors: [{ message: "Invalid request" }] });
@@ -115,7 +114,7 @@ describe("NewDiaryEntryForm", () => {
   it("should not display time-based header when no time-based suggestions", async () => {
     // Mock GraphQL responses
     server.use(
-      http.post("*/api/v1/graphql", async ({ request }: HttpRequestResolverExtras<Record<string, never>>): Promise<Response> => {
+      http.post("*/api/v1/graphql", async ({ request }): Promise<Response> => {
         const body: unknown = await request.json();
         if (!isGraphQLRequest(body)) {
           return HttpResponse.json({ errors: [{ message: "Invalid request" }] });

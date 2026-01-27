@@ -3,31 +3,33 @@ import { parseISO as parseDate, formatISO } from "date-fns";
 import { Either, Left, Right } from "./Either";
 import { NewDiaryEntry } from "./Api";
 
-export function parseCSV(csv: string) {
-  const lines = parseCSVString(csv);
-  const header = lines[0];
-  const rows = lines.slice(1);
+type ParsedRow = Record<string, string>;
+
+export function parseCSV(csv: string): ParsedRow[] {
+  const lines: string[][] = parseCSVString(csv);
+  const header: string[] = lines[0];
+  const rows: string[][] = lines.slice(1);
   return rows.map((row: string[]) =>
     row.reduce(
-      (acc, cell, i) => ({
+      (acc: ParsedRow, cell: string, i: number) => ({
         ...acc,
         [header[i]]: cell,
       }),
-      {},
+      {} as ParsedRow,
     ),
   );
 }
 
-function parseNumber(parser: (x: any, d: number) => number, value: any) {
-  const parsed = parser(value, 10);
+function parseNumber(parser: (x: string, d: number) => number, value: string): number {
+  const parsed: number = parser(value, 10);
   return isNaN(parsed) ? 0 : parsed;
 }
 
 export function rowToEntry(
   row: Record<string, string>,
-): Either<object, NewDiaryEntry> {
+): Either<Record<string, unknown>, NewDiaryEntry> {
   try {
-    const consumed_at = parseDate(row["Consumed At"]);
+    const consumed_at: Date = parseDate(row["Consumed At"]);
     if (isNaN(consumed_at.getTime())) {
       return Left({ error: "Invalid Consumed At Date" });
     }
@@ -60,7 +62,7 @@ export function rowToEntry(
         proteinGrams: parseNumber(parseFloat, row["Protein (g)"]),
       },
     });
-  } catch (e: any) {
-    return Left({ error: e, row });
+  } catch (e: unknown) {
+    return Left({ error: e as Error, row });
   }
 }

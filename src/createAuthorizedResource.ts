@@ -32,30 +32,40 @@ function createAuthorizedResource<T, S, R = unknown>(
   options?: ResourceOptions<T, S>,
 ): ResourceReturn<T, R>;
 function createAuthorizedResource<S = true, T = unknown, R = unknown>(
-  source?: any,
-  fetcher?: any,
-  options: Record<string, any> = {},
+  source?: AuthorizedResourceFetcher<true, T> | ResourceSource<S>,
+  fetcher?: AuthorizedResourceFetcher<S, T> | ResourceOptions<T, true>,
+  options: Record<string, unknown> = {},
 ): ResourceReturn<T, R> {
+  let finalSource: ResourceSource<any> | true = true;
+  let finalFetcher: AuthorizedResourceFetcher<any, T>;
+  let finalOptions: ResourceOptions<T, any> = options as ResourceOptions<T, any>;
+
   if (arguments.length === 2) {
     if (typeof fetcher === "object") {
-      options = fetcher;
-      fetcher = source;
-      source = true;
+      finalOptions = fetcher as ResourceOptions<T, any>;
+      finalFetcher = source as AuthorizedResourceFetcher<any, T>;
+      finalSource = true;
+    } else {
+      finalSource = source as ResourceSource<any>;
+      finalFetcher = fetcher as AuthorizedResourceFetcher<any, T>;
     }
   } else if (arguments.length === 1) {
-    fetcher = source;
-    source = true;
+    finalFetcher = source as AuthorizedResourceFetcher<any, T>;
+    finalSource = true;
+  } else {
+    finalSource = source as ResourceSource<any>;
+    finalFetcher = fetcher as AuthorizedResourceFetcher<any, T>;
   }
   const [{ accessToken, auth0 }] = useAuth();
-  const tokenizedSource = () => ({
+  const tokenizedSource: () => { accessToken: string; source: any } = () => ({
     accessToken: accessToken(),
-    source: source === true ? source : source(),
+    source: finalSource === true ? (finalSource as true) : (finalSource as () => any)(),
   });
   return createResource(
     tokenizedSource,
     async ({ accessToken, source }: { accessToken: string; source: any }) => {
       try {
-        return await fetcher(accessToken, source);
+        return await finalFetcher(accessToken, source as any);
       } catch (error) {
         // If we get an authorization error, log out the user
         if (error instanceof AuthorizationError) {
@@ -70,7 +80,7 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
         throw error;
       }
     },
-    options as any,
+    finalOptions as ResourceOptions<T, any>,
   ) as ResourceReturn<T, R>;
 }
 
