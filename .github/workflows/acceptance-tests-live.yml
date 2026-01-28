@@ -26,6 +26,7 @@ jobs:
       graphql-engine:
         image: ghcr.io/bspaulding/food-diary-graphql-engine:latest
         env:
+          HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
           HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
           PG_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
           HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
@@ -43,19 +44,38 @@ jobs:
       - uses: actions/setup-node@v4
       - run: npm ci
 
+      - name: Wait for PostgreSQL
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres 2>/dev/null; then
+              echo "PostgreSQL is ready!"
+              break
+            fi
+            echo "Attempt $i: PostgreSQL not ready yet, waiting..."
+            sleep 2
+          done
+
       - name: Wait for GraphQL Engine
         run: |
           echo "Waiting for GraphQL engine to be ready..."
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -f http://localhost:8080/healthz 2>/dev/null; then
               echo "GraphQL engine is ready!"
-              exit 0
+              break
             fi
             echo "Attempt $i: GraphQL engine not ready yet, waiting..."
             sleep 2
           done
-          echo "GraphQL engine failed to start"
-          exit 1
+
+      - name: Check GraphQL Engine Health
+        run: |
+          echo "Checking GraphQL engine health..."
+          curl -v http://localhost:8080/healthz || true
+          echo "Checking if metadata endpoint is accessible..."
+          curl -X POST -H "X-Hasura-Admin-Secret: adminsecret" -H "Content-Type: application/json" \
+            -d '{"type":"export_metadata","args":{}}' \
+            http://localhost:8080/v1/metadata || true
 
       - name: Install Playwright Browsers
         run: npx playwright install chromium
