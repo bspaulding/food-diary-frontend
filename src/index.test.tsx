@@ -36,6 +36,11 @@ describe("index", () => {
     await import("./index");
 
     expect(render).toHaveBeenCalled();
+    
+    // Verify render was called with correct parameters
+    const renderCall = (render as any).mock.calls[0];
+    expect(renderCall).toBeDefined();
+    expect(renderCall[1]).toBe(mockRoot); // Second argument should be the root element
 
     // Clean up
     document.body.removeChild(mockRoot);

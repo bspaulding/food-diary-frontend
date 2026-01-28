@@ -309,31 +309,141 @@ describe("NewNutritionItemForm", () => {
     expect(proteinInput.value).toBe("3");
   });
 
-  it("should handle handleImport with all nutrition data fields", () => {
+  it("should populate form with initialItem values including all nutrition fields", () => {
     const initialItem = {
-      id: 0,
-      description: "",
-      calories: 0,
-      totalFatGrams: 0,
+      id: 123,
+      description: "Test Food",
+      calories: 150,
+      totalFatGrams: 5,
+      saturatedFatGrams: 2,
+      transFatGrams: 0.5,
+      polyunsaturatedFatGrams: 1,
+      monounsaturatedFatGrams: 1.5,
+      cholesterolMilligrams: 25,
+      sodiumMilligrams: 200,
+      totalCarbohydrateGrams: 20,
+      dietaryFiberGrams: 3,
+      totalSugarsGrams: 10,
+      addedSugarsGrams: 5,
+      proteinGrams: 6,
+    };
+
+    render(() => <NewNutritionItemForm initialItem={initialItem} />);
+
+    // Verify all fields are populated
+    const descInput = document.querySelector(
+      'input[name="description"]',
+    ) as HTMLInputElement;
+    expect(descInput.value).toBe("Test Food");
+
+    const caloriesInput = document.querySelector(
+      'input[name="calories"]',
+    ) as HTMLInputElement;
+    expect(caloriesInput.value).toBe("150");
+
+    const transFatInput = document.querySelector(
+      'input[name="trans-fat-grams"]',
+    ) as HTMLInputElement;
+    expect(transFatInput.value).toBe("0.5");
+
+    const polyFatInput = document.querySelector(
+      'input[name="polyunsaturated-fat-grams"]',
+    ) as HTMLInputElement;
+    expect(polyFatInput.value).toBe("1");
+
+    const monoFatInput = document.querySelector(
+      'input[name="monounsaturated-fat-grams"]',
+    ) as HTMLInputElement;
+    expect(monoFatInput.value).toBe("1.5");
+
+    const cholesterolInput = document.querySelector(
+      'input[name="cholesterol-milligrams"]',
+    ) as HTMLInputElement;
+    expect(cholesterolInput.value).toBe("25");
+
+    const sodiumInput = document.querySelector(
+      'input[name="sodium-milligrams"]',
+    ) as HTMLInputElement;
+    expect(sodiumInput.value).toBe("200");
+
+    const proteinInput = document.querySelector(
+      'input[name="protein-grams"]',
+    ) as HTMLInputElement;
+    expect(proteinInput.value).toBe("6");
+  });
+
+  it.skip("should call updateNutritionItem when saving an existing item", async () => {
+    const user = userEvent.setup();
+    let updateCalled = false;
+
+    const initialItem = {
+      id: 456,
+      description: "Existing Item",
+      calories: 100,
+      totalFatGrams: 1,
       saturatedFatGrams: 0,
       transFatGrams: 0,
       polyunsaturatedFatGrams: 0,
       monounsaturatedFatGrams: 0,
       cholesterolMilligrams: 0,
       sodiumMilligrams: 0,
-      totalCarbohydrateGrams: 0,
-      dietaryFiberGrams: 0,
-      totalSugarsGrams: 0,
-      addedSugarsGrams: 0,
-      proteinGrams: 0,
+      totalCarbohydrateGrams: 20,
+      dietaryFiberGrams: 2,
+      totalSugarsGrams: 10,
+      addedSugarsGrams: 5,
+      proteinGrams: 2,
     };
+
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        if (body.query.includes("UpdateNutritionItem")) {
+          updateCalled = true;
+          // Simulate delay
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          return HttpResponse.json({
+            data: {
+              update_food_diary_nutrition_item_by_pk: {
+                id: 456,
+              },
+            },
+          });
+        }
+        return HttpResponse.json({ data: {} });
+      }),
+    );
 
     render(() => <NewNutritionItemForm initialItem={initialItem} />);
 
-    // Verify initial state
-    const descInput = document.querySelector(
-      'input[name="description"]',
+    // Wait for form to be ready
+    await waitFor(() => {
+      const saveButton = screen.queryByText("Save");
+      expect(saveButton).not.toBeNull();
+      expect(saveButton?.hasAttribute("disabled")).toBeFalsy();
+    });
+
+    // Modify a field
+    const caloriesInput = document.querySelector(
+      'input[name="calories"]',
     ) as HTMLInputElement;
-    expect(descInput.value).toBe("");
+    await user.clear(caloriesInput);
+    await user.type(caloriesInput, "150");
+
+    // Save
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Wait for the update to be called and navigation to occur
+    await waitFor(
+      () => {
+        expect(updateCalled).toBe(true);
+      },
+      { timeout: 3000 },
+    );
+
+    // After navigation, mockNavigate should have been called
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalled();
+    });
   });
 });

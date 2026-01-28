@@ -266,6 +266,43 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
     global.FileReader = originalFileReader;
   });
 
+  it("should handle file read with no event target", async () => {
+    const user = userEvent.setup();
+
+    const file = new File(["test"], "test.csv", { type: "text/csv" });
+
+    // Mock FileReader to simulate missing event.target
+    const originalFileReader = global.FileReader;
+    global.FileReader = class {
+      addEventListener(event: string, handler: any) {
+        if (event === "load") {
+          setTimeout(() => handler({}), 0); // Event with no target
+        }
+      }
+      readAsText() {}
+    } as any;
+
+    render(() => <ImportDiaryEntries />);
+
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]',
+    ) as HTMLInputElement;
+
+    Object.defineProperty(fileInput, "files", {
+      value: [file],
+      writable: false,
+    });
+
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Import Error")).toBeTruthy();
+    });
+
+    // Restore
+    global.FileReader = originalFileReader;
+  });
+
   it("should toggle nutrition facts details", async () => {
     const user = userEvent.setup();
 

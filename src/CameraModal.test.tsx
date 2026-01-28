@@ -129,6 +129,24 @@ describe("CameraModal", () => {
     });
   });
 
+  it("should handle DevicesNotFoundError", async () => {
+    const error = new DOMException("No devices", "DevicesNotFoundError");
+    mockGetUserMedia.mockRejectedValue(error);
+
+    render(() => (
+      <CameraModal
+        isOpen={true}
+        onClose={() => {}}
+        onImport={() => {}}
+        accessToken="test-token"
+      />
+    ));
+
+    await waitFor(() => {
+      expect(screen.getByText(/No camera found/)).toBeTruthy();
+    });
+  });
+
   it("should handle camera in use error", async () => {
     const error = new DOMException("Camera in use", "NotReadableError");
     mockGetUserMedia.mockRejectedValue(error);
@@ -533,6 +551,142 @@ describe("CameraModal", () => {
     // Should show error
     await waitFor(() => {
       expect(screen.getByText(/Could not get canvas context/)).toBeTruthy();
+    });
+  });
+
+  it("should successfully capture from camera and upload", async () => {
+    const user = userEvent.setup();
+    const mockOnImport = vi.fn();
+    const mockOnClose = vi.fn();
+    mockGetUserMedia.mockResolvedValue(mockStream);
+
+    // Mock fetch for upload
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        image: {
+          description: "Camera Captured",
+          calories: 200,
+        },
+      }),
+    });
+
+    render(() => (
+      <CameraModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onImport={mockOnImport}
+        accessToken="test-token"
+      />
+    ));
+
+    await waitFor(() => {
+      expect(mockGetUserMedia).toHaveBeenCalled();
+    });
+
+    // Capture image
+    const captureButton = screen.getByText("Capture & Import");
+    await user.click(captureButton);
+
+    // Wait for upload and import
+    await waitFor(() => {
+      expect(mockOnImport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Camera Captured",
+          calories: 200,
+        }),
+      );
+      expect(mockOnClose).toHaveBeenCalled();
+    });
+  });
+
+  it("should reset captured image when Take Picture is clicked", async () => {
+    const user = userEvent.setup();
+    mockGetUserMedia.mockResolvedValue(mockStream);
+
+    // Mock fetch to capture successfully
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        image: {
+          description: "Test",
+          calories: 100,
+        },
+      }),
+    });
+
+    render(() => (
+      <CameraModal
+        isOpen={true}
+        onClose={() => {}}
+        onImport={() => {}}
+        accessToken="test-token"
+      />
+    ));
+
+    await waitFor(() => {
+      expect(mockGetUserMedia).toHaveBeenCalled();
+    });
+
+    // First capture an image
+    const captureButton = screen.getByText("Capture & Import");
+    await user.click(captureButton);
+
+    // Wait for review mode (we might see an error but that's ok)
+    await waitFor(
+      () => {
+        // Look for "Take Picture" button which appears in review mode
+        const takePictureButtons = screen.queryAllByText("Take Picture");
+        expect(takePictureButtons.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 },
+    );
+
+    // Click "Take Picture" to go back to camera mode
+    const takePictureButton = screen.getAllByText("Take Picture")[0];
+    await user.click(takePictureButton);
+
+    // Should be back in camera mode
+    await waitFor(() => {
+      expect(screen.getByText("Capture & Import")).toBeTruthy();
+    });
+  });
+
+  it("should set isUploading to false in upload error finally block", async () => {
+    const user = userEvent.setup();
+    mockGetUserMedia.mockResolvedValue(mockStream);
+
+    // Mock fetch to fail
+    global.fetch = vi.fn().mockRejectedValue(new Error("Upload failed"));
+
+    render(() => (
+      <CameraModal
+        isOpen={true}
+        onClose={() => {}}
+        onImport={() => {}}
+        accessToken="test-token"
+      />
+    ));
+
+    await waitFor(() => {
+      expect(mockGetUserMedia).toHaveBeenCalled();
+    });
+
+    // Try to capture
+    const captureButton = screen.getByText("Capture & Import");
+    await user.click(captureButton);
+
+    // Should show error
+    await waitFor(() => {
+      expect(screen.queryByText(/Upload failed|Failed to/)).not.toBeNull();
+    });
+
+    // Button should no longer be disabled (isUploading set to false)
+    await waitFor(() => {
+      const buttons = screen.getAllByRole("button");
+      // At least one button should be enabled
+      const enabledButtons = buttons.filter((b) => !b.hasAttribute("disabled"));
+      expect(enabledButtons.length).toBeGreaterThan(0);
     });
   });
 

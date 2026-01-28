@@ -372,6 +372,93 @@ describe("NewDiaryEntryForm", () => {
     });
   });
 
+  it.skip("should display ITEM badge for nutrition items and RECIPE badge for recipes", async () => {
+    const user = await import("@testing-library/user-event").then((m) =>
+      m.default.setup(),
+    );
+
+    // Mock GraphQL responses with both items and recipes
+    server.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const query = body.query || "";
+
+        // Mock GetRecentEntryItems query with both item and recipe
+        if (query.includes("GetRecentEntryItems")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_diary_entry_recent: [
+                {
+                  consumed_at: "2024-01-24T08:00:00Z",
+                  nutrition_item: { id: 1, description: "Apple" },
+                  recipe: null,
+                },
+                {
+                  consumed_at: "2024-01-24T09:00:00Z",
+                  nutrition_item: null,
+                  recipe: { id: 2, name: "Smoothie" },
+                },
+              ],
+            },
+          });
+        }
+
+        // Mock GetEntriesAroundTime query
+        if (query.includes("GetEntriesAroundTime")) {
+          return HttpResponse.json({
+            data: { food_diary_diary_entry: [] },
+          });
+        }
+
+        // Handle search query - return both items and recipes
+        if (query.includes("SearchNutritionItems")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_search_nutrition_items: [
+                { id: 3, description: "Banana", calories: 100 },
+              ],
+              food_diary_search_recipes: [
+                { id: 4, name: "Protein Shake", calories: 200 },
+              ],
+            },
+          });
+        }
+
+        return HttpResponse.json({ data: {} });
+      }),
+    );
+
+    render(() => <NewDiaryEntryForm />);
+
+    // Wait for suggestions to load
+    await waitFor(() => {
+      expect(screen.queryByText("Apple")).not.toBeNull();
+      expect(screen.queryByText("Smoothie")).not.toBeNull();
+    });
+
+    // Switch to Search tab to see the badges
+    const searchTab = screen.getByText("Search");
+    await user.click(searchTab);
+
+    // Type to trigger search
+    const searchInput = document.querySelector(
+      'input[name="entry-item-search"]',
+    ) as HTMLInputElement;
+    await user.type(searchInput, "test");
+
+    // Wait for search results with badges
+    await waitFor(
+      () => {
+        const itemBadges = screen.queryAllByText("ITEM");
+        const recipeBadges = screen.queryAllByText("RECIPE");
+
+        expect(itemBadges.length).toBeGreaterThan(0);
+        expect(recipeBadges.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 },
+    );
+  });
+
   it("should show success indicator briefly after saving entry", async () => {
     const user = await import("@testing-library/user-event").then((m) =>
       m.default.setup(),

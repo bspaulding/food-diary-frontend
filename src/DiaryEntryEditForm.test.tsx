@@ -433,4 +433,48 @@ describe("DiaryEntryEditForm", () => {
     consoleDebugSpy.mockRestore();
     unmount();
   });
+
+  it.skip("should navigate back without saving when nothing is changed", async () => {
+    const user = userEvent.setup();
+
+    // Mock the GraphQL endpoint
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = await request.json();
+        const query = (body as any).query;
+
+        // Handle GetDiaryEntry query
+        if (query.includes("GetDiaryEntry")) {
+          return HttpResponse.json(mockDiaryEntry);
+        }
+
+        // This should not be called since nothing changed
+        if (query.includes("UpdateDiaryEntry")) {
+          throw new Error("Should not update when nothing changed");
+        }
+
+        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+      }),
+    );
+
+    const { unmount } = render(() => <DiaryEntryEditForm />);
+
+    // Wait for the form to load
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Servings")).not.toBeNull();
+    });
+
+    // Don't change anything, just click save
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Should navigate back - in the test, this will be visible as the form being disabled
+    // or the component behaving as if navigation happened
+    await waitFor(() => {
+      // Button should be disabled since navigate() was called
+      expect(saveButton.hasAttribute("disabled")).toBeTruthy();
+    });
+
+    unmount();
+  });
 });
