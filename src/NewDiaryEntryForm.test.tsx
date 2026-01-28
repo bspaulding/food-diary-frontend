@@ -248,12 +248,23 @@ describe("NewDiaryEntryForm", () => {
         // Mock CreateDiaryEntry mutation
         if (query.includes("CreateDiaryEntry")) {
           createEntryCalled = true;
-          const { attrs } = body.variables;
-          expect(attrs.servings).toBe(2.5);
-          expect(attrs.nutrition_item_id).toBe(5);
+          const { entry } = body.variables;
+          expect(entry.servings).toBe(2.5);
+          expect(entry.nutrition_item_id).toBe(5);
           return HttpResponse.json({
             data: {
               insert_food_diary_diary_entry_one: { id: 100 },
+            },
+          });
+        }
+
+        // Mock GetWeeklyStats query to prevent unhandled errors
+        if (query.includes("GetWeeklyStats")) {
+          return HttpResponse.json({
+            data: {
+              current_week: { aggregate: { sum: { calories: 0 } } },
+              today: { aggregate: { sum: { calories: 0 } } },
+              four_weeks: { aggregate: { sum: { calories: 0 } } },
             },
           });
         }
@@ -331,12 +342,23 @@ describe("NewDiaryEntryForm", () => {
         // Mock CreateDiaryEntry mutation for recipe
         if (query.includes("CreateDiaryEntry")) {
           createEntryCalled = true;
-          const { attrs } = body.variables;
-          expect(attrs.servings).toBe(1);
-          expect(attrs.recipe_id).toBe(3);
+          const { entry } = body.variables;
+          expect(entry.servings).toBe(1);
+          expect(entry.recipe_id).toBe(3);
           return HttpResponse.json({
             data: {
               insert_food_diary_diary_entry_one: { id: 101 },
+            },
+          });
+        }
+
+        // Mock GetWeeklyStats query to prevent unhandled errors
+        if (query.includes("GetWeeklyStats")) {
+          return HttpResponse.json({
+            data: {
+              current_week: { aggregate: { sum: { calories: 0 } } },
+              today: { aggregate: { sum: { calories: 0 } } },
+              four_weeks: { aggregate: { sum: { calories: 0 } } },
             },
           });
         }
