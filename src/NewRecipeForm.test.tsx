@@ -126,12 +126,14 @@ describe("NewRecipeForm", () => {
         if (body.query.includes("SearchNutritionItems")) {
           return HttpResponse.json({
             data: {
-              food_diary_nutrition_item: [
+              food_diary_search_nutrition_items: [
                 {
                   id: 1,
                   description: "Apple",
+                  calories: 95,
                 },
               ],
+              food_diary_search_recipes: [],
             },
           });
         }
@@ -142,13 +144,18 @@ describe("NewRecipeForm", () => {
     render(() => <NewRecipeForm />);
 
     const searchInput = document.querySelector(
-      'input[type="search"]'
+      'input[name="entry-item-search"]'
     ) as HTMLInputElement;
+    
+    // Type and wait for debounce (500ms)
     await user.type(searchInput, "Apple");
-
-    await waitFor(() => {
-      expect(screen.getByText("Apple")).toBeTruthy();
-    });
+    
+    await waitFor(
+      () => {
+        expect(screen.getByText("Apple")).toBeTruthy();
+      },
+      { timeout: 1000 }
+    );
 
     const addButton = screen.getByText("⊕");
     await user.click(addButton);
@@ -182,7 +189,8 @@ describe("NewRecipeForm", () => {
     const itemServingsInput = servingsInputs[1] as HTMLInputElement;
 
     await user.clear(itemServingsInput);
-    await user.type(itemServingsInput, "2.5");
+    await user.type(itemServingsInput, "2");
+    await user.type(itemServingsInput, ".5");
 
     expect(itemServingsInput.value).toBe("2.5");
   });

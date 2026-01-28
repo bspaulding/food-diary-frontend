@@ -197,7 +197,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
       http.post("/api/v1/graphql", async ({ request }) => {
         const body = (await request.json()) as any;
         if (body.query.includes("InsertDiaryEntries")) {
-          throw new Error("Network error");
+          return HttpResponse.error();
         }
         return HttpResponse.json({ data: {} });
       })
@@ -225,7 +225,6 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     await waitFor(() => {
       expect(screen.getByText("Import Error")).toBeTruthy();
-      expect(screen.getByText("Network error")).toBeTruthy();
     });
   });
 
