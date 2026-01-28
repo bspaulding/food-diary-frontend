@@ -19,7 +19,7 @@ function readFile(file: File): Promise<string> {
     (resolve: (value: string) => void, reject: (reason?: unknown) => void) => {
       const reader: FileReader = new FileReader();
       reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
-        if (event.target && typeof event.target.result === 'string') {
+        if (event.target && typeof event.target.result === "string") {
           resolve(event.target.result);
         } else {
           reject(new Error("Failed to read file"));

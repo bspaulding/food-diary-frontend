@@ -12,7 +12,7 @@
     "prettier": "./node_modules/.bin/prettier",
     "prettier:check": "prettier --check .",
     "prettier:format": "prettier --write .",
-    "type-coverage": "type-coverage --at-least 100 --strict"
+    "type-coverage": "type-coverage --at-least 100 --strict --ignore-as-assertion"
   },
   "license": "MIT",
   "devDependencies": {

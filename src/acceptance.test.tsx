@@ -100,7 +100,10 @@ describe("Browser Acceptance Tests", () => {
           path="/nutrition_item/new"
           component={NewNutritionItemForm as Component}
         />
-        <Route path="/diary_entry/new" component={NewDiaryEntryForm as Component} />
+        <Route
+          path="/diary_entry/new"
+          component={NewDiaryEntryForm as Component}
+        />
       </Router>
     ));
 

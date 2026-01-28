@@ -59,7 +59,10 @@ const RecipeShow: Component = () => {
         <LoggableItem
           recipe={
             {
-              id: recipe().id !== undefined && recipe().id !== null ? recipe().id : 0,
+              id:
+                recipe().id !== undefined && recipe().id !== null
+                  ? recipe().id
+                  : 0,
               name: "Log It",
             } as {
               id: number;

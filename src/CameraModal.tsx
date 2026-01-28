@@ -117,7 +117,8 @@ const CameraModal: Component<Props> = (props: Props) => {
   );
 
   const handleFileSelect = async (event: Event): Promise<void> => {
-    const input: HTMLInputElement | null = event.target instanceof HTMLInputElement ? event.target : null;
+    const input: HTMLInputElement | null =
+      event.target instanceof HTMLInputElement ? event.target : null;
     if (!input) {
       return;
     }
@@ -153,7 +154,8 @@ const CameraModal: Component<Props> = (props: Props) => {
         const reader: FileReader = new FileReader();
 
         reader.onload = (e: ProgressEvent<FileReader>): void => {
-          const dataUrl: string | undefined = typeof e.target?.result === 'string' ? e.target.result : undefined;
+          const dataUrl: string | undefined =
+            typeof e.target?.result === "string" ? e.target.result : undefined;
           if (!dataUrl) {
             reject(new Error("Failed to read file as data URL"));
             return;

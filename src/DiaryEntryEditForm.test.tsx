@@ -42,25 +42,28 @@ vi.mock("./Auth0", () => ({
 }));
 
 // Mock router hooks
-vi.mock("@solidjs/router", async (): Promise<{
-  useParams: () => { id: string };
-  useNavigate: () => ReturnType<typeof vi.fn>;
-  [key: string]: unknown;
-}> => {
-  const actual: unknown = await vi.importActual("@solidjs/router");
-  interface RouterModule {
+vi.mock(
+  "@solidjs/router",
+  async (): Promise<{
+    useParams: () => { id: string };
+    useNavigate: () => ReturnType<typeof vi.fn>;
     [key: string]: unknown;
-  }
-  if (typeof actual !== "object" || actual === null) {
-    return {};
-  }
-  const actualModule = actual as RouterModule;
-  return {
-    ...actualModule,
-    useParams: () => ({ id: "1" }),
-    useNavigate: () => vi.fn(),
-  };
-});
+  }> => {
+    const actual: unknown = await vi.importActual("@solidjs/router");
+    interface RouterModule {
+      [key: string]: unknown;
+    }
+    if (typeof actual !== "object" || actual === null) {
+      return {};
+    }
+    const actualModule = actual as RouterModule;
+    return {
+      ...actualModule,
+      useParams: () => ({ id: "1" }),
+      useNavigate: () => vi.fn(),
+    };
+  },
+);
 
 const mockDiaryEntry = {
   data: {
@@ -244,7 +247,9 @@ describe("DiaryEntryEditForm", () => {
     if (capturedRequest) {
       expect(capturedRequest.variables.id).toBe(1);
       expect(capturedRequest.variables.attrs.servings).toBe(3);
-      expect(capturedRequest.variables.attrs.consumed_at).toContain("2022-08-29");
+      expect(capturedRequest.variables.attrs.consumed_at).toContain(
+        "2022-08-29",
+      );
     }
 
     unmount();

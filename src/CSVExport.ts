@@ -69,7 +69,7 @@ export function entriesToCsv(entries: EntryRecord[]): string {
     ...entries.flatMap((entry: EntryRecord) => {
       const nutritionItem = entry.nutrition_item;
       const recipe = entry.recipe;
-      
+
       if (nutritionItem !== undefined && nutritionItem !== null) {
         return [
           header.map((key: string): string => {
@@ -89,32 +89,34 @@ export function entriesToCsv(entries: EntryRecord[]): string {
           }),
         ];
       } else if (recipe) {
-        return recipe.recipe_items.map((recipe_item: { servings: number; [key: string]: unknown }) => {
-          return header.map((key: string): string => {
-            const consumedAt: Date = parseISO(
-              String(getPath(headerKeyMap["Consumed At"], entry)),
-            );
-            const entryServings = entry.servings;
-            const itemServings = recipe_item.servings;
-            switch (key) {
-              case "Date":
-                return format(consumedAt, "yyyy-MM-dd");
-              case "Time":
-                return format(consumedAt, "p");
-              case "Consumed At":
-                return formatISO(consumedAt);
-              case "Servings":
-                return String(entryServings * itemServings);
-              case "Description":
-                const itemName: string = String(
-                  getPath(headerKeyMap[key], recipe_item),
-                );
-                return `${recipe.name} - ${itemName}`;
-              default:
-                return String(getPath(headerKeyMap[key], recipe_item));
-            }
-          });
-        });
+        return recipe.recipe_items.map(
+          (recipe_item: { servings: number; [key: string]: unknown }) => {
+            return header.map((key: string): string => {
+              const consumedAt: Date = parseISO(
+                String(getPath(headerKeyMap["Consumed At"], entry)),
+              );
+              const entryServings = entry.servings;
+              const itemServings = recipe_item.servings;
+              switch (key) {
+                case "Date":
+                  return format(consumedAt, "yyyy-MM-dd");
+                case "Time":
+                  return format(consumedAt, "p");
+                case "Consumed At":
+                  return formatISO(consumedAt);
+                case "Servings":
+                  return String(entryServings * itemServings);
+                case "Description":
+                  const itemName: string = String(
+                    getPath(headerKeyMap[key], recipe_item),
+                  );
+                  return `${recipe.name} - ${itemName}`;
+                default:
+                  return String(getPath(headerKeyMap[key], recipe_item));
+              }
+            });
+          },
+        );
       }
       return [];
     }),
@@ -140,18 +142,22 @@ function stringsToCsv(rows: string[][]): string {
     .trim();
 }
 
-function getPath(path: string[], x: EntryRecord | NutritionItemRecord | { [key: string]: unknown }): string | number {
+function getPath(
+  path: string[],
+  x: EntryRecord | NutritionItemRecord | { [key: string]: unknown },
+): string | number {
   type PathValue = string | number | { [key: string]: unknown };
-  return path.reduce<PathValue>(
-    (acc: PathValue, k: string) => {
-      if (typeof acc === "object" && acc !== null && k in acc) {
-        const val = (acc as Record<string, unknown>)[k];
-        if (typeof val === "string" || typeof val === "number" || (typeof val === "object" && val !== null)) {
-          return val as PathValue;
-        }
+  return path.reduce<PathValue>((acc: PathValue, k: string) => {
+    if (typeof acc === "object" && acc !== null && k in acc) {
+      const val = (acc as Record<string, unknown>)[k];
+      if (
+        typeof val === "string" ||
+        typeof val === "number" ||
+        (typeof val === "object" && val !== null)
+      ) {
+        return val as PathValue;
       }
-      return acc;
-    },
-    x as PathValue,
-  ) as string | number;
+    }
+    return acc;
+  }, x as PathValue) as string | number;
 }

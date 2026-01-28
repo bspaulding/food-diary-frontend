@@ -7,15 +7,12 @@ export function accessorsToObject<T extends Record<string, unknown>>(
 ): T {
   type AccessorFunc = () => unknown;
   const entries = Object.entries(accessors) as Array<[string, AccessorFunc]>;
-  return entries.reduce<Partial<T>>(
-    (acc, [k, accessor]) => {
-      return {
-        ...acc,
-        [k]: accessor(),
-      };
-    },
-    {},
-  ) as T;
+  return entries.reduce<Partial<T>>((acc, [k, accessor]) => {
+    return {
+      ...acc,
+      [k]: accessor(),
+    };
+  }, {}) as T;
 }
 
 const timeFormat = new Intl.DateTimeFormat("en-US", { timeStyle: "short" });

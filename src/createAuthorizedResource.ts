@@ -57,16 +57,22 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
     finalFetcher = fetcher as AuthorizedResourceFetcher<S, T>;
   }
   const [{ accessToken, auth0 }] = useAuth();
-  const tokenizedSource: () => { accessToken: string; source: S | true } = () => ({
+  const tokenizedSource: () => {
+    accessToken: string;
+    source: S | true;
+  } = () => ({
     accessToken: accessToken(),
-    source:
-      finalSource === true
-        ? (true as true)
-        : (finalSource as () => S)(),
+    source: finalSource === true ? (true as true) : (finalSource as () => S)(),
   });
   return createResource(
     tokenizedSource,
-    async ({ accessToken, source }: { accessToken: string; source: S | true }) => {
+    async ({
+      accessToken,
+      source,
+    }: {
+      accessToken: string;
+      source: S | true;
+    }) => {
       try {
         return await finalFetcher(accessToken, source as S);
       } catch (error) {

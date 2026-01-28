@@ -320,10 +320,14 @@ const NewNutritionItemForm: Component<Props> = ({
             onClick={async (event) => {
               event.preventDefault();
               const itemData: NutritionItem = item();
-              const id: number | undefined = await saveItem(accessToken(), setDisabled, {
-                ...itemData,
-                id: itemData.id || 0,
-              } as NutritionItem);
+              const id: number | undefined = await saveItem(
+                accessToken(),
+                setDisabled,
+                {
+                  ...itemData,
+                  id: itemData.id || 0,
+                } as NutritionItem,
+              );
               if (!onSaved) {
                 navigate(`/nutrition_item/${id}`);
               }

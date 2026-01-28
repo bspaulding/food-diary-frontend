@@ -14,7 +14,6 @@ function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
   const record = obj as Record<string, unknown>;
   return "query" in record && typeof record.query === "string";
 }
-}
 
 // Mock data for tests - defined here so handlers can access them
 const mockNutritionItems = [
@@ -83,127 +82,127 @@ const graphqlHandler: HttpResponseResolver = async ({ request }) => {
 
   // Handle GetEntries query
   if (query.includes("GetEntries")) {
-      return HttpResponse.json({
-        data: {
-          food_diary_diary_entry: mockDiaryEntries,
-        },
-      });
-    }
+    return HttpResponse.json({
+      data: {
+        food_diary_diary_entry: mockDiaryEntries,
+      },
+    });
+  }
 
-    // Handle GetWeeklyTrends query
-    if (query.includes("GetWeeklyTrends")) {
-      return HttpResponse.json({
-        data: {
-          food_diary_trends_weekly: [],
-        },
-      });
-    }
+  // Handle GetWeeklyTrends query
+  if (query.includes("GetWeeklyTrends")) {
+    return HttpResponse.json({
+      data: {
+        food_diary_trends_weekly: [],
+      },
+    });
+  }
 
-    // Handle GetWeeklyStats query
-    if (query.includes("GetWeeklyStats")) {
-      // Use fixed 7-day rolling window and calculate 4-week period
-      const now = new Date();
-      const currentWeekDays = 7;
-      const fourWeeksDays = calculateFourWeeksDays(now);
+  // Handle GetWeeklyStats query
+  if (query.includes("GetWeeklyStats")) {
+    // Use fixed 7-day rolling window and calculate 4-week period
+    const now = new Date();
+    const currentWeekDays = 7;
+    const fourWeeksDays = calculateFourWeeksDays(now);
 
-      // Target: 300 kcal/day for both metrics
-      const targetDailyCalories = 300;
+    // Target: 300 kcal/day for both metrics
+    const targetDailyCalories = 300;
 
-      return HttpResponse.json({
-        data: {
-          current_week: {
-            aggregate: {
-              sum: {
-                calories: targetDailyCalories * currentWeekDays,
-              },
-            },
-          },
-          past_four_weeks: {
-            aggregate: {
-              sum: {
-                calories: targetDailyCalories * fourWeeksDays,
-              },
+    return HttpResponse.json({
+      data: {
+        current_week: {
+          aggregate: {
+            sum: {
+              calories: targetDailyCalories * currentWeekDays,
             },
           },
         },
-      });
-    }
-
-    // Handle GetRecentEntryItems query
-    if (query.includes("GetRecentEntryItems")) {
-      return HttpResponse.json({
-        data: {
-          food_diary_diary_entry_recent: mockRecentEntries,
-        },
-      });
-    }
-
-    // Handle GetEntriesAroundTime query
-    if (query.includes("GetEntriesAroundTime")) {
-      return HttpResponse.json({
-        data: {
-          food_diary_diary_entry: [],
-        },
-      });
-    }
-
-    // Handle SearchItemsAndRecipes query
-    if (query.includes("SearchItemsAndRecipes")) {
-      return HttpResponse.json({
-        data: {
-          food_diary_search_nutrition_items: mockNutritionItems,
-          food_diary_search_recipes: mockRecipes,
-        },
-      });
-    }
-
-    // Handle SearchItems query
-    if (query.includes("SearchItems")) {
-      return HttpResponse.json({
-        data: {
-          food_diary_search_nutrition_items: mockNutritionItems,
-        },
-      });
-    }
-
-    // Handle CreateDiaryEntry mutation
-    if (query.includes("CreateDiaryEntry")) {
-      return HttpResponse.json({
-        data: {
-          insert_food_diary_diary_entry_one: {
-            id: 100,
+        past_four_weeks: {
+          aggregate: {
+            sum: {
+              calories: targetDailyCalories * fourWeeksDays,
+            },
           },
         },
-      });
-    }
+      },
+    });
+  }
 
-    // Handle CreateNutritionItem mutation
-    if (query.includes("CreateNutritionItem")) {
-      return HttpResponse.json({
-        data: {
-          insert_food_diary_nutrition_item_one: {
-            id: 200,
-          },
+  // Handle GetRecentEntryItems query
+  if (query.includes("GetRecentEntryItems")) {
+    return HttpResponse.json({
+      data: {
+        food_diary_diary_entry_recent: mockRecentEntries,
+      },
+    });
+  }
+
+  // Handle GetEntriesAroundTime query
+  if (query.includes("GetEntriesAroundTime")) {
+    return HttpResponse.json({
+      data: {
+        food_diary_diary_entry: [],
+      },
+    });
+  }
+
+  // Handle SearchItemsAndRecipes query
+  if (query.includes("SearchItemsAndRecipes")) {
+    return HttpResponse.json({
+      data: {
+        food_diary_search_nutrition_items: mockNutritionItems,
+        food_diary_search_recipes: mockRecipes,
+      },
+    });
+  }
+
+  // Handle SearchItems query
+  if (query.includes("SearchItems")) {
+    return HttpResponse.json({
+      data: {
+        food_diary_search_nutrition_items: mockNutritionItems,
+      },
+    });
+  }
+
+  // Handle CreateDiaryEntry mutation
+  if (query.includes("CreateDiaryEntry")) {
+    return HttpResponse.json({
+      data: {
+        insert_food_diary_diary_entry_one: {
+          id: 100,
         },
-      });
-    }
+      },
+    });
+  }
 
-    // Handle CreateRecipe mutation
-    if (query.includes("CreateRecipe")) {
-      return HttpResponse.json({
-        data: {
-          insert_food_diary_recipe_one: {
-            id: 300,
-          },
+  // Handle CreateNutritionItem mutation
+  if (query.includes("CreateNutritionItem")) {
+    return HttpResponse.json({
+      data: {
+        insert_food_diary_nutrition_item_one: {
+          id: 200,
         },
-      });
-    }
+      },
+    });
+  }
 
-    // If we reach here, it's an unhandled GraphQL query
-    // Throw an error so the test fails
-    const queryPreview: string = query.substring(0, 100);
-    console.error("Unhandled GraphQL query:", query);
-    throw new Error(`Unhandled GraphQL query: ${queryPreview}`);
+  // Handle CreateRecipe mutation
+  if (query.includes("CreateRecipe")) {
+    return HttpResponse.json({
+      data: {
+        insert_food_diary_recipe_one: {
+          id: 300,
+        },
+      },
+    });
+  }
+
+  // If we reach here, it's an unhandled GraphQL query
+  // Throw an error so the test fails
+  const queryPreview: string = query.substring(0, 100);
+  console.error("Unhandled GraphQL query:", query);
+  throw new Error(`Unhandled GraphQL query: ${queryPreview}`);
 };
 
 export const worker = setupWorker(

@@ -57,9 +57,8 @@ describe("Add Recipe Flow Acceptance Test", () => {
     expect(screen.getByText(/New Recipe/i)).toBeTruthy();
 
     // Verify form elements are present
-    const nameInput: HTMLInputElement | null = document.querySelector(
-      'input[name="name"]',
-    );
+    const nameInput: HTMLInputElement | null =
+      document.querySelector('input[name="name"]');
     expect(nameInput).not.toBeNull();
 
     // Note: Full form interaction could be tested here, but we're keeping it simple
