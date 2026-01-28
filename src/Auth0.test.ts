@@ -42,7 +42,8 @@ describe("Auth0", () => {
 
   it("should handle redirect callback when code and state params are present", async () => {
     window.location.search = "?code=test-code&state=test-state";
-    window.location.href = "http://localhost:3000?code=test-code&state=test-state";
+    window.location.href =
+      "http://localhost:3000?code=test-code&state=test-state";
 
     const mockNavigate = vi.fn();
     vi.doMock("@solidjs/router", () => ({
@@ -61,7 +62,7 @@ describe("Auth0", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(mockClient.handleRedirectCallback).toHaveBeenCalledWith(
-      "http://localhost:3000?code=test-code&state=test-state"
+      "http://localhost:3000?code=test-code&state=test-state",
     );
   });
 

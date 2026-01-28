@@ -83,7 +83,7 @@ describe("UserProfile", () => {
             ],
           },
         });
-      })
+      }),
     );
 
     // Mock URL.createObjectURL and URL.revokeObjectURL

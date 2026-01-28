@@ -9,7 +9,7 @@ export const server = setupServer(
     return HttpResponse.json({
       data: {},
     });
-  })
+  }),
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: "warn" }));

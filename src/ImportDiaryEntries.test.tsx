@@ -30,7 +30,7 @@ describe("ImportDiaryEntries", () => {
     render(() => <ImportDiaryEntries />);
 
     expect(
-      screen.getByText("Select a CSV to import entries from.")
+      screen.getByText("Select a CSV to import entries from."),
     ).toBeTruthy();
     expect(screen.getByText("Expected columns are:")).toBeTruthy();
     expect(screen.getByText("Consumed At")).toBeTruthy();
@@ -48,7 +48,7 @@ describe("ImportDiaryEntries", () => {
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -76,7 +76,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -112,13 +112,13 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
           });
         }
         return HttpResponse.json({ data: {} });
-      })
+      }),
     );
 
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -159,13 +159,13 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -200,13 +200,13 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
           return HttpResponse.error();
         }
         return HttpResponse.json({ data: {} });
-      })
+      }),
     );
 
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -248,7 +248,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -277,7 +277,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -318,7 +318,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -341,7 +341,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
     render(() => <ImportDiaryEntries />);
 
     const fileInput = document.querySelector(
-      'input[name="diary-import-file"]'
+      'input[name="diary-import-file"]',
     ) as HTMLInputElement;
 
     // Simulate input event with no files
@@ -355,7 +355,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     // Should still show the upload form
     expect(
-      screen.getByText("Select a CSV to import entries from.")
+      screen.getByText("Select a CSV to import entries from."),
     ).toBeTruthy();
   });
 });

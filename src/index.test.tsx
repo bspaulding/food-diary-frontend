@@ -27,16 +27,16 @@ vi.mock("./Trends", () => ({ default: vi.fn() }));
 describe("index", () => {
   it("should call render with router and routes", async () => {
     const { render } = await import("solid-js/web");
-    
+
     // Mock document.getElementById
     const mockRoot = document.createElement("div");
     mockRoot.id = "root";
     document.body.appendChild(mockRoot);
-    
+
     await import("./index");
-    
+
     expect(render).toHaveBeenCalled();
-    
+
     // Clean up
     document.body.removeChild(mockRoot);
   });

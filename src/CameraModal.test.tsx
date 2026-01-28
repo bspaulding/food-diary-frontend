@@ -28,7 +28,7 @@ describe("CameraModal", () => {
 
     // Mock HTMLCanvasElement.toBlob
     HTMLCanvasElement.prototype.toBlob = vi.fn(function (
-      callback: BlobCallback
+      callback: BlobCallback,
     ) {
       const blob = new Blob(["mock-image"], { type: "image/jpeg" });
       callback(blob);
@@ -107,9 +107,7 @@ describe("CameraModal", () => {
     ));
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Camera permission was denied/)
-      ).toBeTruthy();
+      expect(screen.getByText(/Camera permission was denied/)).toBeTruthy();
     });
   });
 
@@ -146,7 +144,7 @@ describe("CameraModal", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Camera is in use by another application/)
+        screen.getByText(/Camera is in use by another application/),
       ).toBeTruthy();
     });
   });
@@ -280,10 +278,10 @@ describe("CameraModal", () => {
     const fileInput = screen.getByRole("button", {
       name: "Choose File",
     }) as HTMLButtonElement;
-    
+
     // Get the actual hidden file input
     const hiddenFileInput = document.querySelector(
-      'input[type="file"]'
+      'input[type="file"]',
     ) as HTMLInputElement;
     Object.defineProperty(hiddenFileInput, "files", {
       value: [file],
@@ -339,7 +337,7 @@ describe("CameraModal", () => {
     const file = new File(["text content"], "test.txt", { type: "text/plain" });
 
     const fileInput = document.querySelector(
-      'input[type="file"]'
+      'input[type="file"]',
     ) as HTMLInputElement;
     Object.defineProperty(fileInput, "files", {
       value: [file],
@@ -349,9 +347,7 @@ describe("CameraModal", () => {
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Please select a valid image file")
-      ).toBeTruthy();
+      expect(screen.getByText("Please select a valid image file")).toBeTruthy();
     });
   });
 
@@ -391,7 +387,7 @@ describe("CameraModal", () => {
     } as any;
 
     const fileInput = document.querySelector(
-      'input[type="file"]'
+      'input[type="file"]',
     ) as HTMLInputElement;
     Object.defineProperty(fileInput, "files", {
       value: [file],
@@ -465,7 +461,7 @@ describe("CameraModal", () => {
     } as any;
 
     const fileInput = document.querySelector(
-      'input[type="file"]'
+      'input[type="file"]',
     ) as HTMLInputElement;
     Object.defineProperty(fileInput, "files", {
       value: [file],
@@ -554,7 +550,7 @@ describe("CameraModal", () => {
 
     // Just test that unmount works without errors
     unmount();
-    
+
     // The test passes if no errors are thrown during cleanup
     expect(true).toBe(true);
   });

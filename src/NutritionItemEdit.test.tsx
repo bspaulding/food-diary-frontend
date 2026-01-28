@@ -41,7 +41,7 @@ describe("NutritionItemEdit", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <NutritionItemEdit />);
@@ -59,7 +59,7 @@ describe("NutritionItemEdit", () => {
             food_diary_nutrition_item_by_pk: null,
           },
         });
-      })
+      }),
     );
 
     render(() => <NutritionItemEdit />);

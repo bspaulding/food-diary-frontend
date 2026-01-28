@@ -32,7 +32,7 @@ describe("NewRecipeForm", () => {
 
     expect(screen.getByText("New Recipe")).toBeTruthy();
     const nameInput = document.querySelector(
-      'input[name="name"]'
+      'input[name="name"]',
     ) as HTMLInputElement;
     expect(nameInput).toBeTruthy();
     expect(screen.getByDisplayValue("1")).toBeTruthy(); // Total Servings defaults to 1
@@ -51,7 +51,7 @@ describe("NewRecipeForm", () => {
     render(() => <NewRecipeForm />);
 
     const nameInput = document.querySelector(
-      'input[name="name"]'
+      'input[name="name"]',
     ) as HTMLInputElement;
     await user.type(nameInput, "Smoothie");
 
@@ -63,7 +63,7 @@ describe("NewRecipeForm", () => {
     render(() => <NewRecipeForm />);
 
     const servingsInput = document.querySelector(
-      'input[name="total-servings"]'
+      'input[name="total-servings"]',
     ) as HTMLInputElement;
     await user.clear(servingsInput);
     await user.type(servingsInput, "4");
@@ -76,7 +76,7 @@ describe("NewRecipeForm", () => {
     render(() => <NewRecipeForm />);
 
     const servingsInput = document.querySelector(
-      'input[name="total-servings"]'
+      'input[name="total-servings"]',
     ) as HTMLInputElement;
     await user.clear(servingsInput);
     await user.type(servingsInput, "abc");
@@ -104,12 +104,12 @@ describe("NewRecipeForm", () => {
     render(() => <NewRecipeForm initialRecipe={initialRecipe} />);
 
     const nameInput = document.querySelector(
-      'input[name="name"]'
+      'input[name="name"]',
     ) as HTMLInputElement;
     expect(nameInput.value).toBe("Existing Recipe");
 
     const servingsInput = document.querySelector(
-      'input[name="total-servings"]'
+      'input[name="total-servings"]',
     ) as HTMLInputElement;
     expect(servingsInput.value).toBe("2");
 
@@ -139,23 +139,23 @@ describe("NewRecipeForm", () => {
           });
         }
         return HttpResponse.json({ data: {} });
-      })
+      }),
     );
 
     render(() => <NewRecipeForm />);
 
     const searchInput = document.querySelector(
-      'input[name="entry-item-search"]'
+      'input[name="entry-item-search"]',
     ) as HTMLInputElement;
-    
+
     // Type and wait for debounce (500ms)
     await user.type(searchInput, "Apple");
-    
+
     await waitFor(
       () => {
         expect(screen.getByText("Apple")).toBeTruthy();
       },
-      { timeout: 1000 }
+      { timeout: 1000 },
     );
 
     const addButton = screen.getByText("⊕");
@@ -242,13 +242,13 @@ describe("NewRecipeForm", () => {
           });
         }
         return HttpResponse.json({ data: {} });
-      })
+      }),
     );
 
     render(() => <NewRecipeForm />);
 
     const nameInput = document.querySelector(
-      'input[name="name"]'
+      'input[name="name"]',
     ) as HTMLInputElement;
     await user.type(nameInput, "My Recipe");
 
@@ -283,7 +283,7 @@ describe("NewRecipeForm", () => {
           });
         }
         return HttpResponse.json({ data: {} });
-      })
+      }),
     );
 
     render(() => <NewRecipeForm initialRecipe={initialRecipe} />);
@@ -306,13 +306,13 @@ describe("NewRecipeForm", () => {
             insert_food_diary_recipe_one: null,
           },
         });
-      })
+      }),
     );
 
     render(() => <NewRecipeForm />);
 
     const nameInput = document.querySelector(
-      'input[name="name"]'
+      'input[name="name"]',
     ) as HTMLInputElement;
     await user.type(nameInput, "My Recipe");
 
@@ -341,7 +341,7 @@ describe("NewRecipeForm", () => {
             update_food_diary_recipe_by_pk: null,
           },
         });
-      })
+      }),
     );
 
     render(() => <NewRecipeForm initialRecipe={initialRecipe} />);

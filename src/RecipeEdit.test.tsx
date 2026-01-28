@@ -47,7 +47,7 @@ describe("RecipeEdit", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeEdit />);
@@ -65,7 +65,7 @@ describe("RecipeEdit", () => {
             food_diary_recipe_by_pk: null,
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeEdit />);

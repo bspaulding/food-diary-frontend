@@ -50,7 +50,7 @@ describe("NutritionItemShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <NutritionItemShow />);
@@ -75,7 +75,7 @@ describe("NutritionItemShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <NutritionItemShow />);
@@ -98,7 +98,7 @@ describe("NutritionItemShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <NutritionItemShow />);
@@ -121,7 +121,7 @@ describe("NutritionItemShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <NutritionItemShow />);
@@ -146,7 +146,7 @@ describe("NutritionItemShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <NutritionItemShow />);

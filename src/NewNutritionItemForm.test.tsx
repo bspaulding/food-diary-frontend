@@ -31,11 +31,11 @@ describe("NewNutritionItemForm", () => {
     render(() => <NewNutritionItemForm />);
 
     const descInput = document.querySelector(
-      'input[name="description"]'
+      'input[name="description"]',
     ) as HTMLInputElement;
     expect(descInput).toBeTruthy();
     const caloriesInput = document.querySelector(
-      'input[name="calories"]'
+      'input[name="calories"]',
     ) as HTMLInputElement;
     expect(caloriesInput).toBeTruthy();
     expect(screen.getByText("Save")).toBeTruthy();
@@ -51,7 +51,7 @@ describe("NewNutritionItemForm", () => {
     render(() => <NewNutritionItemForm />);
 
     const descInput = document.querySelector(
-      'input[name="description"]'
+      'input[name="description"]',
     ) as HTMLInputElement;
     await user.type(descInput, "Apple");
 
@@ -64,7 +64,7 @@ describe("NewNutritionItemForm", () => {
 
     const inputs = screen.getAllByDisplayValue("0");
     const caloriesInput = inputs.find(
-      (input) => (input as HTMLInputElement).name === "calories"
+      (input) => (input as HTMLInputElement).name === "calories",
     ) as HTMLInputElement;
     await user.clear(caloriesInput);
     await user.type(caloriesInput, "95");
@@ -78,10 +78,10 @@ describe("NewNutritionItemForm", () => {
 
     const inputs = screen.getAllByDisplayValue("0");
     const caloriesInput = inputs.find(
-      (input) => (input as HTMLInputElement).name === "calories"
+      (input) => (input as HTMLInputElement).name === "calories",
     ) as HTMLInputElement;
     const initialValue = caloriesInput.value;
-    
+
     await user.clear(caloriesInput);
     await user.type(caloriesInput, "abc");
 
@@ -111,7 +111,7 @@ describe("NewNutritionItemForm", () => {
     render(() => <NewNutritionItemForm initialItem={initialItem} />);
 
     const descInput = document.querySelector(
-      'input[name="description"]'
+      'input[name="description"]',
     ) as HTMLInputElement;
     expect(descInput.value).toBe("Banana");
     expect(screen.getByDisplayValue("105")).toBeTruthy();
@@ -135,13 +135,13 @@ describe("NewNutritionItemForm", () => {
           });
         }
         return HttpResponse.json({ data: {} });
-      })
+      }),
     );
 
     render(() => <NewNutritionItemForm />);
 
     const descInput = document.querySelector(
-      'input[name="description"]'
+      'input[name="description"]',
     ) as HTMLInputElement;
     await user.type(descInput, "Apple");
 
@@ -188,7 +188,7 @@ describe("NewNutritionItemForm", () => {
           });
         }
         return HttpResponse.json({ data: {} });
-      })
+      }),
     );
 
     render(() => <NewNutritionItemForm initialItem={initialItem} />);
@@ -200,7 +200,7 @@ describe("NewNutritionItemForm", () => {
       () => {
         expect(mockNavigate).toHaveBeenCalledWith("/nutrition_item/123");
       },
-      { timeout: 3000 }
+      { timeout: 3000 },
     );
   });
 
@@ -217,7 +217,7 @@ describe("NewNutritionItemForm", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <NewNutritionItemForm />);
@@ -245,7 +245,7 @@ describe("NewNutritionItemForm", () => {
           });
         }
         return HttpResponse.json({ data: {} });
-      })
+      }),
     );
 
     render(() => <NewNutritionItemForm onSaved={onSaved} />);
@@ -294,7 +294,7 @@ describe("NewNutritionItemForm", () => {
 
     for (const field of fields) {
       const input = document.querySelector(
-        `input[name="${field.name}"]`
+        `input[name="${field.name}"]`,
       ) as HTMLInputElement;
       if (input) {
         await user.clear(input);
@@ -304,7 +304,7 @@ describe("NewNutritionItemForm", () => {
 
     // Verify last field as a sanity check
     const proteinInput = document.querySelector(
-      'input[name="protein-grams"]'
+      'input[name="protein-grams"]',
     ) as HTMLInputElement;
     expect(proteinInput.value).toBe("3");
   });
@@ -332,7 +332,7 @@ describe("NewNutritionItemForm", () => {
 
     // Verify initial state
     const descInput = document.querySelector(
-      'input[name="description"]'
+      'input[name="description"]',
     ) as HTMLInputElement;
     expect(descInput.value).toBe("");
   });

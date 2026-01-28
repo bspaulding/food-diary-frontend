@@ -441,7 +441,7 @@ describe("NewDiaryEntryForm", () => {
 
     // Wait for success state to clear (after 1000ms timeout in component)
     await new Promise((resolve) => setTimeout(resolve, 1100));
-    
+
     // Logging dialog should be closed after save
     expect(screen.queryByText("Save")).toBeNull();
   });

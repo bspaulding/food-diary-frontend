@@ -31,7 +31,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 0 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -53,7 +53,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 0 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -73,7 +73,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 56000 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -126,7 +126,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 2000 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -172,7 +172,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 1200 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -209,7 +209,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 800 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -225,8 +225,8 @@ describe("DiaryList", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
-        if (body.query.includes("DeleteDiaryEntry")) {
+        const body = (await request.json()) as { query?: string };
+        if (body && body.query && body.query.includes("DeleteDiaryEntry")) {
           return HttpResponse.json({
             data: {
               delete_food_diary_diary_entry_by_pk: {
@@ -258,7 +258,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 800 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -276,15 +276,17 @@ describe("DiaryList", () => {
   });
 
   it.skip("should handle delete error and restore entry", async () => {
-    // TODO: Fix MSW mock to properly handle GraphQL errors  
+    // TODO: Fix MSW mock to properly handle GraphQL errors
     const user = userEvent.setup();
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
     let deleteCallCount = 0;
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("DeleteDiaryEntry")) {
+        const body = (await request.json()) as { query?: string };
+        if (body && body.query && body.query.includes("DeleteDiaryEntry")) {
           deleteCallCount++;
           return HttpResponse.json({
             errors: [{ message: "Network error" }],
@@ -313,7 +315,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 800 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -360,7 +362,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 800 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -394,7 +396,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 1200 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -431,7 +433,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 800 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -488,7 +490,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 2400 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);
@@ -540,7 +542,7 @@ describe("DiaryList", () => {
             past_four_weeks: { aggregate: { sum: { calories: 1400 } } },
           },
         });
-      })
+      }),
     );
 
     render(() => <DiaryList />);

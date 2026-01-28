@@ -56,7 +56,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -98,7 +98,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -131,7 +131,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -164,7 +164,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -196,7 +196,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -220,7 +220,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -244,7 +244,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -268,7 +268,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -291,7 +291,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
@@ -323,7 +323,7 @@ describe("RecipeShow", () => {
             },
           },
         });
-      })
+      }),
     );
 
     render(() => <RecipeShow />);
