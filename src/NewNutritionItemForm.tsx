@@ -314,18 +314,16 @@ const NewNutritionItemForm: Component<Props> = ({
         </fieldset>
         <fieldset class="mb-4">
           <button
+            type="button"
             class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
             disabled={disabled()}
-            onClick={async (): Promise<void> => {
+            onClick={async (event) => {
+              event.preventDefault();
               const itemData: NutritionItem = item();
-              const id: number | undefined = await saveItem(
-                accessToken(),
-                setDisabled,
-                {
-                  ...itemData,
-                  id: itemData.id ?? 0,
-                } as NutritionItem,
-              );
+              const id: number | undefined = await saveItem(accessToken(), setDisabled, {
+                ...itemData,
+                id: itemData.id || 0,
+              } as NutritionItem);
               if (!onSaved) {
                 navigate(`/nutrition_item/${id}`);
               }
