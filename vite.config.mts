@@ -48,6 +48,24 @@ export default defineConfig(
         name: "chromium",
         provider: "playwright",
       },
+      coverage: {
+        provider: "istanbul",
+        reporter: ["text", "json", "html"],
+        include: ["src/**/*.{ts,tsx}"],
+        exclude: [
+          "src/**/*.test.{ts,tsx}",
+          "src/test-setup.ts",
+          "src/test-setup-browser.ts",
+          "src/acceptance*.test.{ts,tsx}",
+          "src/assets/**",
+        ],
+        thresholds: {
+          lines: 93,
+          functions: 95,
+          branches: 77,
+          statements: 94,
+        },
+      },
     },
   }),
 );

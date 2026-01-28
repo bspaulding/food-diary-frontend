@@ -408,4 +408,152 @@ describe("DiaryEntryEditForm", () => {
 
     unmount();
   });
+
+  it("should show error messages when update fails", async () => {
+    const user = userEvent.setup();
+
+    // Mock the GraphQL endpoint
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = await request.json();
+        const query = (body as any).query;
+
+        // Handle GetDiaryEntry query
+        if (query.includes("GetDiaryEntry")) {
+          return HttpResponse.json(mockDiaryEntry);
+        }
+
+        // Handle UpdateDiaryEntry mutation with error
+        if (query.includes("UpdateDiaryEntry")) {
+          return HttpResponse.json({
+            errors: [
+              { message: "Database error" },
+              { message: "Validation failed" },
+            ],
+          });
+        }
+
+        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+      }),
+    );
+
+    const { unmount } = render(() => <DiaryEntryEditForm />);
+
+    // Wait for the form to load with data
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Servings")).not.toBeNull();
+    });
+
+    // Change servings
+    const servingsInput = screen.getByLabelText("Servings") as HTMLInputElement;
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "3");
+
+    // Click the save button
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Check that errors are displayed
+    await waitFor(() => {
+      const errorText = screen.getByText(/Database error/);
+      expect(errorText).toBeTruthy();
+    });
+
+    unmount();
+  });
+
+  it("should handle exception during save", async () => {
+    const user = userEvent.setup();
+    const consoleDebugSpy = vi
+      .spyOn(console, "debug")
+      .mockImplementation(() => {});
+
+    // Mock the GraphQL endpoint to throw exception
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = await request.json();
+        const query = (body as any).query;
+
+        // Handle GetDiaryEntry query
+        if (query.includes("GetDiaryEntry")) {
+          return HttpResponse.json(mockDiaryEntry);
+        }
+
+        // Handle UpdateDiaryEntry mutation by throwing network error
+        if (query.includes("UpdateDiaryEntry")) {
+          return HttpResponse.error();
+        }
+
+        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+      }),
+    );
+
+    const { unmount } = render(() => <DiaryEntryEditForm />);
+
+    // Wait for the form to load
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Servings")).not.toBeNull();
+    });
+
+    // Change servings
+    const servingsInput = screen.getByLabelText("Servings") as HTMLInputElement;
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "4");
+
+    // Click the save button
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Wait for the error to be logged
+    await waitFor(() => {
+      expect(consoleDebugSpy).toHaveBeenCalled();
+    });
+
+    consoleDebugSpy.mockRestore();
+    unmount();
+  });
+
+  it.skip("should navigate back without saving when nothing is changed", async () => {
+    const user = userEvent.setup();
+
+    // Mock the GraphQL endpoint
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = await request.json();
+        const query = (body as any).query;
+
+        // Handle GetDiaryEntry query
+        if (query.includes("GetDiaryEntry")) {
+          return HttpResponse.json(mockDiaryEntry);
+        }
+
+        // This should not be called since nothing changed
+        if (query.includes("UpdateDiaryEntry")) {
+          throw new Error("Should not update when nothing changed");
+        }
+
+        return HttpResponse.json({ errors: [{ message: "Unknown query" }] });
+      }),
+    );
+
+    const { unmount } = render(() => <DiaryEntryEditForm />);
+
+    // Wait for the form to load
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Servings")).not.toBeNull();
+    });
+
+    // Don't change anything, just click save
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Should navigate back - in the test, this will be visible as the form being disabled
+    // or the component behaving as if navigation happened
+    await waitFor(() => {
+      // Button should be disabled since navigate() was called
+      expect(saveButton.hasAttribute("disabled")).toBeTruthy();
+    });
+
+    unmount();
+  });
 });

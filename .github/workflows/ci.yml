@@ -21,7 +21,7 @@ jobs:
         run: npx tsc --noEmit
       - name: Type Coverage Check
         run: npm run type-coverage
-      - run: npm test
+      - run: npm test -- --run --coverage
         env:
           TZ: America/Los_Angeles
       - name: Install Playwright Browsers
