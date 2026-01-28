@@ -236,23 +236,25 @@ describe("CameraModal", () => {
     const mockOnImport = vi.fn();
 
     // Mock fetch for upload
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        image: {
-          description: "Test Item",
-          calories: 100,
-          total_fat_grams: 5,
-          cholesterol_mg: 10,
-          sodium_mg: 200,
-          total_carbohydrates_g: 20,
-          dietary_fiber_g: 3,
-          total_sugars_g: 10,
-          added_sugars_g: 5,
-          protein_g: 8,
-        },
-      }),
-    });
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          image: {
+            description: "Test Item",
+            calories: 100,
+            total_fat_grams: 5,
+            cholesterol_mg: 10,
+            sodium_mg: 200,
+            total_carbohydrates_g: 20,
+            dietary_fiber_g: 3,
+            total_sugars_g: 10,
+            added_sugars_g: 5,
+            protein_g: 8,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
 
     render(() => (
       <CameraModal
@@ -433,15 +435,17 @@ describe("CameraModal", () => {
       if (callCount < 3) {
         return Promise.reject(new Error("Network error"));
       }
-      return Promise.resolve({
-        ok: true,
-        json: async () => ({
-          image: {
-            description: "Test",
-            calories: 100,
-          },
-        }),
-      });
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            image: {
+              description: "Test",
+              calories: 100,
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
     });
 
     render(() => (
@@ -561,15 +565,17 @@ describe("CameraModal", () => {
     mockGetUserMedia.mockResolvedValue(mockStream);
 
     // Mock fetch for upload
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        image: {
-          description: "Camera Captured",
-          calories: 200,
-        },
-      }),
-    });
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          image: {
+            description: "Camera Captured",
+            calories: 200,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
 
     render(() => (
       <CameraModal
