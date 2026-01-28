@@ -281,7 +281,7 @@ describe("DiaryList", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
+        const body = (await request.json()) as any;
         if (body.query.includes("DeleteDiaryEntry")) {
           throw new Error("Network error");
         }
@@ -320,7 +320,9 @@ describe("DiaryList", () => {
     const deleteButton = screen.getByText("Delete");
     await user.click(deleteButton);
 
+    // Entry should still be visible after error
     await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeTruthy();
       expect(consoleError).toHaveBeenCalledWith(
         "Failed to delete entry: ",
         expect.any(Error)

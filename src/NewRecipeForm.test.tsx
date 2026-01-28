@@ -31,8 +31,11 @@ describe("NewRecipeForm", () => {
     render(() => <NewRecipeForm />);
 
     expect(screen.getByText("New Recipe")).toBeTruthy();
-    expect(screen.getByLabelText("Name")).toBeTruthy();
-    expect(screen.getByLabelText("Total Servings")).toBeTruthy();
+    const nameInput = document.querySelector(
+      'input[name="name"]'
+    ) as HTMLInputElement;
+    expect(nameInput).toBeTruthy();
+    expect(screen.getByDisplayValue("1")).toBeTruthy(); // Total Servings defaults to 1
     expect(screen.getByText("Save Recipe")).toBeTruthy();
   });
 
@@ -47,7 +50,9 @@ describe("NewRecipeForm", () => {
     const user = userEvent.setup();
     render(() => <NewRecipeForm />);
 
-    const nameInput = screen.getByLabelText("Name") as HTMLInputElement;
+    const nameInput = document.querySelector(
+      'input[name="name"]'
+    ) as HTMLInputElement;
     await user.type(nameInput, "Smoothie");
 
     expect(nameInput.value).toBe("Smoothie");
@@ -57,8 +62,8 @@ describe("NewRecipeForm", () => {
     const user = userEvent.setup();
     render(() => <NewRecipeForm />);
 
-    const servingsInput = screen.getByLabelText(
-      "Total Servings"
+    const servingsInput = document.querySelector(
+      'input[name="total-servings"]'
     ) as HTMLInputElement;
     await user.clear(servingsInput);
     await user.type(servingsInput, "4");
@@ -70,13 +75,13 @@ describe("NewRecipeForm", () => {
     const user = userEvent.setup();
     render(() => <NewRecipeForm />);
 
-    const servingsInput = screen.getByLabelText(
-      "Total Servings"
+    const servingsInput = document.querySelector(
+      'input[name="total-servings"]'
     ) as HTMLInputElement;
     await user.clear(servingsInput);
     await user.type(servingsInput, "abc");
 
-    // Should not update to NaN
+    // Should not update to NaN - stays cleared
     expect(servingsInput.value).toBe("");
   });
 
@@ -98,11 +103,13 @@ describe("NewRecipeForm", () => {
 
     render(() => <NewRecipeForm initialRecipe={initialRecipe} />);
 
-    const nameInput = screen.getByLabelText("Name") as HTMLInputElement;
+    const nameInput = document.querySelector(
+      'input[name="name"]'
+    ) as HTMLInputElement;
     expect(nameInput.value).toBe("Existing Recipe");
 
-    const servingsInput = screen.getByLabelText(
-      "Total Servings"
+    const servingsInput = document.querySelector(
+      'input[name="total-servings"]'
     ) as HTMLInputElement;
     expect(servingsInput.value).toBe("2");
 
@@ -115,7 +122,7 @@ describe("NewRecipeForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
+        const body = (await request.json()) as any;
         if (body.query.includes("SearchNutritionItems")) {
           return HttpResponse.json({
             data: {
@@ -134,7 +141,9 @@ describe("NewRecipeForm", () => {
 
     render(() => <NewRecipeForm />);
 
-    const searchInput = screen.getByPlaceholderText("Search for items...");
+    const searchInput = document.querySelector(
+      'input[type="search"]'
+    ) as HTMLInputElement;
     await user.type(searchInput, "Apple");
 
     await waitFor(() => {
@@ -212,7 +221,7 @@ describe("NewRecipeForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
+        const body = (await request.json()) as any;
         if (body.query.includes("CreateRecipe")) {
           return HttpResponse.json({
             data: {
@@ -228,7 +237,9 @@ describe("NewRecipeForm", () => {
 
     render(() => <NewRecipeForm />);
 
-    const nameInput = screen.getByLabelText("Name");
+    const nameInput = document.querySelector(
+      'input[name="name"]'
+    ) as HTMLInputElement;
     await user.type(nameInput, "My Recipe");
 
     const saveButton = screen.getByText("Save Recipe");
@@ -251,7 +262,7 @@ describe("NewRecipeForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
+        const body = (await request.json()) as any;
         if (body.query.includes("UpdateRecipe")) {
           return HttpResponse.json({
             data: {
@@ -290,7 +301,9 @@ describe("NewRecipeForm", () => {
 
     render(() => <NewRecipeForm />);
 
-    const nameInput = screen.getByLabelText("Name");
+    const nameInput = document.querySelector(
+      'input[name="name"]'
+    ) as HTMLInputElement;
     await user.type(nameInput, "My Recipe");
 
     const saveButton = screen.getByText("Save Recipe");

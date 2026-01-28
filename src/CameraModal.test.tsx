@@ -58,7 +58,7 @@ describe("CameraModal", () => {
       />
     ));
 
-    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText("Scan Nutrition Label")).toBeTruthy();
   });
 
   it("should not render modal when closed", () => {
@@ -71,7 +71,7 @@ describe("CameraModal", () => {
       />
     ));
 
-    expect(screen.queryByRole("dialog")).toBeFalsy();
+    expect(screen.queryByText("Scan Nutrition Label")).toBeFalsy();
   });
 
   it("should start camera when opened in camera mode", async () => {
@@ -207,7 +207,7 @@ describe("CameraModal", () => {
       />
     ));
 
-    const uploadButton = screen.getByText("Upload Photo");
+    const uploadButton = screen.getByText("Upload Image");
     await user.click(uploadButton);
 
     await waitFor(() => {
@@ -247,7 +247,7 @@ describe("CameraModal", () => {
       />
     ));
 
-    const uploadButton = screen.getByText("Upload Photo");
+    const uploadButton = screen.getByText("Upload Image");
     await user.click(uploadButton);
 
     await waitFor(() => {
@@ -277,21 +277,30 @@ describe("CameraModal", () => {
       }
     } as any;
 
-    const fileInput = screen.getByLabelText("Choose File") as HTMLInputElement;
-    Object.defineProperty(fileInput, "files", {
+    const fileInput = screen.getByRole("button", {
+      name: "Choose File",
+    }) as HTMLButtonElement;
+    
+    // Get the actual hidden file input
+    const hiddenFileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    Object.defineProperty(hiddenFileInput, "files", {
       value: [file],
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    // Trigger the file input change event
+    await user.click(fileInput);
+    hiddenFileInput.dispatchEvent(new Event("change", { bubbles: true }));
 
     await waitFor(() => {
-      expect(screen.getByText("Scan")).toBeTruthy();
+      expect(screen.getByText("Import Label")).toBeTruthy();
     });
 
-    // Click scan button
-    const scanButton = screen.getByText("Scan");
-    await user.click(scanButton);
+    // Click import button
+    const importButton = screen.getByText("Import Label");
+    await user.click(importButton);
 
     await waitFor(() => {
       expect(mockOnImport).toHaveBeenCalledWith({
@@ -324,18 +333,20 @@ describe("CameraModal", () => {
       />
     ));
 
-    const uploadButton = screen.getByText("Upload Photo");
+    const uploadButton = screen.getByText("Upload Image");
     await user.click(uploadButton);
 
     const file = new File(["text content"], "test.txt", { type: "text/plain" });
 
-    const fileInput = screen.getByLabelText("Choose File") as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     Object.defineProperty(fileInput, "files", {
       value: [file],
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("change", { bubbles: true }));
 
     await waitFor(() => {
       expect(
@@ -356,7 +367,7 @@ describe("CameraModal", () => {
       />
     ));
 
-    const uploadButton = screen.getByText("Upload Photo");
+    const uploadButton = screen.getByText("Upload Image");
     await user.click(uploadButton);
 
     const file = new File(["image content"], "test.jpg", {
@@ -379,13 +390,15 @@ describe("CameraModal", () => {
       }
     } as any;
 
-    const fileInput = screen.getByLabelText("Choose File") as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     Object.defineProperty(fileInput, "files", {
       value: [file],
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("change", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to load image/)).toBeTruthy();
@@ -426,7 +439,7 @@ describe("CameraModal", () => {
       />
     ));
 
-    const uploadButton = screen.getByText("Upload Photo");
+    const uploadButton = screen.getByText("Upload Image");
     await user.click(uploadButton);
 
     const file = new File(["image content"], "test.jpg", {
@@ -451,20 +464,22 @@ describe("CameraModal", () => {
       }
     } as any;
 
-    const fileInput = screen.getByLabelText("Choose File") as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     Object.defineProperty(fileInput, "files", {
       value: [file],
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("change", { bubbles: true }));
 
     await waitFor(() => {
-      expect(screen.getByText("Scan")).toBeTruthy();
+      expect(screen.getByText("Import Label")).toBeTruthy();
     });
 
-    const scanButton = screen.getByText("Scan");
-    await user.click(scanButton);
+    const importButton = screen.getByText("Import Label");
+    await user.click(importButton);
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledTimes(3);
@@ -516,7 +531,7 @@ describe("CameraModal", () => {
     });
 
     // Try to capture - will fail due to null context
-    const captureButton = screen.getByText("Capture");
+    const captureButton = screen.getByText("Capture & Import");
     await user.click(captureButton);
 
     // Should show error

@@ -47,8 +47,8 @@ describe("ImportDiaryEntries", () => {
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -56,7 +56,7 @@ describe("ImportDiaryEntries", () => {
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText(/1 rows parsed/)).toBeTruthy();
@@ -75,8 +75,8 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -84,7 +84,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText(/1 errors/)).toBeTruthy();
@@ -101,7 +101,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
+        const body = (await request.json()) as any;
         if (body.query.includes("InsertDiaryEntries")) {
           return HttpResponse.json({
             data: {
@@ -117,8 +117,8 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -126,7 +126,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText("Import Entries")).toBeTruthy();
@@ -164,8 +164,8 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -173,7 +173,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText("Import Entries")).toBeTruthy();
@@ -195,7 +195,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
+        const body = (await request.json()) as any;
         if (body.query.includes("InsertDiaryEntries")) {
           throw new Error("Network error");
         }
@@ -205,8 +205,8 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -214,7 +214,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText("Import Entries")).toBeTruthy();
@@ -248,8 +248,8 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -257,7 +257,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText("Import Error")).toBeTruthy();
@@ -277,8 +277,8 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -286,7 +286,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText("View Details")).toBeTruthy();
@@ -318,8 +318,8 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     Object.defineProperty(fileInput, "files", {
@@ -327,7 +327,7 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
       writable: false,
     });
 
-    await user.upload(fileInput, file);
+    fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     await waitFor(() => {
       expect(screen.getByText("Banana")).toBeTruthy();
@@ -341,8 +341,8 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     render(() => <ImportDiaryEntries />);
 
-    const fileInput = screen.getByLabelText(
-      "Select a CSV to import entries from."
+    const fileInput = document.querySelector(
+      'input[name="diary-import-file"]'
     ) as HTMLInputElement;
 
     // Simulate input event with no files
