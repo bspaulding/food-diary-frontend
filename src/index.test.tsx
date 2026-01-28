@@ -36,7 +36,7 @@ describe("index", () => {
     await import("./index");
 
     expect(render).toHaveBeenCalled();
-    
+
     // Verify render was called with correct parameters
     const renderCall = (render as any).mock.calls[0];
     expect(renderCall).toBeDefined();
