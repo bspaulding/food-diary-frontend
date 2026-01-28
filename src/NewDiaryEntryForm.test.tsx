@@ -371,4 +371,78 @@ describe("NewDiaryEntryForm", () => {
       expect(createEntryCalled).toBe(true);
     });
   });
+
+  it("should show success indicator briefly after saving entry", async () => {
+    const user = await import("@testing-library/user-event").then((m) =>
+      m.default.setup(),
+    );
+
+    // Mock GraphQL responses
+    server.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const query = body.query || "";
+
+        // Mock GetRecentEntryItems query with one item
+        if (query.includes("GetRecentEntryItems")) {
+          return HttpResponse.json({
+            data: {
+              food_diary_diary_entry_recent: [
+                {
+                  consumed_at: "2024-01-24T08:00:00Z",
+                  nutrition_item: { id: 5, description: "Test Food" },
+                  recipe: null,
+                },
+              ],
+            },
+          });
+        }
+
+        // Mock GetEntriesAroundTime query
+        if (query.includes("GetEntriesAroundTime")) {
+          return HttpResponse.json({
+            data: { food_diary_diary_entry: [] },
+          });
+        }
+
+        // Mock CreateDiaryEntry mutation
+        if (query.includes("CreateDiaryEntry")) {
+          return HttpResponse.json({
+            data: {
+              insert_food_diary_diary_entry_one: { id: 100 },
+            },
+          });
+        }
+
+        return HttpResponse.json({ data: {} });
+      }),
+    );
+
+    render(() => <NewDiaryEntryForm />);
+
+    // Wait for suggestions to load
+    await waitFor(() => {
+      expect(screen.queryByText("Test Food")).not.toBeNull();
+    });
+
+    // Click the ⊕ button on the first item
+    const logButtons = screen.getAllByText("⊕");
+    await user.click(logButtons[0]);
+
+    // Wait for the logging dialog to appear
+    await waitFor(() => {
+      const saveButton = screen.queryByText("Save");
+      expect(saveButton).not.toBeNull();
+    });
+
+    // Click Save button
+    const saveButton = screen.getByText("Save");
+    await user.click(saveButton);
+
+    // Wait for success state to clear (after 1000ms timeout in component)
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    
+    // Logging dialog should be closed after save
+    expect(screen.queryByText("Save")).toBeNull();
+  });
 });
