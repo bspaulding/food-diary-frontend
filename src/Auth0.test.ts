@@ -10,13 +10,17 @@ vi.mock("@solidjs/router", () => ({
 describe("Auth0", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete (window as any).location;
-    window.location = {
+    const mockLocation: Location = {
       protocol: "http:",
       host: "localhost:3000",
       search: "",
       href: "http://localhost:3000",
-    } as any;
+    } as Location;
+    Object.defineProperty(window, "location", {
+      value: mockLocation,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it("should configure auth0 client and check authentication status when not authenticated", async () => {

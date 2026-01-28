@@ -415,8 +415,8 @@ describe("DiaryEntryEditForm", () => {
     // Mock the GraphQL endpoint
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
-        const query = (body as any).query;
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         // Handle GetDiaryEntry query
         if (query.includes("GetDiaryEntry")) {
@@ -471,8 +471,8 @@ describe("DiaryEntryEditForm", () => {
     // Mock the GraphQL endpoint to throw exception
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
-        const query = (body as any).query;
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         // Handle GetDiaryEntry query
         if (query.includes("GetDiaryEntry")) {
@@ -519,8 +519,8 @@ describe("DiaryEntryEditForm", () => {
     // Mock the GraphQL endpoint
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = await request.json();
-        const query = (body as any).query;
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         // Handle GetDiaryEntry query
         if (query.includes("GetDiaryEntry")) {

@@ -388,7 +388,7 @@ describe("parseCSV", function () {
   });
 
   it("should return Left when exception is thrown during parsing", () => {
-    const row = null as any; // This will cause an exception when accessing properties
+    const row: Record<string, unknown> = null as any; // This will cause an exception when accessing properties
 
     const result = rowToEntry(row);
     expect(isLeft(result)).toBe(true);

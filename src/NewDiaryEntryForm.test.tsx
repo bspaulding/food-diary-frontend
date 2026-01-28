@@ -6,6 +6,7 @@ import NewDiaryEntryForm from "./NewDiaryEntryForm";
 
 interface GraphQLRequest {
   query: string;
+  variables?: Record<string, unknown>;
 }
 
 function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
@@ -182,8 +183,8 @@ describe("NewDiaryEntryForm", () => {
     // Mock GraphQL responses
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         // Mock GetRecentEntryItems query
         if (query.includes("GetRecentEntryItems")) {
@@ -242,8 +243,8 @@ describe("NewDiaryEntryForm", () => {
     // Mock GraphQL responses
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         // Mock GetRecentEntryItems query with one item
         if (query.includes("GetRecentEntryItems")) {
@@ -270,7 +271,13 @@ describe("NewDiaryEntryForm", () => {
         // Mock CreateDiaryEntry mutation
         if (query.includes("CreateDiaryEntry")) {
           createEntryCalled = true;
-          const { entry } = body.variables;
+          const vars: Record<string, unknown> =
+            isGraphQLRequest(body) && body.variables ? body.variables : {};
+          const entryData: unknown = vars.entry;
+          const entry = entryData as {
+            servings: number;
+            nutrition_item_id: number;
+          };
           expect(entry.servings).toBe(2.5);
           expect(entry.nutrition_item_id).toBe(5);
           return HttpResponse.json({
@@ -336,8 +343,8 @@ describe("NewDiaryEntryForm", () => {
     // Mock GraphQL responses
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         // Mock GetRecentEntryItems query with a recipe
         if (query.includes("GetRecentEntryItems")) {
@@ -364,7 +371,13 @@ describe("NewDiaryEntryForm", () => {
         // Mock CreateDiaryEntry mutation for recipe
         if (query.includes("CreateDiaryEntry")) {
           createEntryCalled = true;
-          const { entry } = body.variables;
+          const vars: Record<string, unknown> =
+            isGraphQLRequest(body) && body.variables ? body.variables : {};
+          const entryData: unknown = vars.entry;
+          const entry = entryData as {
+            servings: number;
+            recipe_id: number;
+          };
           expect(entry.servings).toBe(1);
           expect(entry.recipe_id).toBe(3);
           return HttpResponse.json({
@@ -424,8 +437,8 @@ describe("NewDiaryEntryForm", () => {
     // Mock GraphQL responses with both items and recipes
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         // Mock GetRecentEntryItems query with both item and recipe
         if (query.includes("GetRecentEntryItems")) {
@@ -511,8 +524,8 @@ describe("NewDiaryEntryForm", () => {
     // Mock GraphQL responses
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         // Mock GetRecentEntryItems query with one item
         if (query.includes("GetRecentEntryItems")) {

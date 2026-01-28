@@ -5,6 +5,18 @@ import { http, HttpResponse } from "msw";
 import { server } from "./test-setup";
 import NewNutritionItemForm from "./NewNutritionItemForm";
 
+interface GraphQLRequest {
+  query: string;
+}
+
+function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  if (typeof obj !== "object" || obj === null) {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  return "query" in record && typeof record.query === "string";
+}
+
 vi.mock("./Auth0", () => ({
   useAuth: () => [
     {
@@ -19,7 +31,9 @@ vi.mock("./Auth0", () => ({
 const mockNavigate = vi.fn();
 vi.mock("@solidjs/router", () => ({
   useNavigate: () => mockNavigate,
-  A: ({ href, children }: any) => <a href={href}>{children}</a>,
+  A: ({ href, children }: { href: string; children: unknown }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 describe("NewNutritionItemForm", () => {
@@ -124,8 +138,11 @@ describe("NewNutritionItemForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("CreateNutritionItem")) {
+        const body: unknown = await request.json();
+        if (
+          isGraphQLRequest(body) &&
+          body.query.includes("CreateNutritionItem")
+        ) {
           return HttpResponse.json({
             data: {
               insert_food_diary_nutrition_item_one: {
@@ -177,8 +194,11 @@ describe("NewNutritionItemForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("UpdateNutritionItem")) {
+        const body: unknown = await request.json();
+        if (
+          isGraphQLRequest(body) &&
+          body.query.includes("UpdateNutritionItem")
+        ) {
           return HttpResponse.json({
             data: {
               update_food_diary_nutrition_item_by_pk: {
@@ -234,8 +254,11 @@ describe("NewNutritionItemForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("CreateNutritionItem")) {
+        const body: unknown = await request.json();
+        if (
+          isGraphQLRequest(body) &&
+          body.query.includes("CreateNutritionItem")
+        ) {
           return HttpResponse.json({
             data: {
               insert_food_diary_nutrition_item_one: {
@@ -396,8 +419,11 @@ describe("NewNutritionItemForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("UpdateNutritionItem")) {
+        const body: unknown = await request.json();
+        if (
+          isGraphQLRequest(body) &&
+          body.query.includes("UpdateNutritionItem")
+        ) {
           updateCalled = true;
           // Simulate delay
           await new Promise((resolve) => setTimeout(resolve, 100));

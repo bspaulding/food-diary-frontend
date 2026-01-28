@@ -5,6 +5,18 @@ import { http, HttpResponse } from "msw";
 import { server } from "./test-setup";
 import NewRecipeForm from "./NewRecipeForm";
 
+interface GraphQLRequest {
+  query: string;
+}
+
+function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  if (typeof obj !== "object" || obj === null) {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  return "query" in record && typeof record.query === "string";
+}
+
 vi.mock("./Auth0", () => ({
   useAuth: () => [
     {
@@ -19,7 +31,9 @@ vi.mock("./Auth0", () => ({
 const mockNavigate = vi.fn();
 vi.mock("@solidjs/router", () => ({
   useNavigate: () => mockNavigate,
-  A: ({ href, children }: any) => <a href={href}>{children}</a>,
+  A: ({ href, children }: { href: string; children: unknown }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 describe("NewRecipeForm", () => {
@@ -122,8 +136,11 @@ describe("NewRecipeForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("SearchNutritionItems")) {
+        const body: unknown = await request.json();
+        if (
+          isGraphQLRequest(body) &&
+          body.query.includes("SearchNutritionItems")
+        ) {
           return HttpResponse.json({
             data: {
               food_diary_search_nutrition_items: [
@@ -245,8 +262,8 @@ describe("NewRecipeForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("CreateRecipe")) {
+        const body: unknown = await request.json();
+        if (isGraphQLRequest(body) && body.query.includes("CreateRecipe")) {
           return HttpResponse.json({
             data: {
               insert_food_diary_recipe_one: {
@@ -286,8 +303,8 @@ describe("NewRecipeForm", () => {
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("UpdateRecipe")) {
+        const body: unknown = await request.json();
+        if (isGraphQLRequest(body) && body.query.includes("UpdateRecipe")) {
           return HttpResponse.json({
             data: {
               update_food_diary_recipe_by_pk: {

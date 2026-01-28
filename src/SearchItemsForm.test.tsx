@@ -5,6 +5,18 @@ import { http, HttpResponse } from "msw";
 import { server } from "./test-setup";
 import SearchItemsForm, { ItemsQueryType } from "./SearchItemsForm";
 
+interface GraphQLRequest {
+  query: string;
+}
+
+function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  if (typeof obj !== "object" || obj === null) {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  return "query" in record && typeof record.query === "string";
+}
+
 // Mock Auth0
 vi.mock("./Auth0", () => ({
   useAuth: () => [
@@ -34,8 +46,8 @@ describe("SearchItemsForm", () => {
 
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         if (query.includes("SearchItemsAndRecipes")) {
           return HttpResponse.json({
@@ -117,8 +129,8 @@ describe("SearchItemsForm", () => {
 
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+        const body: unknown = await request.json();
+        const query: string = isGraphQLRequest(body) ? body.query : "";
 
         if (
           query.includes("SearchItems") &&
