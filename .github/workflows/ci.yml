@@ -19,7 +19,7 @@ jobs:
         run: npm run prettier:check
       - name: TypeScript Check
         run: npx tsc --noEmit
-      - run: npm test
+      - run: npm test -- --run --coverage
         env:
           TZ: America/Los_Angeles
       - name: Install Playwright Browsers
