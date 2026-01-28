@@ -32,7 +32,7 @@ const mockNavigate = vi.fn();
 vi.mock("@solidjs/router", () => ({
   useNavigate: () => mockNavigate,
   A: ({ href, children }: { href: string; children: unknown }) => (
-    <a href={href}>{children}</a>
+    <a href={href}>{children as Element}</a>
   ),
 }));
 

@@ -23,7 +23,7 @@ const responseData = {
           added_sugars_grams: 8,
           protein_grams: 3,
         },
-        recipe: null,
+        recipe: undefined,
       },
       {
         servings: 1,
@@ -44,12 +44,12 @@ const responseData = {
           added_sugars_grams: 7,
           protein_grams: 1,
         },
-        recipe: null,
+        recipe: undefined,
       },
       {
         servings: 2,
         consumed_at: "2022-08-29T14:30:00+00:00",
-        nutrition_item: null,
+        nutrition_item: undefined,
         recipe: {
           name: "Test Recipe",
           recipe_items: [
@@ -130,7 +130,7 @@ describe("entriesToCSV", () => {
           added_sugars_grams: 0,
           protein_grams: 1,
         },
-        recipe: null,
+        recipe: undefined,
       },
     ];
     const csv = entriesToCsv(entries);
@@ -159,7 +159,7 @@ describe("entriesToCSV", () => {
           added_sugars_grams: 14,
           protein_grams: 2,
         },
-        recipe: null,
+        recipe: undefined,
       },
     ];
     const csv = entriesToCsv(entries);

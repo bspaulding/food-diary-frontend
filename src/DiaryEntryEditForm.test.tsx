@@ -32,7 +32,7 @@ function isCapturedRequest(obj: unknown): obj is CapturedRequest {
   if (!isGraphQLRequest(obj)) {
     return false;
   }
-  const record = obj as Record<string, unknown>;
+  const record = obj as unknown as Record<string, unknown>;
   return "variables" in record && typeof record.variables === "object";
 }
 
@@ -54,7 +54,10 @@ vi.mock(
       [key: string]: unknown;
     }
     if (typeof actual !== "object" || actual === null) {
-      return {};
+      return {
+        useParams: () => ({ id: "1" }),
+        useNavigate: () => vi.fn(),
+      };
     }
     const actualModule = actual as RouterModule;
     return {
@@ -159,12 +162,11 @@ describe("DiaryEntryEditForm", () => {
 
     // Verify the mutation contains the correct variables
     expect(capturedRequest).not.toBeNull();
-    if (capturedRequest) {
-      expect(capturedRequest.variables.id).toBe(1);
-      expect(capturedRequest.variables.attrs.servings).toBe(2);
-      expect(capturedRequest.variables.attrs.consumed_at).toBe(
-        "2022-08-28T14:30:00Z",
-      );
+    if (capturedRequest !== null && isCapturedRequest(capturedRequest)) {
+      const request: CapturedRequest = capturedRequest;
+      expect(request.variables.id).toBe(1);
+      expect(request.variables.attrs.servings).toBe(2);
+      expect(request.variables.attrs.consumed_at).toBe("2022-08-28T14:30:00Z");
     }
 
     unmount();
@@ -244,12 +246,11 @@ describe("DiaryEntryEditForm", () => {
 
     // Verify the mutation contains both updated values
     expect(capturedRequest).not.toBeNull();
-    if (capturedRequest) {
-      expect(capturedRequest.variables.id).toBe(1);
-      expect(capturedRequest.variables.attrs.servings).toBe(3);
-      expect(capturedRequest.variables.attrs.consumed_at).toContain(
-        "2022-08-29",
-      );
+    if (capturedRequest !== null && isCapturedRequest(capturedRequest)) {
+      const request: CapturedRequest = capturedRequest;
+      expect(request.variables.id).toBe(1);
+      expect(request.variables.attrs.servings).toBe(3);
+      expect(request.variables.attrs.consumed_at).toContain("2022-08-29");
     }
 
     unmount();
@@ -322,8 +323,9 @@ describe("DiaryEntryEditForm", () => {
 
     // Verify the request includes servings as 0, not the original value
     expect(capturedRequest).not.toBeNull();
-    if (capturedRequest) {
-      expect(capturedRequest.variables.attrs.servings).toBe(0);
+    if (capturedRequest !== null && isCapturedRequest(capturedRequest)) {
+      const request: CapturedRequest = capturedRequest;
+      expect(request.variables.attrs.servings).toBe(0);
     }
 
     unmount();
@@ -398,12 +400,11 @@ describe("DiaryEntryEditForm", () => {
 
     // Verify the mutation contains the fractional value, not rounded down
     expect(capturedRequest).not.toBeNull();
-    if (capturedRequest) {
-      expect(capturedRequest.variables.id).toBe(1);
-      expect(capturedRequest.variables.attrs.servings).toBe(2.5);
-      expect(capturedRequest.variables.attrs.consumed_at).toBe(
-        "2022-08-28T14:30:00Z",
-      );
+    if (capturedRequest !== null && isCapturedRequest(capturedRequest)) {
+      const request: CapturedRequest = capturedRequest;
+      expect(request.variables.id).toBe(1);
+      expect(request.variables.attrs.servings).toBe(2.5);
+      expect(request.variables.attrs.consumed_at).toBe("2022-08-28T14:30:00Z");
     }
 
     unmount();

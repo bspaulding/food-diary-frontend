@@ -19,7 +19,7 @@ vi.mock("@solidjs/router", () => ({
   useParams: () => ({ id: "123" }),
   useNavigate: () => vi.fn(),
   A: ({ href, children }: { href: string; children: unknown }) => (
-    <a href={href}>{children}</a>
+    <a href={href}>{children as Element}</a>
   ),
 }));
 

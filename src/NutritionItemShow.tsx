@@ -1,7 +1,7 @@
 import type { Component } from "solid-js";
 import { useParams, A } from "@solidjs/router";
 import { Show } from "solid-js";
-import { fetchNutritionItem } from "./Api";
+import { fetchNutritionItem, NutritionItem } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import ButtonLink from "./ButtonLink";
 import { LoggableItem } from "./NewDiaryEntryForm";
@@ -68,7 +68,9 @@ const NutritionItemShow: Component = () => {
               <span class={boldKeys.indexOf(k) >= 0 ? "font-semibold" : "ml-4"}>
                 {propTitles[k] || k}
               </span>
-              <span>{(nutritionItem() as Record<string, unknown>)[k]}</span>
+              <span>
+                {String((nutritionItem() as Record<string, unknown>)[k])}
+              </span>
             </p>
           ))}
       </div>

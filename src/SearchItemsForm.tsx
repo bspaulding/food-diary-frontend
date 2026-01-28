@@ -14,6 +14,9 @@ type ItemOrRecipe = {
   recipe?: SearchRecipe;
   nutritionItem?: SearchNutritionItem;
 };
+
+export type { ItemOrRecipe };
+
 export enum ItemsQueryType {
   ItemsAndRecipes,
   ItemsOnly,
@@ -38,7 +41,7 @@ const SearchItemsForm: Component<Props> = (props: Props) => {
     getItemsQuery()?.data?.food_diary_search_nutrition_items || [];
   const recipes = (): SearchRecipe[] =>
     getItemsQuery()?.data?.food_diary_search_recipes || [];
-  const clear = (): void => setSearch("");
+  const clear = (): string => setSearch("");
 
   return (
     <section class="flex flex-col mt-5">

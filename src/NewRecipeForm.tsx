@@ -3,7 +3,10 @@ import { createSignal, Index } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import type { Recipe, SearchNutritionItem } from "./Api";
 import { createRecipe, updateRecipe } from "./Api";
-import SearchItemsForm, { ItemsQueryType } from "./SearchItemsForm";
+import SearchItemsForm, {
+  ItemsQueryType,
+  ItemOrRecipe,
+} from "./SearchItemsForm";
 import { useAuth } from "./Auth0";
 import ButtonLink from "./ButtonLink";
 
@@ -107,18 +110,13 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }: Props) => {
         <fieldset>
           <legend class="font-semibold">Add New Items</legend>
           <SearchItemsForm queryType={ItemsQueryType.ItemsOnly}>
-            {({
-              clear,
-              nutritionItem,
-            }: {
-              clear: () => void;
-              nutritionItem: SearchNutritionItem;
-            }) => (
+            {({ clear, nutritionItem }: ItemOrRecipe) => (
               <li class="flex flex-row">
                 <button
                   class="mr-1 text-3xl text-indigo-600 transition-transform "
                   onClick={(event: MouseEvent) => {
                     event.preventDefault();
+                    if (!nutritionItem) return false;
                     setInput((input: Recipe) => ({
                       ...input,
                       recipe_items: [
@@ -129,13 +127,13 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }: Props) => {
                         },
                       ],
                     }));
-                    clear();
+                    clear?.();
                     return false;
                   }}
                 >
                   ⊕
                 </button>
-                <p>{nutritionItem.description}</p>
+                <p>{nutritionItem?.description}</p>
               </li>
             )}
           </SearchItemsForm>

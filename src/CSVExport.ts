@@ -63,6 +63,8 @@ type EntryRecord = {
   [key: string]: unknown;
 };
 
+export type { EntryRecord };
+
 export function entriesToCsv(entries: EntryRecord[]): string {
   return stringsToCsv([
     header,

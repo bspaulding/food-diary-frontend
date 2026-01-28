@@ -42,16 +42,16 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
 
   if (arguments.length === 2) {
     if (typeof fetcher === "object") {
-      finalOptions = fetcher as ResourceOptions<T, true>;
-      finalFetcher = source as AuthorizedResourceFetcher<true, T>;
-      finalSource = true as true;
+      finalOptions = fetcher as unknown as ResourceOptions<T, S>;
+      finalFetcher = source as unknown as AuthorizedResourceFetcher<S, T>;
+      finalSource = true as unknown as ResourceSource<S>;
     } else {
       finalSource = source as ResourceSource<S>;
       finalFetcher = fetcher as AuthorizedResourceFetcher<S, T>;
     }
   } else if (arguments.length === 1) {
-    finalFetcher = source as AuthorizedResourceFetcher<true, T>;
-    finalSource = true as true;
+    finalFetcher = source as unknown as AuthorizedResourceFetcher<S, T>;
+    finalSource = true as unknown as ResourceSource<S>;
   } else {
     finalSource = source as ResourceSource<S>;
     finalFetcher = fetcher as AuthorizedResourceFetcher<S, T>;
@@ -89,7 +89,10 @@ function createAuthorizedResource<S = true, T = unknown, R = unknown>(
         throw error;
       }
     },
-    finalOptions,
+    finalOptions as unknown as ResourceOptions<
+      T,
+      { accessToken: string; source: S | true }
+    >,
   ) as ResourceReturn<T, R>;
 }
 

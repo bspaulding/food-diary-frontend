@@ -42,7 +42,7 @@ const DiaryEntryEditForm: Component = () => {
       ?.data?.food_diary_diary_entry_by_pk;
   const href = (): string =>
     diaryEntry()?.nutrition_item
-      ? `/nutrition_item/${diaryEntry()?.nutrition_item.id}`
+      ? `/nutrition_item/${diaryEntry()?.nutrition_item?.id}`
       : `/recipe/${diaryEntry()?.recipe?.id ?? 0}`;
   return (
     <>

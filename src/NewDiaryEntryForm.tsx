@@ -145,7 +145,7 @@ export const LoggableItem: Component<{
           class={`mr-1 text-3xl text-indigo-600 transition-transform ${
             logging() ? "rotate-45" : ""
           }`}
-          onClick={(): void => setLogging((l: boolean) => !l)}
+          onClick={(): boolean => setLogging((l: boolean) => !l)}
         >
           ⊕
         </button>
@@ -173,7 +173,7 @@ export const LoggableItem: Component<{
           <button
             class="ml-2 bg-indigo-600 text-slate-50 py-1 px-3 text-lg rounded-md"
             onClick={async (): Promise<void> => {
-              const entry: CreateDiaryEntryInput = recipe
+              const entry: CreateDiaryEntryInput | null = recipe
                 ? {
                     servings: servings(),
                     recipe_id: recipe.id,

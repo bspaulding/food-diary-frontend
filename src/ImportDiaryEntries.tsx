@@ -7,7 +7,7 @@ import { isRight, isLeft } from "./Either";
 import { useAuth } from "./Auth0";
 import { insertDiaryEntries } from "./Api";
 import ButtonLink from "./ButtonLink";
-import { parseCSV, rowToEntry } from "./CSVImport";
+import { parseCSV, rowToEntry, ParsedRow } from "./CSVImport";
 
 interface GraphQLResponse<T> {
   data?: T;
@@ -52,7 +52,7 @@ const ImportDiaryEntries: Component = () => {
     setImportError(null);
     try {
       const csv: string = await readFile(file);
-      const rows: string[][] = parseCSV(csv);
+      const rows: ParsedRow[] = parseCSV(csv);
       const entries: Either<object, NewDiaryEntry>[] = rows.map(rowToEntry);
 
       const { lefts, rights }: { lefts: object[]; rights: NewDiaryEntry[] } =

@@ -3,7 +3,7 @@ import { parseISO as parseDate, formatISO } from "date-fns";
 import { Either, Left, Right } from "./Either";
 import { NewDiaryEntry } from "./Api";
 
-type ParsedRow = Record<string, string>;
+export type ParsedRow = Record<string, string>;
 
 export function parseCSV(csv: string): ParsedRow[] {
   const lines: string[][] = parseCSVString(csv);

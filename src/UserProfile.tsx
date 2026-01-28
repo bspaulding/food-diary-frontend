@@ -1,7 +1,7 @@
 import type { Component } from "solid-js";
 import { useAuth } from "./Auth0";
 import { fetchExportEntries } from "./Api";
-import { entriesToCsv } from "./CSVExport";
+import { entriesToCsv, EntryRecord } from "./CSVExport";
 
 type Auth0User = {
   picture?: string;
@@ -30,7 +30,7 @@ const UserProfile: Component = () => {
         <button
           onClick={async (): Promise<void> => {
             const responseData: {
-              data: { food_diary_diary_entry: unknown[] };
+              data: { food_diary_diary_entry: EntryRecord[] };
             } = await fetchExportEntries(accessToken());
             const data: string = entriesToCsv(
               responseData.data.food_diary_diary_entry,

@@ -1,4 +1,4 @@
-import type { Component } from "solid-js";
+import type { Component, JSX } from "solid-js";
 import { createSignal, Index } from "solid-js";
 
 type Props = {
