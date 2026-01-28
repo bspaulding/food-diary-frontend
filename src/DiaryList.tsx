@@ -63,13 +63,13 @@ const EntryMacro: Component<{
   value: string;
   unit?: string;
   label: string;
-}> = ({ value, unit, label }) => (
+}> = (props: { value: string; unit?: string; label: string }) => (
   <div class="text-center text-xl mt-4">
     <p>
-      {value}
-      {unit}
+      {props.value}
+      {props.unit}
     </p>
-    <p class="text-sm uppercase">{label}</p>
+    <p class="text-sm uppercase">{props.label}</p>
   </div>
 );
 
@@ -158,8 +158,8 @@ const DiaryList: Component = () => {
           <p class="text-slate-400 text-center">No entries, yet...</p>
         </Show>
         <Index each={entriesByDay()}>
-          {(dayEntries, i) => {
-            const [dateStr, entries] = dayEntries();
+          {(dayEntries: () => [string, DiaryEntry[]], i: number) => {
+            const [dateStr, entries]: [string, DiaryEntry[]] = dayEntries();
             return (
               <li class="grid grid-cols-6 -ml-4 mb-6">
                 <div>
@@ -201,7 +201,7 @@ const DiaryList: Component = () => {
                     </div>
                   </li>
                   <Index each={entries.sort(compareEntriesByConsumedAt)}>
-                    {(entry, i) => (
+                    {(entry: () => DiaryEntry, i: number) => (
                       <li class="mb-4">
                         <p class="font-semibold">
                           {entry().calories} kcal,{" "}
@@ -228,14 +228,17 @@ const DiaryList: Component = () => {
                             <a href={`/diary_entry/${entry().id}/edit`}>Edit</a>
                             <button
                               class="ml-2"
-                              onClick={() =>
-                                deleteEntry(
-                                  accessToken,
-                                  entry(),
-                                  getEntriesQuery() as GetEntriesQueryResponse,
-                                  mutate,
-                                )
-                              }
+                              onClick={() => {
+                                const entries = getEntriesQuery();
+                                if (entries) {
+                                  deleteEntry(
+                                    accessToken,
+                                    entry(),
+                                    entries as GetEntriesQueryResponse,
+                                    mutate,
+                                  );
+                                }
+                              }}
                             >
                               Delete
                             </button>
@@ -286,11 +289,14 @@ async function deleteEntry(
 ) {
   try {
     removeEntry(entry, entriesQuery, mutate);
-    const response = await deleteDiaryEntry(accessToken(), entry.id);
+    const response: { data: unknown } = await deleteDiaryEntry(
+      accessToken(),
+      entry.id,
+    );
     if (!response.data) {
       mutate(entriesQuery);
     }
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("Failed to delete entry: ", e);
   }
 }

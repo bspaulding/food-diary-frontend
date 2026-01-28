@@ -26,27 +26,45 @@ type NewDiaryEntryInput = {
 };
 
 type Props = {
-  onSubmit?: (input: NewDiaryEntryInput) => {};
+  onSubmit?: (input: NewDiaryEntryInput) => void;
 };
 
-const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
+interface RecentEntry {
+  consumed_at: string;
+  nutrition_item?: { id: number; description: string };
+  recipe?: { id: number; name: string };
+}
+
+interface GetRecentEntriesResponse {
+  data: {
+    food_diary_diary_entry_recent: RecentEntry[];
+  };
+}
+
+interface GetEntriesAroundTimeResponse {
+  data: {
+    food_diary_diary_entry: RecentEntry[];
+  };
+}
+
+const NewDiaryEntryForm: Component<Props> = ({ onSubmit }: Props) => {
   const [getRecentItemsQuery] = createAuthorizedResource((token: string) =>
     fetchRecentEntries(token),
   );
-  const recentItems = () =>
-    getRecentItemsQuery()?.data?.food_diary_diary_entry_recent || [];
+  const recentItems = (): RecentEntry[] =>
+    (getRecentItemsQuery() as GetRecentEntriesResponse | undefined)?.data
+      ?.food_diary_diary_entry_recent ?? [];
 
-  // Calculate time range: current time ± 1 hour
-  // These values are captured once when the component mounts, which is the desired behavior
-  const now = new Date();
-  const startTime = subHours(now, 1).toISOString();
-  const endTime = addHours(now, 1).toISOString();
+  const now: Date = new Date();
+  const startTime: string = subHours(now, 1).toISOString();
+  const endTime: string = addHours(now, 1).toISOString();
 
   const [getTimeBasedItemsQuery] = createAuthorizedResource((token: string) =>
     fetchEntriesAroundTime(token, startTime, endTime),
   );
-  const timeBasedItems = () =>
-    getTimeBasedItemsQuery()?.data?.food_diary_diary_entry || [];
+  const timeBasedItems = (): RecentEntry[] =>
+    (getTimeBasedItemsQuery() as GetEntriesAroundTimeResponse | undefined)?.data
+      ?.food_diary_diary_entry ?? [];
 
   return (
     <div>
@@ -56,7 +74,7 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }) => {
         <ButtonLink href="/recipe/new">Add Recipe</ButtonLink>
       </div>
       <SegmentedControl segments={["Suggestions", "Search"]}>
-        {(segment) => (
+        {(segment: string) => (
           <>
             <Show when={segment === "Suggestions"}>
               <div>
@@ -108,7 +126,13 @@ export default NewDiaryEntryForm;
 export const LoggableItem: Component<{
   recipe?: SearchRecipe;
   nutritionItem?: SearchNutritionItem;
-}> = ({ recipe, nutritionItem }) => {
+}> = ({
+  recipe,
+  nutritionItem,
+}: {
+  recipe?: SearchRecipe;
+  nutritionItem?: SearchNutritionItem;
+}) => {
   const [{ accessToken }] = useAuth();
   const [logging, setLogging] = createSignal(false);
   const [servings, setServings] = createSignal(1);
@@ -121,7 +145,7 @@ export const LoggableItem: Component<{
           class={`mr-1 text-3xl text-indigo-600 transition-transform ${
             logging() ? "rotate-45" : ""
           }`}
-          onClick={() => setLogging((l) => !l)}
+          onClick={(): boolean => setLogging((l: boolean) => !l)}
         >
           ⊕
         </button>
@@ -134,8 +158,8 @@ export const LoggableItem: Component<{
             inputmode="decimal"
             step="0.1"
             value={servings()}
-            onInput={(event) => {
-              const parsed = parseFloat(event.target.value);
+            onInput={(event: InputEvent & { target: HTMLInputElement }) => {
+              const parsed: number = parseFloat(event.target.value);
               if (!isNaN(parsed)) {
                 setServings(parsed);
               }
@@ -148,16 +172,21 @@ export const LoggableItem: Component<{
           />
           <button
             class="ml-2 bg-indigo-600 text-slate-50 py-1 px-3 text-lg rounded-md"
-            onClick={async () => {
-              const entry: CreateDiaryEntryInput = recipe
+            onClick={async (): Promise<void> => {
+              const entry: CreateDiaryEntryInput | null = recipe
                 ? {
                     servings: servings(),
                     recipe_id: recipe.id,
                   }
-                : {
-                    servings: servings(),
-                    nutrition_item_id: nutritionItem!.id,
-                  };
+                : nutritionItem
+                  ? {
+                      servings: servings(),
+                      nutrition_item_id: nutritionItem.id,
+                    }
+                  : null;
+              if (!entry) {
+                return;
+              }
               setSaving(true);
               await createDiaryEntry(accessToken(), entry);
               setSaving(false);

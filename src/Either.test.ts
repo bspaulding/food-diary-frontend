@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isLeft, isRight, Left, Right, split } from "./Either";
+import { isLeft, isRight, Left, Right, split, Either } from "./Either";
 
 describe("Either", () => {
   describe("Left", () => {
@@ -45,7 +45,9 @@ describe("Either", () => {
 
     it("returns false for objects without left tag", () => {
       expect(isLeft({ value: "test", tag: "right" })).toBe(false);
-      expect(isLeft({ tag: "other" })).toBe(false);
+      expect(
+        isLeft({ tag: "other" } as unknown as Either<unknown, unknown>),
+      ).toBe(false);
     });
   });
 
@@ -62,7 +64,9 @@ describe("Either", () => {
 
     it("returns false for objects without right tag", () => {
       expect(isRight({ value: "test", tag: "left" })).toBe(false);
-      expect(isRight({ tag: "other" })).toBe(false);
+      expect(
+        isRight({ tag: "other" } as unknown as Either<unknown, unknown>),
+      ).toBe(false);
     });
   });
 

@@ -1,7 +1,7 @@
 import type { Component } from "solid-js";
 import { useParams, A } from "@solidjs/router";
 import { Show } from "solid-js";
-import { fetchNutritionItem } from "./Api";
+import { fetchNutritionItem, NutritionItem } from "./Api";
 import createAuthorizedResource from "./createAuthorizedResource";
 import ButtonLink from "./ButtonLink";
 import { LoggableItem } from "./NewDiaryEntryForm";
@@ -40,9 +40,9 @@ const NutritionItemShow: Component = () => {
     (token: string, id: string) => fetchNutritionItem(token, id),
   );
 
-  const nutritionItem = () =>
+  const nutritionItem = (): Partial<NutritionItem> =>
     nutritionItemQuery()?.data?.food_diary_nutrition_item_by_pk || {};
-  const itemLoaded = () => !!nutritionItemQuery()?.data;
+  const itemLoaded = (): boolean => !!nutritionItemQuery()?.data;
   return (
     <div style={{ margin: "18px" }}>
       <div class="flex space-x-4 mb-4">
@@ -54,18 +54,23 @@ const NutritionItemShow: Component = () => {
       <h1 class="font-semibold text-2xl">{nutritionItem().description}</h1>
       <Show when={itemLoaded()}>
         <LoggableItem
-          nutritionItem={{ id: nutritionItem().id, description: "Log It" }}
+          nutritionItem={{
+            id: nutritionItem().id as number,
+            description: "Log It",
+          }}
         />
       </Show>
       <div class="text-lg">
         {Object.keys(nutritionItem())
-          .filter((k) => keys_denylist.indexOf(k) < 0)
-          .map((k) => (
+          .filter((k: string) => keys_denylist.indexOf(k) < 0)
+          .map((k: string) => (
             <p class="flex justify-between">
               <span class={boldKeys.indexOf(k) >= 0 ? "font-semibold" : "ml-4"}>
                 {propTitles[k] || k}
               </span>
-              <span>{(nutritionItem() as any)[k]}</span>
+              <span>
+                {String((nutritionItem() as Record<string, unknown>)[k])}
+              </span>
             </p>
           ))}
       </div>

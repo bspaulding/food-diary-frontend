@@ -22,7 +22,7 @@ const getNumericValue = (
 const MAX_IMAGE_SIZE = 1080;
 const JPEG_QUALITY = 0.95;
 
-const CameraModal: Component<Props> = (props) => {
+const CameraModal: Component<Props> = (props: Props) => {
   let videoRef: HTMLVideoElement | undefined;
   let canvasRef: HTMLCanvasElement | undefined;
   let fileInputRef: HTMLInputElement | undefined;
@@ -35,17 +35,17 @@ const CameraModal: Component<Props> = (props) => {
   const [error, setError] = createSignal<string | null>(null);
   const [mode, setMode] = createSignal<"camera" | "upload">("camera");
 
-  const startCamera = async () => {
+  const startCamera = async (): Promise<void> => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const stream: MediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
       });
       streamRef = stream;
       if (videoRef) {
         videoRef.srcObject = stream;
       }
-    } catch (err) {
-      let errorMessage = "Unable to access camera.";
+    } catch (err: unknown) {
+      let errorMessage: string = "Unable to access camera.";
       if (err instanceof DOMException) {
         if (
           err.name === "NotAllowedError" ||
@@ -72,9 +72,9 @@ const CameraModal: Component<Props> = (props) => {
     }
   };
 
-  const stopCamera = () => {
+  const stopCamera = (): void => {
     if (streamRef) {
-      streamRef.getTracks().forEach((track) => track.stop());
+      streamRef.getTracks().forEach((track: MediaStreamTrack) => track.stop());
       streamRef = null;
     }
   };
@@ -99,16 +99,16 @@ const CameraModal: Component<Props> = (props) => {
 
   // Create effect to manage object URL lifecycle
   createEffect(
-    on(capturedImage, (image) => {
+    on(capturedImage, (image: Blob | null) => {
       // Revoke previous URL if it existed
-      const prevUrl = capturedImageUrl();
+      const prevUrl: string | null = capturedImageUrl();
       if (prevUrl) {
         URL.revokeObjectURL(prevUrl);
       }
 
       // Create new URL if there's an image
       if (image) {
-        const newUrl = URL.createObjectURL(image);
+        const newUrl: string = URL.createObjectURL(image);
         setCapturedImageUrl(newUrl);
       } else {
         setCapturedImageUrl(null);
@@ -116,9 +116,13 @@ const CameraModal: Component<Props> = (props) => {
     }),
   );
 
-  const handleFileSelect = async (event: Event) => {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+  const handleFileSelect = async (event: Event): Promise<void> => {
+    const input: HTMLInputElement | null =
+      event.target instanceof HTMLInputElement ? event.target : null;
+    if (!input) {
+      return;
+    }
+    const file: File | undefined = input.files?.[0];
 
     if (!file) {
       return;
@@ -132,10 +136,10 @@ const CameraModal: Component<Props> = (props) => {
 
     try {
       // Convert and resize the image
-      const resizedBlob = await resizeImage(file);
+      const resizedBlob: Blob = await resizeImage(file);
       setCapturedImage(resizedBlob);
       setError(null);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to process image");
       console.error("Error processing image:", err);
     }
@@ -145,93 +149,108 @@ const CameraModal: Component<Props> = (props) => {
   };
 
   const resizeImage = (file: File): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+    return new Promise(
+      (resolve: (value: Blob) => void, reject: (reason: Error) => void) => {
+        const reader: FileReader = new FileReader();
 
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-
-        // Create an img element with the data URL
-        const img = new Image();
-
-        img.onload = () => {
-          try {
-            // Calculate dimensions with max constraint
-            let width = img.width;
-            let height = img.height;
-
-            if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
-              if (width > height) {
-                height = (height / width) * MAX_IMAGE_SIZE;
-                width = MAX_IMAGE_SIZE;
-              } else {
-                width = (width / height) * MAX_IMAGE_SIZE;
-                height = MAX_IMAGE_SIZE;
-              }
-            }
-
-            // Create canvas and draw the resized image
-            const canvas = document.createElement("canvas");
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext("2d");
-
-            if (!ctx) {
-              reject(new Error("Failed to get canvas context"));
-              return;
-            }
-
-            ctx.drawImage(img, 0, 0, width, height);
-
-            // Export as JPEG
-            canvas.toBlob(
-              (blob) => {
-                if (blob) {
-                  resolve(blob);
-                } else {
-                  reject(new Error("Failed to create blob from canvas"));
-                }
-              },
-              "image/jpeg",
-              JPEG_QUALITY,
-            );
-          } catch (err) {
-            reject(err);
+        reader.onload = (e: ProgressEvent<FileReader>): void => {
+          const dataUrl: string | undefined =
+            typeof e.target?.result === "string" ? e.target.result : undefined;
+          if (!dataUrl) {
+            reject(new Error("Failed to read file as data URL"));
+            return;
           }
+
+          // Create an img element with the data URL
+          const img: HTMLImageElement = new Image();
+
+          img.onload = (): void => {
+            try {
+              // Calculate dimensions with max constraint
+              let width: number = img.width;
+              let height: number = img.height;
+
+              if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
+                if (width > height) {
+                  height = (height / width) * MAX_IMAGE_SIZE;
+                  width = MAX_IMAGE_SIZE;
+                } else {
+                  width = (width / height) * MAX_IMAGE_SIZE;
+                  height = MAX_IMAGE_SIZE;
+                }
+              }
+
+              // Create canvas and draw the resized image
+              const canvas: HTMLCanvasElement =
+                document.createElement("canvas");
+              canvas.width = width;
+              canvas.height = height;
+              const ctx: CanvasRenderingContext2D | null =
+                canvas.getContext("2d");
+
+              if (!ctx) {
+                reject(new Error("Failed to get canvas context"));
+                return;
+              }
+
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // Export as JPEG
+              canvas.toBlob(
+                (blob: Blob | null): void => {
+                  if (blob) {
+                    resolve(blob);
+                  } else {
+                    reject(new Error("Failed to create blob from canvas"));
+                  }
+                },
+                "image/jpeg",
+                JPEG_QUALITY,
+              );
+            } catch (err: unknown) {
+              reject(err instanceof Error ? err : new Error(String(err)));
+            }
+          };
+
+          img.onerror = (): void => {
+            reject(new Error("Failed to load image"));
+          };
+
+          img.src = dataUrl;
         };
 
-        img.onerror = () => {
-          reject(new Error("Failed to load image"));
+        reader.onerror = (): void => {
+          reject(new Error("Failed to read file"));
         };
 
-        img.src = dataUrl;
-      };
-
-      reader.onerror = () => {
-        reject(new Error("Failed to read file"));
-      };
-
-      reader.readAsDataURL(file);
-    });
+        reader.readAsDataURL(file);
+      },
+    );
   };
 
-  const uploadImage = async (imageBlob: Blob) => {
+  const uploadImage = async (imageBlob: Blob): Promise<void> => {
     setIsUploading(true);
     setError(null);
 
     try {
       // Create form data and upload
-      const formData = new FormData();
+      const formData: FormData = new FormData();
       formData.append("image", imageBlob, "capture.jpg");
 
-      async function retry(times: number, fn: () => Promise<any>) {
-        let i = 0;
-        let result;
+      async function retry(
+        times: number,
+        fn: () => Promise<Response>,
+      ): Promise<Response> {
+        let i: number = 0;
+        let result: Response | unknown;
         while (i < times) {
           try {
             result = await fn();
-            return result;
-          } catch (e) {
+            if (result instanceof Response) {
+              return result;
+            }
+            throw new Error("Expected Response object");
+          } catch (e: unknown) {
             result = e;
           }
           i++;
@@ -240,11 +259,11 @@ const CameraModal: Component<Props> = (props) => {
           throw new Error(`Too many retries. Last result was ${result}.`);
         }
 
-        return result;
+        throw new Error("Retry logic error");
       }
 
-      const response = await retry(3, async () => {
-        const response = await fetch("/labeller/upload", {
+      const response: Response = await retry(3, async (): Promise<Response> => {
+        const response: Response = await fetch("/labeller/upload", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${props.accessToken}`,
@@ -259,7 +278,8 @@ const CameraModal: Component<Props> = (props) => {
         return response;
       });
 
-      const { image: data } = await response.json();
+      const { image: data }: { image: Record<string, unknown> } =
+        await response.json();
 
       // Map the response to nutrition item attributes
       const nutritionData: Partial<NutritionItemAttrs> = {
@@ -279,7 +299,7 @@ const CameraModal: Component<Props> = (props) => {
       props.onImport(nutritionData);
       stopCamera();
       props.onClose();
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to upload image");
       console.error("Error uploading image:", err);
     } finally {
@@ -287,12 +307,13 @@ const CameraModal: Component<Props> = (props) => {
     }
   };
 
-  const captureAndUpload = async () => {
+  const captureAndUpload = async (): Promise<void> => {
     if (!videoRef || !canvasRef) return;
 
     try {
       // Draw the current video frame to the canvas
-      const context = canvasRef.getContext("2d");
+      const context: CanvasRenderingContext2D | null =
+        canvasRef.getContext("2d");
       if (!context) {
         throw new Error("Could not get canvas context");
       }
@@ -302,36 +323,43 @@ const CameraModal: Component<Props> = (props) => {
       context.drawImage(videoRef, 0, 0);
 
       // Convert canvas to blob
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvasRef!.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(new Error("Failed to create image blob"));
-            }
-          },
-          "image/jpeg",
-          0.95,
-        );
-      });
+      const blob: Blob = await new Promise<Blob>(
+        (resolve: (value: Blob) => void, reject: (reason: Error) => void) => {
+          const canvas: HTMLCanvasElement | undefined = canvasRef;
+          if (!canvas) {
+            reject(new Error("Canvas ref not available"));
+            return;
+          }
+          canvas.toBlob(
+            (blob: Blob | null): void => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error("Failed to create image blob"));
+              }
+            },
+            "image/jpeg",
+            0.95,
+          );
+        },
+      );
 
       setCapturedImage(blob);
       await uploadImage(blob);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to capture image");
       console.error("Error capturing image:", err);
     }
   };
 
-  const handleUploadClick = async () => {
-    const image = capturedImage();
+  const handleUploadClick = async (): Promise<void> => {
+    const image: Blob | null = capturedImage();
     if (image) {
       await uploadImage(image);
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     stopCamera();
     setCapturedImage(null);
     setMode("camera");
@@ -396,7 +424,7 @@ const CameraModal: Component<Props> = (props) => {
             <p class="text-red-500 text-center px-4">{error()}</p>
           ) : capturedImageUrl() ? (
             <img
-              src={capturedImageUrl()!}
+              src={capturedImageUrl() ?? ""}
               class="max-w-full max-h-full object-contain"
             />
           ) : mode() === "camera" ? (

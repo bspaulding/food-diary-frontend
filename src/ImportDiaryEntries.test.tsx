@@ -5,6 +5,18 @@ import { http, HttpResponse } from "msw";
 import { server } from "./test-setup";
 import ImportDiaryEntries from "./ImportDiaryEntries";
 
+interface GraphQLRequest {
+  query: string;
+}
+
+function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  if (typeof obj !== "object" || obj === null) {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  return "query" in record && typeof record.query === "string";
+}
+
 vi.mock("./Auth0", () => ({
   useAuth: () => [
     {
@@ -18,7 +30,9 @@ vi.mock("./Auth0", () => ({
 
 vi.mock("@solidjs/router", () => ({
   useNavigate: () => vi.fn(),
-  A: ({ href, children }: any) => <a href={href}>{children}</a>,
+  A: ({ href, children }: { href: string; children: unknown }) => (
+    <a href={href}>{children as Element}</a>
+  ),
 }));
 
 describe("ImportDiaryEntries", () => {
@@ -101,8 +115,11 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("InsertDiaryEntries")) {
+        const body: unknown = await request.json();
+        if (
+          isGraphQLRequest(body) &&
+          body.query.includes("InsertDiaryEntries")
+        ) {
           return HttpResponse.json({
             data: {
               insert_food_diary_diary_entry: {
@@ -195,8 +212,11 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("InsertDiaryEntries")) {
+        const body: unknown = await request.json();
+        if (
+          isGraphQLRequest(body) &&
+          body.query.includes("InsertDiaryEntries")
+        ) {
           return HttpResponse.error();
         }
         return HttpResponse.json({ data: {} });
@@ -237,9 +257,9 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
     // Mock FileReader to simulate an error
     const originalFileReader = global.FileReader;
     global.FileReader = class {
-      addEventListener(event: string, handler: any) {
+      addEventListener(event: string, handler: EventListener) {
         if (event === "error") {
-          setTimeout(() => handler(new Error("File read error")), 0);
+          setTimeout(() => handler(new Error("File read error") as any), 0);
         }
       }
       readAsText() {}
@@ -274,9 +294,9 @@ invalid-date,Apple,1,95,0.3,0.1,0,0.1,0.1,0,2,25,4,19,0,0.5`;
     // Mock FileReader to simulate missing event.target
     const originalFileReader = global.FileReader;
     global.FileReader = class {
-      addEventListener(event: string, handler: any) {
+      addEventListener(event: string, handler: EventListener) {
         if (event === "load") {
-          setTimeout(() => handler({}), 0); // Event with no target
+          setTimeout(() => handler({} as Event), 0); // Event with no target
         }
       }
       readAsText() {}

@@ -2,14 +2,17 @@ type Accessors<T> = {
   [P in keyof T]: () => T[P];
 };
 
-export function accessorsToObject<T>(accessors: Accessors<T>): T {
-  return Object.entries(accessors).reduce(
-    (acc, [k, v]) => ({
+export function accessorsToObject<T extends Record<string, unknown>>(
+  accessors: Accessors<T>,
+): T {
+  type AccessorFunc = () => unknown;
+  const entries = Object.entries(accessors) as Array<[string, AccessorFunc]>;
+  return entries.reduce<Partial<T>>((acc, [k, accessor]) => {
+    return {
       ...acc,
-      [k]: (v as any)(),
-    }),
-    {} as T,
-  );
+      [k]: accessor(),
+    };
+  }, {}) as T;
 }
 
 const timeFormat = new Intl.DateTimeFormat("en-US", { timeStyle: "short" });

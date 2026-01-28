@@ -8,6 +8,18 @@ import Trends from "./Trends";
 import DiaryList from "./DiaryList";
 import userEvent from "@testing-library/user-event";
 
+interface GraphQLRequest {
+  query: string;
+}
+
+function isGraphQLRequest(obj: unknown): obj is GraphQLRequest {
+  if (typeof obj !== "object" || obj === null) {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  return "query" in record && typeof record.query === "string";
+}
+
 // Mock Auth0 - simulate logged in user
 vi.mock("./Auth0", () => ({
   useAuth: () => [
@@ -28,21 +40,28 @@ describe("Trends", () => {
     // Set up empty response for trends
     server.use(
       http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("GetWeeklyTrends")) {
+        const body: unknown = await request.json();
+        if (!isGraphQLRequest(body)) {
+          return HttpResponse.json({
+            errors: [{ message: "Invalid request" }],
+          });
+        }
+        const query: string = body.query;
+        if (query.includes("GetWeeklyTrends")) {
           return HttpResponse.json({
             data: {
               food_diary_trends_weekly: [],
             },
           });
         }
-        if (body.query.includes("GetEntries")) {
+        if (query.includes("GetEntries")) {
           return HttpResponse.json({
             data: {
               food_diary_diary_entry: [],
             },
           });
         }
+        return HttpResponse.json({ data: {} });
       }),
     );
 
@@ -87,9 +106,14 @@ describe("Trends", () => {
     ];
 
     server.use(
-      http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        const query = body.query || "";
+      http.post("*/api/v1/graphql", async ({ request }): Promise<Response> => {
+        const body: unknown = await request.json();
+        if (!isGraphQLRequest(body)) {
+          return HttpResponse.json({
+            errors: [{ message: "Invalid request" }],
+          });
+        }
+        const query: string = body.query || "";
 
         if (query.includes("GetWeeklyTrends")) {
           return HttpResponse.json({
@@ -134,16 +158,22 @@ describe("Trends", () => {
 
   it("should have View Trends link on DiaryList page", async () => {
     server.use(
-      http.post("*/api/v1/graphql", async ({ request }) => {
-        const body = (await request.json()) as any;
-        if (body.query.includes("GetEntries")) {
+      http.post("*/api/v1/graphql", async ({ request }): Promise<Response> => {
+        const body: unknown = await request.json();
+        if (!isGraphQLRequest(body)) {
+          return HttpResponse.json({
+            errors: [{ message: "Invalid request" }],
+          });
+        }
+        const query: string = body.query;
+        if (query.includes("GetEntries")) {
           return HttpResponse.json({
             data: {
               food_diary_diary_entry: [],
             },
           });
         }
-        if (body.query.includes("GetWeeklyStats")) {
+        if (query.includes("GetWeeklyStats")) {
           return HttpResponse.json({
             data: {
               current_week: {
@@ -163,6 +193,7 @@ describe("Trends", () => {
             },
           });
         }
+        return HttpResponse.json({ data: {} });
       }),
     );
 

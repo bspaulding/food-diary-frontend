@@ -1,6 +1,5 @@
 import type { Component, Accessor, Setter } from "solid-js";
 import { createSignal, Show } from "solid-js";
-import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
 import type { NutritionItem, NutritionItemAttrs } from "./Api";
 import { createNutritionItem, updateNutritionItem } from "./Api";
@@ -8,6 +7,11 @@ import { useAuth } from "./Auth0";
 import { accessorsToObject } from "./Util";
 import styles from "./NewNutritionItemForm.module.css";
 import CameraModal from "./CameraModal";
+
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: Array<{ message: string }>;
+}
 
 const fromTextInput =
   (setter: Setter<string>) =>
@@ -25,7 +29,7 @@ const fromNumberInput =
   };
 
 type Props = {
-  onSaved?: (id: number) => {};
+  onSaved?: (id: number) => void;
   initialItem?: NutritionItem;
 };
 
@@ -80,8 +84,8 @@ const NewNutritionItemForm: Component<Props> = ({
     initialItem?.proteinGrams || 0,
   );
 
-  const item = () =>
-    accessorsToObject({
+  const item = (): NutritionItem => {
+    const result = accessorsToObject({
       id,
       description,
       calories,
@@ -98,8 +102,10 @@ const NewNutritionItemForm: Component<Props> = ({
       addedSugarsGrams,
       proteinGrams,
     });
+    return result as NutritionItem;
+  };
 
-  const handleImport = (nutritionData: Partial<NutritionItemAttrs>) => {
+  const handleImport = (nutritionData: Partial<NutritionItemAttrs>): void => {
     if (nutritionData.description !== undefined)
       setDescription(nutritionData.description);
     if (nutritionData.calories !== undefined)
@@ -313,11 +319,15 @@ const NewNutritionItemForm: Component<Props> = ({
             disabled={disabled()}
             onClick={async (event) => {
               event.preventDefault();
-              const itemData = item();
-              const id = await saveItem(accessToken(), setDisabled, {
-                ...itemData,
-                id: itemData.id || 0,
-              } as NutritionItem);
+              const itemData: NutritionItem = item();
+              const id: number | undefined = await saveItem(
+                accessToken(),
+                setDisabled,
+                {
+                  ...itemData,
+                  id: itemData.id || 0,
+                } as NutritionItem,
+              );
               if (!onSaved) {
                 navigate(`/nutrition_item/${id}`);
               }
@@ -337,15 +347,21 @@ const saveItem = async (
   accessToken: string,
   setLoading: Setter<boolean>,
   item: NutritionItem,
-) => {
+): Promise<number | undefined> => {
   setLoading(true);
   if (item.id) {
-    const response = await updateNutritionItem(accessToken, item);
-    const id = response.data?.update_food_diary_nutrition_item_by_pk.id;
+    const response: GraphQLResponse<{
+      update_food_diary_nutrition_item_by_pk: { id: number };
+    }> = await updateNutritionItem(accessToken, item);
+    const id: number | undefined =
+      response.data?.update_food_diary_nutrition_item_by_pk.id;
     return id;
   } else {
-    const response = await createNutritionItem(accessToken, item);
-    const id = response.data?.insert_food_diary_nutrition_item_one.id;
+    const response: GraphQLResponse<{
+      insert_food_diary_nutrition_item_one: { id: number };
+    }> = await createNutritionItem(accessToken, item);
+    const id: number | undefined =
+      response.data?.insert_food_diary_nutrition_item_one.id;
     return id;
   }
 };

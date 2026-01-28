@@ -5,10 +5,10 @@ type Props = {
   date: Date;
 };
 
-const DateBadge: Component<Props> = ({ class: klass, date }) => (
-  <div class={`${klass || ""} text-center text-xl font-semibold`}>
-    <p class="text-4xl">{dayOfMonth.format(date)}</p>
-    <p class="uppercase">{month.format(date)}</p>
+const DateBadge: Component<Props> = (props: Props) => (
+  <div class={`${props.class || ""} text-center text-xl font-semibold`}>
+    <p class="text-4xl">{dayOfMonth.format(props.date)}</p>
+    <p class="uppercase">{month.format(props.date)}</p>
   </div>
 );
 

@@ -5,8 +5,22 @@ import { format, parse, formatISO, parseISO } from "date-fns";
 import { Show } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import createAuthorizedResource from "./createAuthorizedResource";
+import type { DiaryEntry } from "./Api";
 import { getDiaryEntry, updateDiaryEntry } from "./Api";
 import ButtonLink from "./ButtonLink";
+
+interface GraphQLError {
+  message: string;
+}
+
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: GraphQLError[];
+}
+
+interface GetDiaryEntryResponse {
+  food_diary_diary_entry_by_pk: DiaryEntry;
+}
 
 const DiaryEntryEditForm: Component = () => {
   const params = useParams();
@@ -20,15 +34,16 @@ const DiaryEntryEditForm: Component = () => {
   );
   const [servings, setServings] = createSignal<number | undefined>(undefined);
   const [disabled, setDisabled] = createSignal(false);
-  const [errors, setErrors] = createSignal([]);
+  const [errors, setErrors] = createSignal<string[]>([]);
   const navigate = useNavigate();
 
-  const diaryEntry = () =>
-    diaryEntryQuery()?.data.food_diary_diary_entry_by_pk || {};
-  const href = () =>
+  const diaryEntry = (): DiaryEntry | undefined =>
+    (diaryEntryQuery() as GraphQLResponse<GetDiaryEntryResponse> | undefined)
+      ?.data?.food_diary_diary_entry_by_pk;
+  const href = (): string =>
     diaryEntry()?.nutrition_item
       ? `/nutrition_item/${diaryEntry()?.nutrition_item?.id}`
-      : `/recipe/${diaryEntry()?.recipe?.id}`;
+      : `/recipe/${diaryEntry()?.recipe?.id ?? 0}`;
   return (
     <>
       <div class="flex space-x-4 mb-4">
@@ -40,8 +55,8 @@ const DiaryEntryEditForm: Component = () => {
       <Show when={diaryEntry()?.id}>
         <div class="mb-4">
           <p class="text-2xl">
-            {diaryEntry().nutrition_item?.description ||
-              diaryEntry().recipe?.name}
+            {diaryEntry()?.nutrition_item?.description ||
+              diaryEntry()?.recipe?.name}
           </p>
           <p class="text-indigo-600">
             <a href={href()}>View Detail</a>
@@ -55,9 +70,9 @@ const DiaryEntryEditForm: Component = () => {
               type="number"
               inputmode="decimal"
               step="0.1"
-              value={diaryEntry().servings}
-              onInput={(e) => {
-                const parsed = parseFloat(e.target.value);
+              value={diaryEntry()?.servings ?? 0}
+              onInput={(e: InputEvent & { target: HTMLInputElement }) => {
+                const parsed: number = parseFloat(e.target.value);
                 if (!isNaN(parsed)) {
                   setServings(parsed);
                 }
@@ -70,56 +85,66 @@ const DiaryEntryEditForm: Component = () => {
               id="consumed_at"
               type="datetime-local"
               value={format(
-                parseISO(diaryEntry().consumed_at),
+                parseISO(diaryEntry()?.consumed_at ?? new Date().toISOString()),
                 "yyyy-MM-dd'T'HH:mm",
               )}
-              onChange={(e) => setConsumedAt(e.target.value)}
+              onChange={(e: Event & { target: HTMLInputElement }) =>
+                setConsumedAt(e.target.value)
+              }
             />
           </fieldset>
           <fieldset class="mt-4 mb-4">
             <button
               class="bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold"
               disabled={disabled()}
-              onClick={async () => {
+              onClick={async (): Promise<void> => {
                 setErrors([]);
                 if (consumedAt() === undefined && servings() === undefined) {
                   navigate("/");
-                  return; // nothing changed, nothing to do
+                  return;
                 }
                 setDisabled(true);
 
-                // Use the changed consumed_at if provided, otherwise keep original
-                const newConsumedAt =
-                  consumedAt() !== undefined
-                    ? formatISO(
-                        parse(consumedAt()!, "yyyy-MM-dd'T'HH:mm", new Date()),
-                      )
-                    : diaryEntry().consumed_at;
+                const entry: DiaryEntry | undefined = diaryEntry();
+                if (!entry) return;
 
-                // Use the changed servings if provided, otherwise keep original
-                const newServings =
-                  servings() !== undefined ? servings() : diaryEntry().servings;
+                const newConsumedAt: string =
+                  consumedAt() !== undefined && consumedAt() !== null
+                    ? formatISO(
+                        parse(
+                          consumedAt() ?? "",
+                          "yyyy-MM-dd'T'HH:mm",
+                          new Date(),
+                        ),
+                      )
+                    : entry.consumed_at;
+
+                const newServings: number =
+                  servings() !== undefined && servings() !== null
+                    ? (servings() ?? entry.servings)
+                    : entry.servings;
 
                 try {
-                  const response = await updateDiaryEntry(accessToken(), {
-                    id: diaryEntry().id,
-                    consumedAt: newConsumedAt,
-                    servings: newServings,
-                  });
+                  const response: GraphQLResponse<unknown> =
+                    await updateDiaryEntry(accessToken(), {
+                      id: entry.id,
+                      consumedAt: newConsumedAt,
+                      servings: newServings,
+                    });
                   console.log(response.errors);
                   if (response.errors) {
                     console.debug(response.errors);
                     setDisabled(false);
                     setErrors(
                       response.errors
-                        .filter((e: any) => e.message)
-                        .map((e: any) => e.message),
+                        .filter((e: GraphQLError) => e.message)
+                        .map((e: GraphQLError) => e.message),
                     );
                   } else {
                     setErrors([]);
                     navigate("/");
                   }
-                } catch (e) {
+                } catch (e: unknown) {
                   console.debug(e);
                   setDisabled(false);
                 }

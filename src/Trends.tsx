@@ -33,13 +33,13 @@ const Trends: Component = () => {
   });
 
   const maxCalories = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgCalories), 1),
+    Math.max(...weeklyStats().map((s: WeeklyStats) => s.avgCalories), 1),
   );
   const maxProtein = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgProtein), 1),
+    Math.max(...weeklyStats().map((s: WeeklyStats) => s.avgProtein), 1),
   );
   const maxAddedSugar = createMemo(() =>
-    Math.max(...weeklyStats().map((s) => s.avgAddedSugar), 1),
+    Math.max(...weeklyStats().map((s: WeeklyStats) => s.avgAddedSugar), 1),
   );
 
   const LineChart: Component<{
@@ -47,26 +47,31 @@ const Trends: Component = () => {
     max: number;
     color: string;
     label: string;
-  }> = (props) => {
+  }> = (props: {
+    data: number[];
+    max: number;
+    color: string;
+    label: string;
+  }) => {
     const points = createMemo(() => {
-      const width = props.data.length * 80; // 80px per week
-      const height = 200;
-      const padding = 20;
+      const width: number = props.data.length * 80; // 80px per week
+      const height: number = 200;
+      const padding: number = 20;
 
       return props.data
-        .map((value, index) => {
-          const x =
+        .map((value: number, index: number) => {
+          const x: number =
             padding +
             (index * (width - 2 * padding)) /
               Math.max(props.data.length - 1, 1);
-          const y =
+          const y: number =
             height - padding - (value / props.max) * (height - 2 * padding);
           return `${x},${y}`;
         })
         .join(" ");
     });
 
-    const width = () => props.data.length * 80;
+    const width = (): number => props.data.length * 80;
 
     return (
       <div class="mb-8">
@@ -112,11 +117,11 @@ const Trends: Component = () => {
             />
 
             {/* Data points */}
-            {props.data.map((value, index) => {
-              const x =
+            {props.data.map((value: number, index: number) => {
+              const x: number =
                 20 +
                 (index * (width() - 40)) / Math.max(props.data.length - 1, 1);
-              const y = 180 - (value / props.max) * 160;
+              const y: number = 180 - (value / props.max) * 160;
               return (
                 <g>
                   <circle cx={x} cy={y} r="4" fill={props.color} />
@@ -135,9 +140,9 @@ const Trends: Component = () => {
 
             {/* Week labels */}
             {(() => {
-              const stats = weeklyStats();
-              return stats.map((stat, index) => {
-                const x =
+              const stats: WeeklyStats[] = weeklyStats();
+              return stats.map((stat: WeeklyStats, index: number) => {
+                const x: number =
                   20 + (index * (width() - 40)) / Math.max(stats.length - 1, 1);
                 return (
                   <text
@@ -172,19 +177,19 @@ const Trends: Component = () => {
       ) : (
         <>
           <LineChart
-            data={weeklyStats().map((s) => s.avgCalories)}
+            data={weeklyStats().map((s: WeeklyStats) => s.avgCalories)}
             max={maxCalories()}
             color="#3b82f6"
             label="Average Daily Calories (per week)"
           />
           <LineChart
-            data={weeklyStats().map((s) => s.avgProtein)}
+            data={weeklyStats().map((s: WeeklyStats) => s.avgProtein)}
             max={maxProtein()}
             color="#10b981"
             label="Average Daily Protein (g per week)"
           />
           <LineChart
-            data={weeklyStats().map((s) => s.avgAddedSugar)}
+            data={weeklyStats().map((s: WeeklyStats) => s.avgAddedSugar)}
             max={maxAddedSugar()}
             color="#ef4444"
             label="Average Daily Added Sugar (g per week)"

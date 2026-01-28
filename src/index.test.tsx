@@ -6,7 +6,7 @@ vi.mock("solid-js/web", () => ({
 }));
 
 vi.mock("@solidjs/router", () => ({
-  Router: vi.fn(({ children }: any) => children),
+  Router: vi.fn(({ children }: { children: unknown }) => children),
   Route: vi.fn(() => null),
 }));
 
@@ -38,7 +38,10 @@ describe("index", () => {
     expect(render).toHaveBeenCalled();
 
     // Verify render was called with correct parameters
-    const renderCall = (render as any).mock.calls[0];
+    const renderAny: Record<string, unknown> = render as any;
+    const mockData: unknown = renderAny.mock;
+    const mockObj = mockData as { calls: unknown[][] };
+    const renderCall: unknown[] = mockObj.calls[0];
     expect(renderCall).toBeDefined();
     expect(renderCall[1]).toBe(mockRoot); // Second argument should be the root element
 

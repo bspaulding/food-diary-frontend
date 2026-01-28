@@ -14,6 +14,9 @@ type ItemOrRecipe = {
   recipe?: SearchRecipe;
   nutritionItem?: SearchNutritionItem;
 };
+
+export type { ItemOrRecipe };
+
 export enum ItemsQueryType {
   ItemsAndRecipes,
   ItemsOnly,
@@ -23,21 +26,22 @@ type Props = {
   queryType?: ItemsQueryType;
 };
 
-const SearchItemsForm: Component<Props> = ({ children, queryType }: Props) => {
+const SearchItemsForm: Component<Props> = (props: Props) => {
   const [search, setSearch] = createSignal("");
   const [getItemsQuery] = createAuthorizedResource(
     search,
     (token: string, searchValue: string) => {
-      return "undefined" === typeof queryType ||
-        queryType === ItemsQueryType.ItemsAndRecipes
+      return "undefined" === typeof props.queryType ||
+        props.queryType === ItemsQueryType.ItemsAndRecipes
         ? searchItemsAndRecipes(token, searchValue)
         : searchItemsOnly(token, searchValue);
     },
   );
-  const nutritionItems = () =>
+  const nutritionItems = (): SearchNutritionItem[] =>
     getItemsQuery()?.data?.food_diary_search_nutrition_items || [];
-  const recipes = () => getItemsQuery()?.data?.food_diary_search_recipes || [];
-  const clear = () => setSearch("");
+  const recipes = (): SearchRecipe[] =>
+    getItemsQuery()?.data?.food_diary_search_recipes || [];
+  const clear = (): string => setSearch("");
 
   return (
     <section class="flex flex-col mt-5">
@@ -46,8 +50,11 @@ const SearchItemsForm: Component<Props> = ({ children, queryType }: Props) => {
         type="search"
         placeholder="Search Previous Items"
         name="entry-item-search"
-        onInput={debounce((event: InputEvent) => {
-          setSearch((event.target as HTMLInputElement).value);
+        onInput={debounce((event: InputEvent): void => {
+          const target = event.target;
+          if (target instanceof HTMLInputElement) {
+            setSearch(target.value);
+          }
         }, 500)}
         value={search()}
       />
@@ -66,10 +73,12 @@ const SearchItemsForm: Component<Props> = ({ children, queryType }: Props) => {
           </p>
           <ul>
             <For each={nutritionItems()}>
-              {(nutritionItem) => children({ clear, nutritionItem })}
+              {(nutritionItem: SearchNutritionItem) =>
+                props.children({ clear, nutritionItem })
+              }
             </For>
             <For each={recipes()}>
-              {(recipe) => children({ clear, recipe })}
+              {(recipe: SearchRecipe) => props.children({ clear, recipe })}
             </For>
           </ul>
         </Show>

@@ -214,7 +214,7 @@ export type SearchRecipe = {
 };
 
 export type SearchItemsAndRecipesQueryResponse = {
-  data: {
+  data?: {
     food_diary_search_nutrition_items: SearchNutritionItem[];
     food_diary_search_recipes: SearchRecipe[];
   };
@@ -239,7 +239,17 @@ query SearchItems($search: String!) {
 }
 `;
 
-export async function searchItemsOnly(accessToken: string, search: string) {
+export type SearchItemsOnlyQueryResponse = {
+  data?: {
+    food_diary_search_nutrition_items: SearchNutritionItem[];
+    food_diary_search_recipes?: SearchRecipe[];
+  };
+};
+
+export async function searchItemsOnly(
+  accessToken: string,
+  search: string,
+): Promise<SearchItemsOnlyQueryResponse> {
   const response = await fetchQuery(accessToken, searchItemsOnlyQuery, {
     search,
   });
@@ -317,7 +327,10 @@ function camelToSnakeCase(s: string): string {
 
 function objectToSnakeCaseKeys(o: object): object {
   return Object.entries(o).reduce(
-    (acc, [k, v]) => ({ ...acc, [camelToSnakeCase(k)]: v }),
+    (acc: object, [k, v]: [string, unknown]) => ({
+      ...acc,
+      [camelToSnakeCase(k)]: v,
+    }),
     {},
   );
 }
@@ -343,10 +356,16 @@ query GetNutritionItem($id: Int!) {
   }
 }
 `;
+export type GetNutritionItemQueryResponse = {
+  data?: {
+    food_diary_nutrition_item_by_pk?: NutritionItem;
+  };
+};
+
 export async function fetchNutritionItem(
   accessToken: string,
   id: number | string,
-) {
+): Promise<GetNutritionItemQueryResponse> {
   const response = await fetchQuery(accessToken, getNutritionItemQuery, { id });
   return response.json();
 }
@@ -538,7 +557,21 @@ query GetRecipe($id: Int!) {
 }
 `;
 
-export async function fetchRecipe(accessToken: string, id: number) {
+export type GetRecipeQueryResponse = {
+  data?: {
+    food_diary_recipe_by_pk?: {
+      id: number;
+      name: string;
+      total_servings: number;
+      recipe_items: RecipeItem[];
+    };
+  };
+};
+
+export async function fetchRecipe(
+  accessToken: string,
+  id: number,
+): Promise<GetRecipeQueryResponse> {
   return (await fetchQuery(accessToken, fetchRecipeQuery, { id })).json();
 }
 

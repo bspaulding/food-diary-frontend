@@ -90,12 +90,17 @@ describe("createAuthorizedResource", () => {
     mockLogout.mockClear();
 
     const TestComponent: Component = () => {
-      const [data] = createAuthorizedResource(async (token: string) => {
-        throw new AuthorizationError("Unauthorized");
-      });
+      const [data] = createAuthorizedResource<{ message: string }>(
+        async (token: string) => {
+          throw new AuthorizationError("Unauthorized");
+        },
+      );
 
       return (
-        <Show when={!data.error} fallback={<div>Error occurred</div>}>
+        <Show
+          when={!((data as any)["error"] as unknown)}
+          fallback={<div>Error occurred</div>}
+        >
           <div>Success</div>
         </Show>
       );
@@ -116,12 +121,17 @@ describe("createAuthorizedResource", () => {
     mockLogout.mockClear();
 
     const TestComponent: Component = () => {
-      const [data] = createAuthorizedResource(async (token: string) => {
-        throw new Error("Some other error");
-      });
+      const [data] = createAuthorizedResource<{ message: string }>(
+        async (token: string) => {
+          throw new Error("Some other error");
+        },
+      );
 
       return (
-        <Show when={!data.error} fallback={<div>Other error occurred</div>}>
+        <Show
+          when={!((data as any)["error"] as unknown)}
+          fallback={<div>Other error occurred</div>}
+        >
           <div>Success</div>
         </Show>
       );
