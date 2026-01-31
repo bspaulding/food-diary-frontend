@@ -92,11 +92,14 @@ This project uses several automated checks that must pass before any pull reques
 
 - tsc checks for any errors or warnings in typescript types
 - type-coverage checks that 100% of code has explicit types (no implicit any)
+- test coverage checks that code coverage meets minimum thresholds (lines: 92.9%, functions: 95%, branches: 74%, statements: 92.9%)
 - prettier checks for consistent formatting
 - the unit tests must pass
 - the acceptance tests must pass
 
 please run all of these checks, and make sure they pass, before committing changes.
+
+To run test coverage locally: `npm test -- --coverage`
 
 ## Common Commands
 

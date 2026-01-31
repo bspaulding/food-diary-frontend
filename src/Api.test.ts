@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "./test-setup";
-import { fetchEntries, createNutritionItem, GraphQLError } from "./Api";
+import {
+  fetchEntries,
+  createNutritionItem,
+  updateNutritionItem,
+  createRecipe,
+  GraphQLError,
+} from "./Api";
 
 describe("Api authorization error handling", () => {
   it("should throw AuthorizationError when API returns 401", async () => {
@@ -143,5 +149,125 @@ describe("createNutritionItem", () => {
     // Verify other fields are present (in snake_case)
     expect(vars.nutritionItem.description).toBe("Test Food");
     expect(vars.nutritionItem.calories).toBe(100);
+  });
+});
+
+describe("updateNutritionItem", () => {
+  it("should update an existing nutrition item", async () => {
+    let capturedVariables: unknown = null;
+
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as {
+          query: string;
+          variables: unknown;
+        };
+        capturedVariables = body.variables;
+
+        return HttpResponse.json({
+          data: {
+            update_food_diary_nutrition_item_by_pk: {
+              id: 123,
+            },
+          },
+        });
+      }),
+    );
+
+    const item = {
+      id: 123,
+      description: "Updated Food",
+      calories: 150,
+      totalFatGrams: 7,
+      saturatedFatGrams: 2,
+      transFatGrams: 0,
+      polyunsaturatedFatGrams: 1,
+      monounsaturatedFatGrams: 3,
+      cholesterolMilligrams: 15,
+      sodiumMilligrams: 60,
+      totalCarbohydrateGrams: 25,
+      dietaryFiberGrams: 4,
+      totalSugarsGrams: 6,
+      addedSugarsGrams: 3,
+      proteinGrams: 5,
+    };
+
+    await updateNutritionItem("test-token", item);
+
+    expect(capturedVariables).toBeTruthy();
+    const vars = capturedVariables as {
+      id: number;
+      attrs: Record<string, unknown>;
+    };
+    expect(vars.id).toBe(123);
+    expect(vars.attrs).toBeTruthy();
+    // Verify fields are in snake_case
+    expect(vars.attrs.description).toBe("Updated Food");
+    expect(vars.attrs.calories).toBe(150);
+  });
+});
+
+describe("createRecipe", () => {
+  it("should transform recipe input correctly", async () => {
+    let capturedVariables: unknown = null;
+
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as {
+          query: string;
+          variables: unknown;
+        };
+        capturedVariables = body.variables;
+
+        return HttpResponse.json({
+          data: {
+            insert_food_diary_recipe_one: {
+              id: 456,
+            },
+          },
+        });
+      }),
+    );
+
+    const recipeInput = {
+      name: "Test Recipe",
+      total_servings: 4,
+      recipe_items: [
+        {
+          servings: 1,
+          nutrition_item: {
+            id: 100,
+            description: "Item 1",
+            calories: 50,
+          },
+        },
+        {
+          servings: 2,
+          nutrition_item: {
+            id: 101,
+            description: "Item 2",
+            calories: 75,
+          },
+        },
+      ],
+    };
+
+    await createRecipe("test-token", recipeInput);
+
+    expect(capturedVariables).toBeTruthy();
+    const vars = capturedVariables as {
+      input: {
+        name: string;
+        total_servings: number;
+        recipe_items: {
+          data: Array<{ servings: number; nutrition_item_id: number }>;
+        };
+      };
+    };
+    expect(vars.input.name).toBe("Test Recipe");
+    expect(vars.input.total_servings).toBe(4);
+    expect(vars.input.recipe_items.data).toHaveLength(2);
+    expect(vars.input.recipe_items.data[0].nutrition_item_id).toBe(100);
+    expect(vars.input.recipe_items.data[1].nutrition_item_id).toBe(101);
   });
 });
