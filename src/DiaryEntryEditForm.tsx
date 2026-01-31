@@ -6,7 +6,11 @@ import { Show } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import createAuthorizedResource from "./createAuthorizedResource";
 import type { DiaryEntry } from "./Api";
-import { getDiaryEntry, updateDiaryEntry } from "./Api";
+import {
+  getDiaryEntry,
+  updateDiaryEntry,
+  GraphQLError as ApiGraphQLError,
+} from "./Api";
 import ButtonLink from "./ButtonLink";
 
 interface GraphQLError {
@@ -147,6 +151,24 @@ const DiaryEntryEditForm: Component = () => {
                 } catch (e: unknown) {
                   console.debug(e);
                   setDisabled(false);
+                  // Handle GraphQLError from fetchQuery
+                  if (e instanceof ApiGraphQLError) {
+                    const errorMessages = e.errors
+                      .filter(
+                        (err: unknown): err is { message: string } =>
+                          typeof err === "object" &&
+                          err !== null &&
+                          "message" in err &&
+                          typeof (err as { message: unknown }).message ===
+                            "string",
+                      )
+                      .map((err) => err.message);
+                    setErrors(errorMessages);
+                  } else if (e instanceof Error) {
+                    setErrors([e.message]);
+                  } else {
+                    setErrors(["An unexpected error occurred"]);
+                  }
                 }
               }}
             >
