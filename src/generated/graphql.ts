@@ -398,7 +398,7 @@ export type DeleteEntryMutationResult = {
     | undefined;
 };
 
-export type NutritionItemFragment = {
+export type NutritionItemFullFragment = {
   __typename?: "food_diary_nutrition_item";
   description: string;
   calories: number;
@@ -837,12 +837,12 @@ export type UpdateRecipeMutationResult = {
     | undefined;
 };
 
-export const NutritionItemFragmentDoc = {
+export const NutritionItemFullFragmentDoc = {
   kind: "Document",
   definitions: [
     {
       kind: "FragmentDefinition",
-      name: { kind: "Name", value: "nutritionItem" },
+      name: { kind: "Name", value: "NutritionItemFull" },
       typeCondition: {
         kind: "NamedType",
         name: { kind: "Name", value: "food_diary_nutrition_item" },
@@ -892,7 +892,7 @@ export const NutritionItemFragmentDoc = {
       },
     },
   ],
-} as unknown as DocumentNode<NutritionItemFragment, unknown>;
+} as unknown as DocumentNode<NutritionItemFullFragment, unknown>;
 export const MacrosFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -1165,7 +1165,7 @@ export const ExportEntriesDocument = {
                     selections: [
                       {
                         kind: "FragmentSpread",
-                        name: { kind: "Name", value: "nutritionItem" },
+                        name: { kind: "Name", value: "NutritionItemFull" },
                       },
                     ],
                   },
@@ -1197,7 +1197,7 @@ export const ExportEntriesDocument = {
                                     kind: "FragmentSpread",
                                     name: {
                                       kind: "Name",
-                                      value: "nutritionItem",
+                                      value: "NutritionItemFull",
                                     },
                                   },
                                 ],
@@ -1217,7 +1217,7 @@ export const ExportEntriesDocument = {
     },
     {
       kind: "FragmentDefinition",
-      name: { kind: "Name", value: "nutritionItem" },
+      name: { kind: "Name", value: "NutritionItemFull" },
       typeCondition: {
         kind: "NamedType",
         name: { kind: "Name", value: "food_diary_nutrition_item" },

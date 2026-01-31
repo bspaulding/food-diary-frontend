@@ -1,4 +1,4 @@
-fragment nutritionItem on food_diary_nutrition_item {
+fragment NutritionItemFull on food_diary_nutrition_item {
   description
   calories
   total_fat_grams
@@ -20,14 +20,14 @@ query ExportEntries {
     servings
     consumed_at
     nutrition_item {
-      ...nutritionItem
+      ...NutritionItemFull
     }
     recipe {
       name
       recipe_items {
         servings
         nutrition_item {
-          ...nutritionItem
+          ...NutritionItemFull
         }
       }
     }

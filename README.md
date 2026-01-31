@@ -15,6 +15,7 @@ This project uses GraphQL Code Generator to create type-safe queries. The GraphQ
 ### `npm run codegen`
 
 Regenerates TypeScript types from the GraphQL schema and queries. Run this after:
+
 - Modifying the GraphQL schema in `schema.graphql`
 - Adding or updating queries in `src/graphql/*.graphql`
 
