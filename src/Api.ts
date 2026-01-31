@@ -11,12 +11,28 @@ export class AuthorizationError extends Error {
 }
 
 /**
+ * Type for GraphQL error objects in the response
+ */
+interface GraphQLErrorObject {
+  message: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Type for GraphQL response body
+ */
+interface GraphQLResponse {
+  data?: unknown;
+  errors?: GraphQLErrorObject[];
+}
+
+/**
  * Custom error class for GraphQL errors
  */
 export class GraphQLError extends Error {
   constructor(
     message: string,
-    public errors: unknown[],
+    public errors: GraphQLErrorObject[],
   ) {
     super(message);
     this.name = "GraphQLError";
@@ -46,7 +62,8 @@ async function fetchQuery(
   accessToken: string,
   query: string,
   variables: object = {},
-) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> {
   const response = await fetch(`${host}`, {
     method: "POST",
     headers: {
@@ -68,10 +85,10 @@ async function fetchQuery(
   }
 
   // Check for GraphQL errors in the response body
-  const json = await response.json();
+  const json: GraphQLResponse = await response.json();
   if (json.errors) {
-    const errorMessage = json.errors
-      .map((e: { message: string }) => e.message)
+    const errorMessage: string = json.errors
+      .map((e: GraphQLErrorObject) => e.message)
       .join(", ");
     throw new GraphQLError(errorMessage, json.errors);
   }

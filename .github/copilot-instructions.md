@@ -88,9 +88,10 @@ src/
 
 ### Automated Checks
 
-This project uses several automated checks tha must pass before any pull request is merged.
+This project uses several automated checks that must pass before any pull request is merged.
 
 - tsc checks for any errors or warnings in typescript types
+- type-coverage checks that 100% of code has explicit types (no implicit any)
 - prettier checks for consistent formatting
 - the unit tests must pass
 - the acceptance tests must pass
