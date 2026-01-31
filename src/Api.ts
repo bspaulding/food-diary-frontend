@@ -155,10 +155,8 @@ export type GetEntriesQueryResponse = {
 
 export async function fetchEntries(
   accessToken: string,
-): Promise<GetEntriesQueryResponse> {
-  const result = await fetchQuery(accessToken, Documents.GetEntriesDocument);
-  // Transform generated type to maintain backward compatibility
-  return result as unknown as GetEntriesQueryResponse;
+): Promise<GraphQLResponse<Types.GetEntriesQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetEntriesDocument);
 }
 
 export type WeeklyStatsResponse = {
@@ -185,17 +183,12 @@ export async function fetchWeeklyStats(
   currentWeekStart: string,
   todayStart: string,
   fourWeeksAgoStart: string,
-): Promise<WeeklyStatsResponse> {
-  const result = await fetchQuery(
-    accessToken,
-    Documents.GetWeeklyStatsDocument,
-    {
-      currentWeekStart,
-      todayStart,
-      fourWeeksAgoStart,
-    },
-  );
-  return result as unknown as WeeklyStatsResponse;
+): Promise<GraphQLResponse<Types.GetWeeklyStatsQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetWeeklyStatsDocument, {
+    currentWeekStart,
+    todayStart,
+    fourWeeksAgoStart,
+  });
 }
 
 // Search result types
@@ -219,7 +212,7 @@ export type SearchItemsAndRecipesQueryResponse = {
 export async function searchItemsAndRecipes(
   accessToken: string,
   search: string,
-): Promise<SearchItemsAndRecipesQueryResponse> {
+): Promise<GraphQLResponse<Types.SearchItemsAndRecipesQueryResult>> {
   return await fetchQuery(
     accessToken,
     Documents.SearchItemsAndRecipesDocument,
@@ -239,7 +232,7 @@ export type SearchItemsOnlyQueryResponse = {
 export async function searchItemsOnly(
   accessToken: string,
   search: string,
-): Promise<SearchItemsOnlyQueryResponse> {
+): Promise<GraphQLResponse<Types.SearchItemsQueryResult>> {
   return await fetchQuery(accessToken, Documents.SearchItemsDocument, {
     search,
   });
@@ -269,7 +262,7 @@ export type NutritionItem = NutritionItemAttrs & {
 export async function createNutritionItem(
   accessToken: string,
   item: NutritionItem,
-) {
+): Promise<GraphQLResponse<Types.CreateNutritionItemMutationResult>> {
   // Exclude id field when creating a new item
   const { id: _id, ...itemWithoutId } = item;
   return await fetchQuery(accessToken, Documents.CreateNutritionItemDocument, {
@@ -282,7 +275,7 @@ export async function createNutritionItem(
 export async function updateNutritionItem(
   accessToken: string,
   item: NutritionItem,
-) {
+): Promise<GraphQLResponse<Types.UpdateItemMutationResult>> {
   return await fetchQuery(accessToken, Documents.UpdateItemDocument, {
     id: item.id,
     attrs: objectToSnakeCaseKeys(item),
@@ -321,18 +314,15 @@ export type GetNutritionItemQueryResponse = {
 export async function fetchNutritionItem(
   accessToken: string,
   id: number | string,
-): Promise<GetNutritionItemQueryResponse> {
-  const result = await fetchQuery(
-    accessToken,
-    Documents.GetNutritionItemDocument,
-    {
-      id: Number(id),
-    },
-  );
-  return result as unknown as GetNutritionItemQueryResponse;
+): Promise<GraphQLResponse<Types.GetNutritionItemQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetNutritionItemDocument, {
+    id: Number(id),
+  });
 }
 
-export async function fetchRecentEntries(accessToken: string) {
+export async function fetchRecentEntries(
+  accessToken: string,
+): Promise<GraphQLResponse<Types.GetRecentEntryItemsQueryResult>> {
   return await fetchQuery(accessToken, Documents.GetRecentEntryItemsDocument);
 }
 
@@ -340,7 +330,7 @@ export async function fetchEntriesAroundTime(
   accessToken: string,
   startTime: string,
   endTime: string,
-) {
+): Promise<GraphQLResponse<Types.GetEntriesAroundTimeQueryResult>> {
   return await fetchQuery(accessToken, Documents.GetEntriesAroundTimeDocument, {
     startTime,
     endTime,
@@ -364,13 +354,16 @@ export type CreateDiaryEntryRecipeInput = {
 export async function createDiaryEntry(
   accessToken: string,
   entry: CreateDiaryEntryInput,
-) {
+): Promise<GraphQLResponse<Types.CreateDiaryEntryMutationResult>> {
   return await fetchQuery(accessToken, Documents.CreateDiaryEntryDocument, {
     entry,
   });
 }
 
-export async function deleteDiaryEntry(accessToken: string, id: number) {
+export async function deleteDiaryEntry(
+  accessToken: string,
+  id: number,
+): Promise<GraphQLResponse<Types.DeleteEntryMutationResult>> {
   return await fetchQuery(accessToken, Documents.DeleteEntryDocument, { id });
 }
 
@@ -413,13 +406,16 @@ function transformRecipeInput(formInput: RecipeAttrs) {
 export async function createRecipe(
   accessToken: string,
   formInput: RecipeAttrs,
-) {
+): Promise<GraphQLResponse<Types.CreateRecipeMutationResult>> {
   return await fetchQuery(accessToken, Documents.CreateRecipeDocument, {
     input: transformRecipeInput(formInput),
   });
 }
 
-export async function updateRecipe(accessToken: string, recipe: Recipe) {
+export async function updateRecipe(
+  accessToken: string,
+  recipe: Recipe,
+): Promise<GraphQLResponse<Types.UpdateRecipeMutationResult>> {
   const { id, ...attrs } = recipe;
   const { recipe_items, ...recipeAttrs } = transformRecipeInput(attrs);
   const recipeItemsInput = recipe_items.data.map((item) => ({
@@ -447,11 +443,10 @@ export type GetRecipeQueryResponse = {
 export async function fetchRecipe(
   accessToken: string,
   id: number,
-): Promise<GetRecipeQueryResponse> {
-  const result = await fetchQuery(accessToken, Documents.GetRecipeDocument, {
+): Promise<GraphQLResponse<Types.GetRecipeQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetRecipeDocument, {
     id,
   });
-  return result as unknown as GetRecipeQueryResponse;
 }
 
 export type NewDiaryEntry = {
@@ -463,7 +458,9 @@ export type NewDiaryEntry = {
 export async function insertDiaryEntries(
   accessToken: string,
   entries: NewDiaryEntry[],
-) {
+): Promise<
+  GraphQLResponse<Types.InsertDiaryEntriesWithNewItemsMutationResult>
+> {
   return await fetchQuery(
     accessToken,
     Documents.InsertDiaryEntriesWithNewItemsDocument,
@@ -480,11 +477,16 @@ export async function insertDiaryEntries(
   );
 }
 
-export async function fetchExportEntries(accessToken: string) {
+export async function fetchExportEntries(
+  accessToken: string,
+): Promise<GraphQLResponse<Types.ExportEntriesQueryResult>> {
   return await fetchQuery(accessToken, Documents.ExportEntriesDocument);
 }
 
-export async function getDiaryEntry(accessToken: string, id: number | string) {
+export async function getDiaryEntry(
+  accessToken: string,
+  id: number | string,
+): Promise<GraphQLResponse<Types.GetDiaryEntryQueryResult>> {
   return await fetchQuery(accessToken, Documents.GetDiaryEntryDocument, {
     id: Number(id),
   });
@@ -493,7 +495,7 @@ export async function getDiaryEntry(accessToken: string, id: number | string) {
 export async function updateDiaryEntry(
   accessToken: string,
   entry: { id: number; servings: number; consumedAt: string },
-) {
+): Promise<GraphQLResponse<Types.UpdateDiaryEntryMutationResult>> {
   return fetchQuery(accessToken, Documents.UpdateDiaryEntryDocument, {
     id: entry.id,
     attrs: objectToSnakeCaseKeys(entry),
@@ -516,10 +518,6 @@ export type GetWeeklyTrendsResponse = {
 
 export async function fetchWeeklyTrends(
   accessToken: string,
-): Promise<GetWeeklyTrendsResponse> {
-  const result = await fetchQuery(
-    accessToken,
-    Documents.GetWeeklyTrendsDocument,
-  );
-  return result as unknown as GetWeeklyTrendsResponse;
+): Promise<GraphQLResponse<Types.GetWeeklyTrendsQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetWeeklyTrendsDocument);
 }

@@ -86,12 +86,10 @@ const ImportDiaryEntries: Component = () => {
     setSaving(true);
     setImportError(null);
     try {
-      const response = (await insertDiaryEntries(
+      const response = await insertDiaryEntries(
         accessToken(),
         parseResult().rights,
-      )) as GraphQLResponse<{
-        insert_food_diary_diary_entry?: { affected_rows: number };
-      }>;
+      );
       setSaving(false);
       setSaved(!!response.data);
     } catch (error: unknown) {
