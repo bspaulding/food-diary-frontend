@@ -308,7 +308,7 @@ export async function createNutritionItem(
   item: NutritionItem,
 ) {
   // Exclude id field when creating a new item
-  const { id, ...itemWithoutId } = item;
+  const { id: _id, ...itemWithoutId } = item;
   return await fetchQuery(accessToken, createNutritionItemMutation, {
     nutritionItem: objectToSnakeCaseKeys(itemWithoutId),
   });
