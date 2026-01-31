@@ -1,0 +1,13 @@
+query GetRecentEntryItems {
+  food_diary_diary_entry_recent(order_by: { consumed_at: desc }, limit: 10) {
+    consumed_at
+    nutrition_item {
+      id
+      description
+    }
+    recipe {
+      id
+      name
+    }
+  }
+}

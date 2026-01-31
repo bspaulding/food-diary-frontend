@@ -1,0 +1,31 @@
+fragment Macros on food_diary_nutrition_item {
+  total_fat_grams
+  added_sugars_grams
+  protein_grams
+}
+
+query GetDiaryEntry($id: Int!) {
+  food_diary_diary_entry_by_pk(id: $id) {
+    id
+    consumed_at
+    calories
+    servings
+    nutrition_item {
+      id
+      description
+      calories
+      ...Macros
+    }
+    recipe {
+      id
+      name
+      calories
+      recipe_items {
+        servings
+        nutrition_item {
+          ...Macros
+        }
+      }
+    }
+  }
+}

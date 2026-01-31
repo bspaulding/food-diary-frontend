@@ -144,9 +144,12 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }: Props) => {
             onClick={async (event: MouseEvent) => {
               event.preventDefault();
               if (input().id) {
-                const response: GraphQLResponse<{
+                const response = (await updateRecipe(
+                  accessToken(),
+                  input(),
+                )) as GraphQLResponse<{
                   update_food_diary_recipe_by_pk?: { id: number };
-                }> = await updateRecipe(accessToken(), input());
+                }>;
                 const id: number | undefined =
                   response?.data?.update_food_diary_recipe_by_pk?.id;
                 if (id) {
@@ -154,9 +157,12 @@ const NewRecipeForm: Component<Props> = ({ initialRecipe }: Props) => {
                 }
               } else {
                 const { id, ...attrs } = input();
-                const response: GraphQLResponse<{
+                const response = (await createRecipe(
+                  accessToken(),
+                  attrs,
+                )) as GraphQLResponse<{
                   insert_food_diary_recipe_one?: { id: number };
-                }> = await createRecipe(accessToken(), attrs);
+                }>;
                 const responseId: number | undefined =
                   response?.data?.insert_food_diary_recipe_one?.id;
                 if (responseId) {

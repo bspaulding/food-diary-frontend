@@ -29,9 +29,9 @@ const UserProfile: Component = () => {
         </a>
         <button
           onClick={async (): Promise<void> => {
-            const responseData: {
+            const responseData = (await fetchExportEntries(accessToken())) as {
               data: { food_diary_diary_entry: EntryRecord[] };
-            } = await fetchExportEntries(accessToken());
+            };
             const data: string = entriesToCsv(
               responseData.data.food_diary_diary_entry,
             );

@@ -12,11 +12,18 @@
     "prettier": "./node_modules/.bin/prettier",
     "prettier:check": "prettier --check .",
     "prettier:format": "prettier --write .",
-    "type-coverage": "type-coverage --at-least 100 --strict --ignore-as-assertion"
+    "type-coverage": "type-coverage --at-least 100 --strict --ignore-as-assertion",
+    "codegen": "graphql-codegen --config codegen.yml"
   },
   "license": "MIT",
   "devDependencies": {
     "@auth0/auth0-spa-js": "^1.22.4",
+    "@graphql-codegen/cli": "^6.1.1",
+    "@graphql-codegen/client-preset": "^5.2.2",
+    "@graphql-codegen/typed-document-node": "^6.1.5",
+    "@graphql-codegen/typescript": "^5.0.7",
+    "@graphql-codegen/typescript-operations": "^5.0.7",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@solid-primitives/scheduled": "^1.0.1",
     "@solidjs/router": "^0.10.0",
     "@solidjs/testing-library": "^0.8.10",
@@ -30,6 +37,8 @@
     "autoprefixer": "^10.4.11",
     "csv-parse": "^5.3.0",
     "date-fns": "^2.29.3",
+    "graphql": "^16.12.0",
+    "graphql-tag": "^2.12.6",
     "jsdom": "^26.0.0",
     "msw": "^2.12.4",
     "playwright": "^1.49.1",

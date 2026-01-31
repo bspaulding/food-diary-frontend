@@ -1,0 +1,6 @@
+query SearchItems($search: String!) {
+  food_diary_search_nutrition_items(args: { search: $search }) {
+    id
+    description
+  }
+}

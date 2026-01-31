@@ -1,0 +1,19 @@
+query GetNutritionItem($id: Int!) {
+  food_diary_nutrition_item_by_pk(id: $id) {
+    id
+    description
+    calories
+    totalFatGrams: total_fat_grams
+    saturatedFatGrams: saturated_fat_grams
+    transFatGrams: trans_fat_grams
+    polyunsaturatedFatGrams: polyunsaturated_fat_grams
+    monounsaturatedFatGrams: monounsaturated_fat_grams
+    cholesterolMilligrams: cholesterol_milligrams
+    sodiumMilligrams: sodium_milligrams
+    totalCarbohydrateGrams: total_carbohydrate_grams
+    dietaryFiberGrams: dietary_fiber_grams
+    totalSugarsGrams: total_sugars_grams
+    addedSugarsGrams: added_sugars_grams
+    proteinGrams: protein_grams
+  }
+}

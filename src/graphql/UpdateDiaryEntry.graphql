@@ -1,0 +1,8 @@
+mutation UpdateDiaryEntry(
+  $id: Int!
+  $attrs: food_diary_diary_entry_set_input!
+) {
+  update_food_diary_diary_entry_by_pk(pk_columns: { id: $id }, _set: $attrs) {
+    id
+  }
+}

@@ -1,0 +1,7 @@
+mutation InsertDiaryEntriesWithNewItems(
+  $entries: [food_diary_diary_entry_insert_input!]!
+) {
+  insert_food_diary_diary_entry(objects: $entries) {
+    affected_rows
+  }
+}

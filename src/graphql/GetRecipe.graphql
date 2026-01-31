@@ -1,0 +1,15 @@
+query GetRecipe($id: Int!) {
+  food_diary_recipe_by_pk(id: $id) {
+    id
+    name
+    total_servings
+    recipe_items {
+      servings
+      nutrition_item {
+        id
+        description
+        calories
+      }
+    }
+  }
+}

@@ -289,10 +289,9 @@ async function deleteEntry(
 ) {
   try {
     removeEntry(entry, entriesQuery, mutate);
-    const response: { data: unknown } = await deleteDiaryEntry(
-      accessToken(),
-      entry.id,
-    );
+    const response = (await deleteDiaryEntry(accessToken(), entry.id)) as {
+      data: unknown;
+    };
     if (!response.data) {
       mutate(entriesQuery);
     }

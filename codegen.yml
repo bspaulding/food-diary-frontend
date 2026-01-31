@@ -1,0 +1,25 @@
+schema: "./schema.graphql"
+documents: "src/graphql/**/*.graphql"
+generates:
+  src/generated/graphql.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node
+    config:
+      # Use snake_case for field names to match Hasura backend
+      transformUnderscore: false
+      # Don't prefix types
+      typesPrefix: ""
+      # Add suffix to operation types
+      operationResultSuffix: "Result"
+      # Make all fields optional by default (matching backend behavior)
+      maybeValue: T | null | undefined
+      # Generate exact types
+      strictScalars: true
+      scalars:
+        timestamptz: string
+        Int: number
+        Float: number
+        String: string
+        Boolean: boolean

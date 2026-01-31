@@ -1,0 +1,292 @@
+scalar timestamptz
+
+# Nutrition item type
+type food_diary_nutrition_item {
+  id: Int!
+  description: String!
+  calories: Float!
+  total_fat_grams: Float!
+  added_sugars_grams: Float!
+  protein_grams: Float!
+  saturated_fat_grams: Float!
+  trans_fat_grams: Float!
+  polyunsaturated_fat_grams: Float!
+  monounsaturated_fat_grams: Float!
+  cholesterol_milligrams: Float!
+  sodium_milligrams: Float!
+  total_carbohydrate_grams: Float!
+  dietary_fiber_grams: Float!
+  total_sugars_grams: Float!
+}
+
+# Recipe item type
+type food_diary_recipe_item {
+  id: Int!
+  servings: Float!
+  nutrition_item_id: Int!
+  recipe_id: Int!
+  nutrition_item: food_diary_nutrition_item!
+}
+
+# Recipe type
+type food_diary_recipe {
+  id: Int!
+  name: String!
+  calories: Float!
+  total_servings: Float!
+  recipe_items: [food_diary_recipe_item!]!
+}
+
+# Diary entry type
+type food_diary_diary_entry {
+  id: Int!
+  day: String!
+  consumed_at: timestamptz!
+  servings: Float!
+  calories: Float!
+  nutrition_item_id: Int
+  recipe_id: Int
+  nutrition_item: food_diary_nutrition_item
+  recipe: food_diary_recipe
+}
+
+# Aggregate types
+type food_diary_diary_entry_aggregate_sum {
+  calories: Float
+}
+
+type food_diary_diary_entry_aggregate_fields {
+  sum: food_diary_diary_entry_aggregate_sum
+}
+
+type food_diary_diary_entry_aggregate {
+  aggregate: food_diary_diary_entry_aggregate_fields
+}
+
+# Weekly trends type
+type food_diary_trends_weekly {
+  week_of_year: String!
+  protein: Float!
+  calories: Float!
+  added_sugar: Float!
+}
+
+# Mutation response types
+type food_diary_nutrition_item_mutation_response {
+  id: Int!
+}
+
+type food_diary_recipe_mutation_response {
+  id: Int!
+}
+
+type food_diary_diary_entry_mutation_response {
+  id: Int!
+  affected_rows: Int!
+}
+
+type food_diary_recipe_item_mutation_response {
+  affected_rows: Int!
+}
+
+# Input types
+input food_diary_nutrition_item_insert_input {
+  description: String!
+  calories: Float!
+  total_fat_grams: Float!
+  saturated_fat_grams: Float!
+  trans_fat_grams: Float!
+  polyunsaturated_fat_grams: Float!
+  monounsaturated_fat_grams: Float!
+  cholesterol_milligrams: Float!
+  sodium_milligrams: Float!
+  total_carbohydrate_grams: Float!
+  dietary_fiber_grams: Float!
+  total_sugars_grams: Float!
+  added_sugars_grams: Float!
+  protein_grams: Float!
+}
+
+input food_diary_nutrition_item_set_input {
+  id: Int
+  description: String
+  calories: Float
+  total_fat_grams: Float
+  saturated_fat_grams: Float
+  trans_fat_grams: Float
+  polyunsaturated_fat_grams: Float
+  monounsaturated_fat_grams: Float
+  cholesterol_milligrams: Float
+  sodium_milligrams: Float
+  total_carbohydrate_grams: Float
+  dietary_fiber_grams: Float
+  total_sugars_grams: Float
+  added_sugars_grams: Float
+  protein_grams: Float
+  consumed_at: timestamptz
+  servings: Float
+}
+
+input food_diary_recipe_insert_input {
+  name: String!
+  total_servings: Float!
+  recipe_items: food_diary_recipe_item_nested_insert_input!
+}
+
+input food_diary_recipe_item_nested_insert_input {
+  data: [food_diary_recipe_item_insert_input!]!
+}
+
+input food_diary_recipe_item_insert_input {
+  servings: Float!
+  nutrition_item_id: Int!
+  recipe_id: Int
+}
+
+input food_diary_recipe_set_input {
+  name: String
+  total_servings: Float
+}
+
+input food_diary_diary_entry_insert_input {
+  consumed_at: timestamptz
+  servings: Float!
+  nutrition_item_id: Int
+  recipe_id: Int
+  nutrition_item: food_diary_nutrition_item_nested_insert_input
+}
+
+input food_diary_nutrition_item_nested_insert_input {
+  data: food_diary_nutrition_item_insert_input!
+}
+
+input food_diary_diary_entry_set_input {
+  consumed_at: timestamptz
+  servings: Float
+}
+
+# Where conditions
+input timestamptz_comparison_exp {
+  _gte: timestamptz
+  _lte: timestamptz
+  _lt: timestamptz
+}
+
+input Int_comparison_exp {
+  _eq: Int
+}
+
+input food_diary_diary_entry_bool_exp {
+  consumed_at: timestamptz_comparison_exp
+  nutrition_item_id: Int_comparison_exp
+  recipe_id: Int_comparison_exp
+}
+
+# Ordering
+enum order_by {
+  asc
+  desc
+}
+
+input food_diary_diary_entry_order_by {
+  day: order_by
+  consumed_at: order_by
+}
+
+# Root types
+type Query {
+  food_diary_diary_entry(
+    order_by: [food_diary_diary_entry_order_by!]
+    where: food_diary_diary_entry_bool_exp
+    limit: Int
+    distinct_on: [String!]
+  ): [food_diary_diary_entry!]!
+
+  food_diary_diary_entry_by_pk(id: Int!): food_diary_diary_entry
+
+  food_diary_diary_entry_recent(
+    order_by: [food_diary_diary_entry_order_by!]
+    limit: Int
+  ): [food_diary_diary_entry!]!
+
+  food_diary_diary_entry_aggregate(
+    where: food_diary_diary_entry_bool_exp
+  ): food_diary_diary_entry_aggregate!
+
+  food_diary_nutrition_item_by_pk(id: Int!): food_diary_nutrition_item
+
+  food_diary_recipe_by_pk(id: Int!): food_diary_recipe
+
+  food_diary_search_nutrition_items(
+    args: SearchArgs!
+  ): [food_diary_nutrition_item!]!
+
+  food_diary_search_recipes(args: SearchArgs!): [food_diary_recipe!]!
+
+  food_diary_trends_weekly: [food_diary_trends_weekly!]!
+}
+
+input SearchArgs {
+  search: String!
+}
+
+type Mutation {
+  insert_food_diary_nutrition_item_one(
+    object: food_diary_nutrition_item_insert_input!
+  ): food_diary_nutrition_item_mutation_response
+
+  update_food_diary_nutrition_item_by_pk(
+    pk_columns: food_diary_nutrition_item_pk_columns_input!
+    _set: food_diary_nutrition_item_set_input!
+  ): food_diary_nutrition_item_mutation_response
+
+  insert_food_diary_recipe_one(
+    object: food_diary_recipe_insert_input!
+  ): food_diary_recipe_mutation_response
+
+  update_food_diary_recipe_by_pk(
+    pk_columns: food_diary_recipe_pk_columns_input!
+    _set: food_diary_recipe_set_input!
+  ): food_diary_recipe_mutation_response
+
+  delete_food_diary_recipe_item(
+    where: food_diary_recipe_item_bool_exp!
+  ): food_diary_recipe_item_mutation_response
+
+  insert_food_diary_recipe_item(
+    objects: [food_diary_recipe_item_insert_input!]!
+  ): food_diary_recipe_item_mutation_response
+
+  insert_food_diary_diary_entry_one(
+    object: food_diary_diary_entry_insert_input!
+  ): food_diary_diary_entry_mutation_response
+
+  insert_food_diary_diary_entry(
+    objects: [food_diary_diary_entry_insert_input!]!
+  ): food_diary_diary_entry_mutation_response
+
+  update_food_diary_diary_entry_by_pk(
+    pk_columns: food_diary_diary_entry_pk_columns_input!
+    _set: food_diary_diary_entry_set_input!
+  ): food_diary_diary_entry_mutation_response
+
+  delete_food_diary_diary_entry_by_pk(
+    id: Int!
+  ): food_diary_diary_entry_mutation_response
+}
+
+input food_diary_nutrition_item_pk_columns_input {
+  id: Int!
+}
+
+input food_diary_recipe_pk_columns_input {
+  id: Int!
+}
+
+input food_diary_recipe_item_bool_exp {
+  recipe_id: Int_comparison_exp
+}
+
+input food_diary_diary_entry_pk_columns_input {
+  id: Int!
+}
