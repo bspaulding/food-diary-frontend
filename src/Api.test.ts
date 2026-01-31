@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "./test-setup";
-import { fetchEntries } from "./Api";
+import { fetchEntries, createNutritionItem, GraphQLError } from "./Api";
 
 describe("Api authorization error handling", () => {
   it("should throw AuthorizationError when API returns 401", async () => {
@@ -62,5 +62,84 @@ describe("Api authorization error handling", () => {
     await expect(fetchEntries("test-token")).rejects.toThrow(
       "API request failed: 500 Internal Server Error",
     );
+  });
+
+  it("should throw GraphQLError when response contains errors field", async () => {
+    const mockErrorResponse = {
+      errors: [
+        {
+          message:
+            'Uniqueness violation. duplicate key value violates unique constraint "nutrition_item_pkey"',
+          extensions: {
+            path: "$.selectionSet.insert_food_diary_nutrition_item_one",
+            code: "constraint-violation",
+          },
+        },
+      ],
+    };
+
+    server.use(
+      http.post("/api/v1/graphql", () => {
+        return HttpResponse.json(mockErrorResponse);
+      }),
+    );
+
+    await expect(fetchEntries("test-token")).rejects.toThrow(GraphQLError);
+    await expect(fetchEntries("test-token")).rejects.toThrow(
+      'Uniqueness violation. duplicate key value violates unique constraint "nutrition_item_pkey"',
+    );
+  });
+});
+
+describe("createNutritionItem", () => {
+  it("should exclude id field when creating a new nutrition item", async () => {
+    let capturedVariables: unknown = null;
+
+    server.use(
+      http.post("/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as {
+          query: string;
+          variables: unknown;
+        };
+        capturedVariables = body.variables;
+
+        return HttpResponse.json({
+          data: {
+            insert_food_diary_nutrition_item_one: {
+              id: 123,
+            },
+          },
+        });
+      }),
+    );
+
+    const item = {
+      id: 999, // This should be excluded
+      description: "Test Food",
+      calories: 100,
+      totalFatGrams: 5,
+      saturatedFatGrams: 1,
+      transFatGrams: 0,
+      polyunsaturatedFatGrams: 1,
+      monounsaturatedFatGrams: 2,
+      cholesterolMilligrams: 10,
+      sodiumMilligrams: 50,
+      totalCarbohydrateGrams: 20,
+      dietaryFiberGrams: 3,
+      totalSugarsGrams: 5,
+      addedSugarsGrams: 2,
+      proteinGrams: 4,
+    };
+
+    await createNutritionItem("test-token", item);
+
+    expect(capturedVariables).toBeTruthy();
+    const vars = capturedVariables as { nutritionItem: Record<string, unknown> };
+    expect(vars.nutritionItem).toBeTruthy();
+    // Verify that id is NOT included in the nutritionItem
+    expect("id" in vars.nutritionItem).toBe(false);
+    // Verify other fields are present (in snake_case)
+    expect(vars.nutritionItem.description).toBe("Test Food");
+    expect(vars.nutritionItem.calories).toBe(100);
   });
 });
