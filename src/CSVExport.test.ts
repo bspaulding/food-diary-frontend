@@ -166,4 +166,20 @@ describe("entriesToCSV", () => {
     // The description should have double quotes escaped as ""
     expect(csv).toContain('"Chocolate ""Dark"" Bar"');
   });
+
+  it("handles entries with neither nutrition_item nor recipe", () => {
+    const entries = [
+      {
+        servings: 1,
+        consumed_at: "2022-08-28T14:30:00+00:00",
+        nutrition_item: undefined,
+        recipe: undefined,
+      },
+    ];
+    const csv = entriesToCsv(entries);
+    // Should only contain the header row since the entry is skipped
+    const lines = csv.split("\n");
+    expect(lines.length).toBe(1); // Only header
+    expect(lines[0]).toContain("Date,Time,Consumed At");
+  });
 });
