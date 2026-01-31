@@ -58,12 +58,12 @@ query GetEntries {
 }
 `;
 
-async function fetchQuery(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchQuery<T = any>(
   accessToken: string,
   query: string,
   variables: object = {},
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
+): Promise<T> {
   const response = await fetch(`${host}`, {
     method: "POST",
     headers: {
@@ -93,7 +93,7 @@ async function fetchQuery(
     throw new GraphQLError(errorMessage, json.errors);
   }
 
-  return json;
+  return json as T;
 }
 
 // Macro nutrient keys that can be accessed on nutrition items
