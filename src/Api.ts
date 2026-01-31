@@ -14,7 +14,10 @@ export class AuthorizationError extends Error {
  * Custom error class for GraphQL errors
  */
 export class GraphQLError extends Error {
-  constructor(message: string, public errors: unknown[]) {
+  constructor(
+    message: string,
+    public errors: unknown[],
+  ) {
     super(message);
     this.name = "GraphQLError";
   }
@@ -67,7 +70,9 @@ async function fetchQuery(
   // Check for GraphQL errors in the response body
   const json = await response.json();
   if (json.errors) {
-    const errorMessage = json.errors.map((e: { message: string }) => e.message).join(", ");
+    const errorMessage = json.errors
+      .map((e: { message: string }) => e.message)
+      .join(", ");
     throw new GraphQLError(errorMessage, json.errors);
   }
 

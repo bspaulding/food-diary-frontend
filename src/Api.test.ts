@@ -134,7 +134,9 @@ describe("createNutritionItem", () => {
     await createNutritionItem("test-token", item);
 
     expect(capturedVariables).toBeTruthy();
-    const vars = capturedVariables as { nutritionItem: Record<string, unknown> };
+    const vars = capturedVariables as {
+      nutritionItem: Record<string, unknown>;
+    };
     expect(vars.nutritionItem).toBeTruthy();
     // Verify that id is NOT included in the nutritionItem
     expect("id" in vars.nutritionItem).toBe(false);
