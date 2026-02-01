@@ -49,7 +49,10 @@ function recipeTotalForKey(
 
 function entryTotalMacro(key: MacroKey, entry: DiaryEntry): number {
   const itemTotal = entry.nutrition_item?.[key] || 0;
-  return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
+  return (
+    entry.servings *
+    (itemTotal + recipeTotalForKey(key, entry.recipe || undefined))
+  );
 }
 
 function totalMacro(key: MacroKey, entries: DiaryEntry[]): number {

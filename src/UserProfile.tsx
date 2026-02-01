@@ -30,9 +30,14 @@ const UserProfile: Component = () => {
         <button
           onClick={async (): Promise<void> => {
             const responseData = await fetchExportEntries(accessToken());
-            const data: string = entriesToCsv(
-              responseData.data?.food_diary_diary_entry || [],
-            );
+            const entries = responseData.data?.food_diary_diary_entry || [];
+            // Filter out null values and map to expected type
+            const entriesForCsv = entries.map((entry) => ({
+              ...entry,
+              nutrition_item: entry.nutrition_item ?? undefined,
+              recipe: entry.recipe ?? undefined,
+            }));
+            const data: string = entriesToCsv(entriesForCsv);
             const blob: Blob = new Blob([data], { type: "text/csv" });
             const url: string = URL.createObjectURL(blob);
 

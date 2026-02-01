@@ -2,6 +2,15 @@ fragment Macros on food_diary_nutrition_item {
   total_fat_grams
   added_sugars_grams
   protein_grams
+  saturated_fat_grams
+  trans_fat_grams
+  polyunsaturated_fat_grams
+  monounsaturated_fat_grams
+  cholesterol_milligrams
+  sodium_milligrams
+  total_carbohydrate_grams
+  dietary_fiber_grams
+  total_sugars_grams
 }
 
 query GetDiaryEntry($id: Int!) {
@@ -23,6 +32,9 @@ query GetDiaryEntry($id: Int!) {
       recipe_items {
         servings
         nutrition_item {
+          id
+          description
+          calories
           ...Macros
         }
       }

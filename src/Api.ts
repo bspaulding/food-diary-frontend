@@ -5,6 +5,12 @@ import * as Documents from "./generated/graphql";
 
 const host = "/api/v1/graphql";
 
+// Type aliases from generated types for backward compatibility
+export type DiaryEntry =
+  Types.GetEntriesQueryResult["food_diary_diary_entry"][number];
+export type GetEntriesQueryResponse =
+  GraphQLResponse<Types.GetEntriesQueryResult>;
+
 /**
  * Custom error class for authorization failures (401/403 responses)
  */
@@ -103,55 +109,18 @@ export type MacroKey =
   | "dietary_fiber_grams"
   | "total_sugars_grams";
 
-// Nutrition item with all macro fields
-export type NutritionItemWithMacros = {
-  id: number;
-  description: string;
-  calories: number;
-  added_sugars_grams: number;
-  protein_grams: number;
-  total_fat_grams: number;
-  saturated_fat_grams: number;
-  trans_fat_grams: number;
-  polyunsaturated_fat_grams: number;
-  monounsaturated_fat_grams: number;
-  cholesterol_milligrams: number;
-  sodium_milligrams: number;
-  total_carbohydrate_grams: number;
-  dietary_fiber_grams: number;
-  total_sugars_grams: number;
-};
+// Type aliases from generated types for backward compatibility
+type GeneratedDiaryEntry =
+  Types.GetEntriesQueryResult["food_diary_diary_entry"][number];
+type GeneratedRecipe = NonNullable<GeneratedDiaryEntry["recipe"]>;
+type GeneratedRecipeItem = GeneratedRecipe["recipe_items"][number];
+type GeneratedNutritionItem = NonNullable<
+  GeneratedDiaryEntry["nutrition_item"]
+>;
 
-// Recipe item that's part of a recipe
-export type RecipeItem = {
-  id: number;
-  servings: number;
-  nutrition_item: NutritionItemWithMacros;
-};
-
-// Recipe with items
-export type RecipeWithItems = {
-  id: number;
-  name: string;
-  calories: number;
-  recipe_items: RecipeItem[];
-};
-
-export type DiaryEntry = {
-  id: number;
-  day: string;
-  consumed_at: string;
-  servings: number;
-  calories: number;
-  nutrition_item?: NutritionItemWithMacros;
-  recipe?: RecipeWithItems;
-};
-
-export type GetEntriesQueryResponse = {
-  data: {
-    food_diary_diary_entry: DiaryEntry[];
-  };
-};
+export type NutritionItemWithMacros = GeneratedNutritionItem;
+export type RecipeItem = GeneratedRecipeItem;
+export type RecipeWithItems = GeneratedRecipe;
 
 export async function fetchEntries(
   accessToken: string,

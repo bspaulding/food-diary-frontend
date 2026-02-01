@@ -1,14 +1,31 @@
+fragment RecipeMacros on food_diary_nutrition_item {
+  total_fat_grams
+  added_sugars_grams
+  protein_grams
+  saturated_fat_grams
+  trans_fat_grams
+  polyunsaturated_fat_grams
+  monounsaturated_fat_grams
+  cholesterol_milligrams
+  sodium_milligrams
+  total_carbohydrate_grams
+  dietary_fiber_grams
+  total_sugars_grams
+}
+
 query GetRecipe($id: Int!) {
   food_diary_recipe_by_pk(id: $id) {
     id
     name
     total_servings
     recipe_items {
+      id
       servings
       nutrition_item {
         id
         description
         calories
+        ...RecipeMacros
       }
     }
   }

@@ -480,6 +480,15 @@ export type MacrosFragment = {
   total_fat_grams: number;
   added_sugars_grams: number;
   protein_grams: number;
+  saturated_fat_grams: number;
+  trans_fat_grams: number;
+  polyunsaturated_fat_grams: number;
+  monounsaturated_fat_grams: number;
+  cholesterol_milligrams: number;
+  sodium_milligrams: number;
+  total_carbohydrate_grams: number;
+  dietary_fiber_grams: number;
+  total_sugars_grams: number;
 };
 
 export type GetDiaryEntryQueryVariables = Exact<{
@@ -504,6 +513,15 @@ export type GetDiaryEntryQueryResult = {
               total_fat_grams: number;
               added_sugars_grams: number;
               protein_grams: number;
+              saturated_fat_grams: number;
+              trans_fat_grams: number;
+              polyunsaturated_fat_grams: number;
+              monounsaturated_fat_grams: number;
+              cholesterol_milligrams: number;
+              sodium_milligrams: number;
+              total_carbohydrate_grams: number;
+              dietary_fiber_grams: number;
+              total_sugars_grams: number;
             }
           | null
           | undefined;
@@ -518,9 +536,21 @@ export type GetDiaryEntryQueryResult = {
                 servings: number;
                 nutrition_item: {
                   __typename?: "food_diary_nutrition_item";
+                  id: number;
+                  description: string;
+                  calories: number;
                   total_fat_grams: number;
                   added_sugars_grams: number;
                   protein_grams: number;
+                  saturated_fat_grams: number;
+                  trans_fat_grams: number;
+                  polyunsaturated_fat_grams: number;
+                  monounsaturated_fat_grams: number;
+                  cholesterol_milligrams: number;
+                  sodium_milligrams: number;
+                  total_carbohydrate_grams: number;
+                  dietary_fiber_grams: number;
+                  total_sugars_grams: number;
                 };
               }>;
             }
@@ -538,6 +568,7 @@ export type GetEntriesQueryResult = {
   food_diary_diary_entry: Array<{
     __typename?: "food_diary_diary_entry";
     id: number;
+    day: string;
     consumed_at: string;
     calories: number;
     servings: number;
@@ -550,6 +581,15 @@ export type GetEntriesQueryResult = {
           total_fat_grams: number;
           added_sugars_grams: number;
           protein_grams: number;
+          saturated_fat_grams: number;
+          trans_fat_grams: number;
+          polyunsaturated_fat_grams: number;
+          monounsaturated_fat_grams: number;
+          cholesterol_milligrams: number;
+          sodium_milligrams: number;
+          total_carbohydrate_grams: number;
+          dietary_fiber_grams: number;
+          total_sugars_grams: number;
         }
       | null
       | undefined;
@@ -561,12 +601,25 @@ export type GetEntriesQueryResult = {
           calories: number;
           recipe_items: Array<{
             __typename?: "food_diary_recipe_item";
+            id: number;
             servings: number;
             nutrition_item: {
               __typename?: "food_diary_nutrition_item";
+              id: number;
+              description: string;
+              calories: number;
               total_fat_grams: number;
               added_sugars_grams: number;
               protein_grams: number;
+              saturated_fat_grams: number;
+              trans_fat_grams: number;
+              polyunsaturated_fat_grams: number;
+              monounsaturated_fat_grams: number;
+              cholesterol_milligrams: number;
+              sodium_milligrams: number;
+              total_carbohydrate_grams: number;
+              dietary_fiber_grams: number;
+              total_sugars_grams: number;
             };
           }>;
         }
@@ -651,6 +704,22 @@ export type GetRecentEntryItemsQueryResult = {
   }>;
 };
 
+export type RecipeMacrosFragment = {
+  __typename?: "food_diary_nutrition_item";
+  total_fat_grams: number;
+  added_sugars_grams: number;
+  protein_grams: number;
+  saturated_fat_grams: number;
+  trans_fat_grams: number;
+  polyunsaturated_fat_grams: number;
+  monounsaturated_fat_grams: number;
+  cholesterol_milligrams: number;
+  sodium_milligrams: number;
+  total_carbohydrate_grams: number;
+  dietary_fiber_grams: number;
+  total_sugars_grams: number;
+};
+
 export type GetRecipeQueryVariables = Exact<{
   id: Scalars["Int"]["input"];
 }>;
@@ -665,12 +734,25 @@ export type GetRecipeQueryResult = {
         total_servings: number;
         recipe_items: Array<{
           __typename?: "food_diary_recipe_item";
+          id: number;
           servings: number;
           nutrition_item: {
             __typename?: "food_diary_nutrition_item";
             id: number;
             description: string;
             calories: number;
+            total_fat_grams: number;
+            added_sugars_grams: number;
+            protein_grams: number;
+            saturated_fat_grams: number;
+            trans_fat_grams: number;
+            polyunsaturated_fat_grams: number;
+            monounsaturated_fat_grams: number;
+            cholesterol_milligrams: number;
+            sodium_milligrams: number;
+            total_carbohydrate_grams: number;
+            dietary_fiber_grams: number;
+            total_sugars_grams: number;
           };
         }>;
       }
@@ -912,11 +994,95 @@ export const MacrosFragmentDoc = {
             name: { kind: "Name", value: "added_sugars_grams" },
           },
           { kind: "Field", name: { kind: "Name", value: "protein_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "saturated_fat_grams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "trans_fat_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "polyunsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "monounsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "cholesterol_milligrams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "sodium_milligrams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_carbohydrate_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "dietary_fiber_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_sugars_grams" },
+          },
         ],
       },
     },
   ],
 } as unknown as DocumentNode<MacrosFragment, unknown>;
+export const RecipeMacrosFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "RecipeMacros" },
+      typeCondition: {
+        kind: "NamedType",
+        name: { kind: "Name", value: "food_diary_nutrition_item" },
+      },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "total_fat_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "added_sugars_grams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "protein_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "saturated_fat_grams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "trans_fat_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "polyunsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "monounsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "cholesterol_milligrams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "sodium_milligrams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_carbohydrate_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "dietary_fiber_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_sugars_grams" },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RecipeMacrosFragment, unknown>;
 export const CreateDiaryEntryDocument = {
   kind: "Document",
   definitions: [
@@ -1362,6 +1528,21 @@ export const GetDiaryEntryDocument = {
                                 kind: "SelectionSet",
                                 selections: [
                                   {
+                                    kind: "Field",
+                                    name: { kind: "Name", value: "id" },
+                                  },
+                                  {
+                                    kind: "Field",
+                                    name: {
+                                      kind: "Name",
+                                      value: "description",
+                                    },
+                                  },
+                                  {
+                                    kind: "Field",
+                                    name: { kind: "Name", value: "calories" },
+                                  },
+                                  {
                                     kind: "FragmentSpread",
                                     name: { kind: "Name", value: "Macros" },
                                   },
@@ -1396,6 +1577,36 @@ export const GetDiaryEntryDocument = {
             name: { kind: "Name", value: "added_sugars_grams" },
           },
           { kind: "Field", name: { kind: "Name", value: "protein_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "saturated_fat_grams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "trans_fat_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "polyunsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "monounsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "cholesterol_milligrams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "sodium_milligrams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_carbohydrate_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "dietary_fiber_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_sugars_grams" },
+          },
         ],
       },
     },
@@ -1442,6 +1653,7 @@ export const GetEntriesDocument = {
               kind: "SelectionSet",
               selections: [
                 { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "day" } },
                 { kind: "Field", name: { kind: "Name", value: "consumed_at" } },
                 { kind: "Field", name: { kind: "Name", value: "calories" } },
                 { kind: "Field", name: { kind: "Name", value: "servings" } },
@@ -1487,6 +1699,10 @@ export const GetEntriesDocument = {
                           selections: [
                             {
                               kind: "Field",
+                              name: { kind: "Name", value: "id" },
+                            },
+                            {
+                              kind: "Field",
                               name: { kind: "Name", value: "servings" },
                             },
                             {
@@ -1495,6 +1711,21 @@ export const GetEntriesDocument = {
                               selectionSet: {
                                 kind: "SelectionSet",
                                 selections: [
+                                  {
+                                    kind: "Field",
+                                    name: { kind: "Name", value: "id" },
+                                  },
+                                  {
+                                    kind: "Field",
+                                    name: {
+                                      kind: "Name",
+                                      value: "description",
+                                    },
+                                  },
+                                  {
+                                    kind: "Field",
+                                    name: { kind: "Name", value: "calories" },
+                                  },
                                   {
                                     kind: "FragmentSpread",
                                     name: { kind: "Name", value: "Macros" },
@@ -1530,6 +1761,36 @@ export const GetEntriesDocument = {
             name: { kind: "Name", value: "added_sugars_grams" },
           },
           { kind: "Field", name: { kind: "Name", value: "protein_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "saturated_fat_grams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "trans_fat_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "polyunsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "monounsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "cholesterol_milligrams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "sodium_milligrams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_carbohydrate_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "dietary_fiber_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_sugars_grams" },
+          },
         ],
       },
     },
@@ -1900,6 +2161,7 @@ export const GetRecipeDocument = {
                   selectionSet: {
                     kind: "SelectionSet",
                     selections: [
+                      { kind: "Field", name: { kind: "Name", value: "id" } },
                       {
                         kind: "Field",
                         name: { kind: "Name", value: "servings" },
@@ -1922,6 +2184,10 @@ export const GetRecipeDocument = {
                               kind: "Field",
                               name: { kind: "Name", value: "calories" },
                             },
+                            {
+                              kind: "FragmentSpread",
+                              name: { kind: "Name", value: "RecipeMacros" },
+                            },
                           ],
                         },
                       },
@@ -1930,6 +2196,55 @@ export const GetRecipeDocument = {
                 },
               ],
             },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "RecipeMacros" },
+      typeCondition: {
+        kind: "NamedType",
+        name: { kind: "Name", value: "food_diary_nutrition_item" },
+      },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "total_fat_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "added_sugars_grams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "protein_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "saturated_fat_grams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "trans_fat_grams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "polyunsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "monounsaturated_fat_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "cholesterol_milligrams" },
+          },
+          { kind: "Field", name: { kind: "Name", value: "sodium_milligrams" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_carbohydrate_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "dietary_fiber_grams" },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "total_sugars_grams" },
           },
         ],
       },
