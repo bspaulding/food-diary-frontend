@@ -14,6 +14,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
+import gleam/uri.{type Uri}
 import gtz
 import lustre
 import lustre/attribute
@@ -21,6 +22,7 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
+import modem
 import rsvp
 import tempo
 import tempo/date
@@ -33,8 +35,14 @@ pub fn main() -> Nil {
   Nil
 }
 
+pub type Route {
+  Home
+  DiaryEntryEdit(String)
+}
+
 pub type Model {
   Model(
+    route: Route,
     access_token: Option(String),
     user: Option(User),
     is_loading: Bool,
@@ -54,8 +62,14 @@ pub type User {
 }
 
 fn init(_args) -> #(Model, Effect(Msg)) {
+  let route: Route =
+    modem.initial_uri()
+    |> result.map(uri_to_route)
+    |> result.unwrap(Home)
+
   let model =
     Model(
+      route: route,
       access_token: None,
       user: None,
       is_loading: False,
@@ -64,7 +78,18 @@ fn init(_args) -> #(Model, Effect(Msg)) {
     )
 
   // Check if there's a token in localStorage or URL
-  #(model, check_auth())
+  #(model, effect.batch([modem.init(on_uri_change), check_auth()]))
+}
+
+fn uri_to_route(uri: Uri) -> Route {
+  case uri.path_segments(uri.path) {
+    ["diary_entry", id, "edit"] -> DiaryEntryEdit(id)
+    _ -> Home
+  }
+}
+
+fn on_uri_change(uri: Uri) -> Msg {
+  BrowserChangedRoute(uri_to_route(uri))
 }
 
 type Msg {
@@ -82,6 +107,9 @@ type Msg {
 
   // gql
   ApiLoadedDiaryEntries(Result(queries.DiaryEntriesResponse, rsvp.Error))
+
+  // routing
+  BrowserChangedRoute(Route)
 }
 
 // ------
@@ -218,12 +246,7 @@ fn load_user_info(token: String) -> Effect(Msg) {
   rsvp.send(request, handler)
 }
 
-fn load_diary_entries(token: String) -> Effect(Msg) {
-  let query = queries.get_entries_query
-  let decoder = queries.diary_entries_response_decoder()
-  let msg = ApiLoadedDiaryEntries
-
-  // V to extract later V
+fn run_graphql_query(token, query, decoder, msg) {
   let body =
     json.object([
       #("query", json.string(query)),
@@ -241,8 +264,21 @@ fn load_diary_entries(token: String) -> Effect(Msg) {
   rsvp.send(request, handler)
 }
 
+fn load_diary_entries(token: String) -> Effect(Msg) {
+  run_graphql_query(
+    token,
+    queries.get_entries_query,
+    queries.diary_entries_response_decoder(),
+    ApiLoadedDiaryEntries,
+  )
+}
+
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
+    BrowserChangedRoute(route) -> {
+      #(Model(..model, route: route), effect.none())
+    }
+
     Login -> {
       #(model, perform_login())
     }
@@ -374,23 +410,29 @@ fn view(model: Model) -> Element(Msg) {
   layout(
     model,
     html.div([], [
-      case model.user {
-        Some(_user) -> diary_entries_view(model.diary_entries)
-        None -> {
-          case model.is_loading {
-            False -> {
-              case model.error {
-                Some(error) -> html.text(error)
-                None ->
-                  html.button([event.on_click(Login)], [html.text("Login")])
-              }
-            }
-            True -> html.text("Loading...")
-          }
-        }
+      case model.route {
+        Home -> home_route(model)
+        DiaryEntryEdit(id) -> diary_entry_edit_route(model, id)
       },
     ]),
   )
+}
+
+fn home_route(model: Model) {
+  case model.user {
+    Some(_user) -> diary_entries_view(model.diary_entries)
+    None -> {
+      case model.is_loading {
+        False -> {
+          case model.error {
+            Some(error) -> html.text(error)
+            None -> html.button([event.on_click(Login)], [html.text("Login")])
+          }
+        }
+        True -> html.text("Loading...")
+      }
+    }
+  }
 }
 
 fn diary_entries_view(entries: List(queries.DiaryEntry)) {
@@ -586,4 +628,8 @@ fn diary_entry_recipe(recipe: queries.Recipe) {
   let href = "/recipe/" <> recipe.id |> int.to_string
 
   html.p([], [html.a([attribute.href(href)], [html.text(recipe.name)])])
+}
+
+fn diary_entry_edit_route(_model: Model, entry_id: String) {
+  html.div([], [html.text("TODO DiaryEntryEdit " <> entry_id)])
 }
