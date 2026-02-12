@@ -76,6 +76,18 @@ function loadScript(url, callback) {
   document.head.appendChild(script);
 }
 
-// loadScript("https://cdn.jsdelivr.net/npm/eruda", function () {
-//   eruda.init();
-// });
+function isMobileSafari() {
+  const ua = navigator.userAgent;
+  return (
+    /iP(hone|od|ad)/.test(ua) &&
+    /WebKit/.test(ua) &&
+    !/CriOS/.test(ua) &&
+    !/FxiOS/.test(ua)
+  );
+}
+
+if (isMobileSafari()) {
+  loadScript("https://cdn.jsdelivr.net/npm/eruda", function () {
+    eruda.init();
+  });
+}
