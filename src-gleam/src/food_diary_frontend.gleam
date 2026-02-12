@@ -2,7 +2,7 @@ import auth0
 import gleam/float
 import queries
 
-import gleam/dict
+import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
 import gleam/http.{Get, Post}
@@ -47,7 +47,7 @@ pub type Model {
     user: Option(User),
     is_loading: Bool,
     error: Option(String),
-    diary_entries: List(queries.DiaryEntry),
+    diary_entries: Dict(Int, queries.DiaryEntry),
   )
 }
 
@@ -74,7 +74,7 @@ fn init(_args) -> #(Model, Effect(Msg)) {
       user: None,
       is_loading: False,
       error: None,
-      diary_entries: [],
+      diary_entries: dict.new(),
     )
 
   // Check if there's a token in localStorage or URL
@@ -347,10 +347,13 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     }
     ApiLoadedDiaryEntries(Ok(res)) -> {
       case res.data {
-        Some(data) -> #(
-          Model(..model, diary_entries: data.entries),
-          effect.none(),
-        )
+        Some(data) -> {
+          let entries_by_id =
+            list.fold(data.entries, dict.new(), fn(by_id, entry) {
+              dict.insert(by_id, entry.id, entry)
+            })
+          #(Model(..model, diary_entries: entries_by_id), effect.none())
+        }
         _ -> #(model, effect.none())
       }
     }
@@ -435,10 +438,10 @@ fn home_route(model: Model) {
   }
 }
 
-fn diary_entries_view(entries: List(queries.DiaryEntry)) {
+fn diary_entries_view(entries: Dict(Int, queries.DiaryEntry)) {
   let assert Ok(local_tz) = gtz.local_name() |> gtz.timezone
   let by_day =
-    list.group(entries, fn(e) {
+    list.group(dict.values(entries), fn(e) {
       datetime.literal(e.consumed_at)
       |> datetime.to_timezone(local_tz)
       |> datetime.format(tempo.Custom("YYYY-MM-DD"))
@@ -538,7 +541,12 @@ fn diary_entries_day(day: String, entries: List(queries.DiaryEntry)) {
     html.ul(
       [attribute.class("col-span-5 mb-6")],
       list.prepend(
-        list.map(entries, diary_entry_item),
+        list.map(
+          list.sort(entries, fn(a, b) {
+            string.compare(a.consumed_at, b.consumed_at)
+          }),
+          diary_entry_item,
+        ),
         html.li([attribute.class("mb-4")], [
           html.div([attribute.class("flex flex-row justify-around")], [
             entry_macro_view(total_added_sugars, "g", "Added Sugar"),
@@ -561,6 +569,8 @@ fn pluralize(x: Float, singular, plural) {
 }
 
 fn diary_entry_item(entry: queries.DiaryEntry) {
+  let assert Ok(local_tz) = gtz.local_name() |> gtz.timezone
+
   html.li([attribute.class("mb-4")], [
     html.p([attribute.class("font-semibold")], [
       html.text(
@@ -582,6 +592,7 @@ fn diary_entry_item(entry: queries.DiaryEntry) {
         pluralize(entry.servings, "serving", "servings")
         <> " at "
         <> datetime.literal(entry.consumed_at)
+        |> datetime.to_timezone(local_tz)
         |> datetime.format(tempo.Custom("h:mm A")),
       ),
       html.span([], [
@@ -630,6 +641,38 @@ fn diary_entry_recipe(recipe: queries.Recipe) {
   html.p([], [html.a([attribute.href(href)], [html.text(recipe.name)])])
 }
 
-fn diary_entry_edit_route(_model: Model, entry_id: String) {
-  html.div([], [html.text("TODO DiaryEntryEdit " <> entry_id)])
+fn diary_entry_edit_route(model: Model, entry_id: String) {
+  let entry: Result(queries.DiaryEntry, Nil) =
+    int.parse(entry_id)
+    |> result.try(fn(id) { dict.get(model.diary_entries, id) })
+
+  html.div([], [
+    html.div([attribute.class("flex space-x-4 mb-4")], [
+      button_link([attribute.href("/")], [html.text("Back to Diary")]),
+    ]),
+    case entry {
+      Ok(entry) ->
+        html.div([attribute.class("mb-4")], [
+          html.p([attribute.class("text-2xl")], [
+            html.text(case entry.nutrition_item, entry.recipe {
+              Some(item), _ -> item.description
+              _, Some(recipe) -> recipe.name
+              _, _ -> "Unknown"
+            }),
+          ]),
+        ])
+      _ -> html.text("DiaryEntry with id " <> entry_id <> " not found")
+    },
+  ])
+}
+
+fn button_link(attrs, children) {
+  html.a(
+    list.append(attrs, [
+      attribute.class(
+        "bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md",
+      ),
+    ]),
+    children,
+  )
 }
