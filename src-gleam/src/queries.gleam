@@ -1,8 +1,9 @@
 import gleam/dynamic/decode
+import gleam/int
 import gleam/option.{type Option, None}
 
-pub const get_entries_query = "
-fragment NutritionItemFields on food_diary_nutrition_item {
+pub fn get_entries_query(offset: Int) {
+  "fragment NutritionItemFields on food_diary_nutrition_item {
   id
   description
   calories
@@ -12,7 +13,9 @@ fragment NutritionItemFields on food_diary_nutrition_item {
 }
 
 query GetEntries {
-    food_diary_diary_entry(order_by: { consumed_at: desc }) {
+    food_diary_diary_entry(order_by: { consumed_at: desc }, limit: 50, offset: " <> int.to_string(
+    offset,
+  ) <> ") {
         id
         consumed_at
         calories
@@ -21,6 +24,7 @@ query GetEntries {
         recipe { id, name, calories, recipe_items { servings, nutrition_item { ...NutritionItemFields } } }
     }
 }"
+}
 
 pub type NutritionItem {
   NutritionItem(

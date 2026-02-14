@@ -36,7 +36,7 @@ pub fn main() -> Nil {
 }
 
 pub type Route {
-  Home
+  DiaryList
   DiaryEntryEdit(String)
 }
 
@@ -48,6 +48,7 @@ pub type Model {
     is_loading: Bool,
     error: Option(String),
     diary_entries: Dict(Int, queries.DiaryEntry),
+    diary_list_offset: Int,
   )
 }
 
@@ -65,7 +66,7 @@ fn init(_args) -> #(Model, Effect(Msg)) {
   let route: Route =
     modem.initial_uri()
     |> result.map(uri_to_route)
-    |> result.unwrap(Home)
+    |> result.unwrap(DiaryList)
 
   let model =
     Model(
@@ -75,6 +76,7 @@ fn init(_args) -> #(Model, Effect(Msg)) {
       is_loading: False,
       error: None,
       diary_entries: dict.new(),
+      diary_list_offset: 0,
     )
 
   // Check if there's a token in localStorage or URL
@@ -84,7 +86,7 @@ fn init(_args) -> #(Model, Effect(Msg)) {
 fn uri_to_route(uri: Uri) -> Route {
   case uri.path_segments(uri.path) {
     ["diary_entry", id, "edit"] -> DiaryEntryEdit(id)
-    _ -> Home
+    _ -> DiaryList
   }
 }
 
@@ -104,6 +106,7 @@ type Msg {
 
   // app
   UserDeletedEntry(queries.DiaryEntry)
+  UserLoadedMoreEntries
 
   // gql
   ApiLoadedDiaryEntries(Result(queries.DiaryEntriesResponse, rsvp.Error))
@@ -264,10 +267,10 @@ fn run_graphql_query(token, query, decoder, msg) {
   rsvp.send(request, handler)
 }
 
-fn load_diary_entries(token: String) -> Effect(Msg) {
+fn load_diary_entries(token: String, offset: Int) -> Effect(Msg) {
   run_graphql_query(
     token,
-    queries.get_entries_query,
+    queries.get_entries_query(offset),
     queries.diary_entries_response_decoder(),
     ApiLoadedDiaryEntries,
   )
@@ -289,7 +292,10 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     }
 
     LoadedSavedToken(token) -> #(Model(..model, access_token: Some(token)), {
-      effect.batch([load_user_info(token), load_diary_entries(token)])
+      effect.batch([
+        load_user_info(token),
+        load_diary_entries(token, model.diary_list_offset),
+      ])
     })
 
     HandleAuthCallback(code) -> {
@@ -340,6 +346,14 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
 
     // app
     UserDeletedEntry(_entry) -> #(model, effect.none())
+    UserLoadedMoreEntries ->
+      case model.access_token {
+        Some(token) -> #(
+          Model(..model, diary_list_offset: model.diary_list_offset + 50),
+          load_diary_entries(token, model.diary_list_offset + 50),
+        )
+        None -> #(model, effect.none())
+      }
 
     // gql
     ApiLoadedDiaryEntries(Error(err)) -> {
@@ -349,7 +363,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       case res.data {
         Some(data) -> {
           let entries_by_id =
-            list.fold(data.entries, dict.new(), fn(by_id, entry) {
+            list.fold(data.entries, model.diary_entries, fn(by_id, entry) {
               dict.insert(by_id, entry.id, entry)
             })
           #(Model(..model, diary_entries: entries_by_id), effect.none())
@@ -414,16 +428,33 @@ fn view(model: Model) -> Element(Msg) {
     model,
     html.div([], [
       case model.route {
-        Home -> home_route(model)
+        DiaryList -> diary_list_route(model)
         DiaryEntryEdit(id) -> diary_entry_edit_route(model, id)
       },
     ]),
   )
 }
 
-fn home_route(model: Model) {
+fn diary_list_route(model: Model) {
   case model.user {
-    Some(_user) -> diary_entries_view(model.diary_entries)
+    Some(_user) ->
+      element.fragment([
+        html.div([attribute.class("flex space-x-4 mb-4")], [
+          button_link([attribute.href("/diary_entry/new")], [
+            html.text("Add New Entry"),
+          ]),
+          button_link([attribute.href("/nutrition_item/new")], [
+            html.text("Add Item"),
+          ]),
+          button_link([attribute.href("/recipe/new")], [html.text("Add Recipe")]),
+        ]),
+        diary_entries_view(model.diary_entries),
+        html.div([attribute.class("mb-4 flex justify-center")], [
+          button([event.on_click(UserLoadedMoreEntries)], [
+            html.text("Load More"),
+          ]),
+        ]),
+      ])
     None -> {
       case model.is_loading {
         False -> {
@@ -668,6 +699,17 @@ fn diary_entry_edit_route(model: Model, entry_id: String) {
 
 fn button_link(attrs, children) {
   html.a(
+    list.append(attrs, [
+      attribute.class(
+        "bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md",
+      ),
+    ]),
+    children,
+  )
+}
+
+fn button(attrs, children) {
+  html.button(
     list.append(attrs, [
       attribute.class(
         "bg-indigo-600 text-slate-50 py-2 px-3 text-lg rounded-md",
