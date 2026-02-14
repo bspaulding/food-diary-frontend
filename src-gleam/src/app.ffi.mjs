@@ -77,13 +77,7 @@ function loadScript(url, callback) {
 }
 
 function isMobileSafari() {
-  const ua = navigator.userAgent;
-  return (
-    /iP(hone|od|ad)/.test(ua) &&
-    /WebKit/.test(ua) &&
-    !/CriOS/.test(ua) &&
-    !/FxiOS/.test(ua)
-  );
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
 }
 
 if (isMobileSafari()) {
