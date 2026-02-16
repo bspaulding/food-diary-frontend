@@ -81,7 +81,17 @@ fn init(_args) -> #(Model, Effect(Msg)) {
     )
 
   // Check if there's a token in localStorage or URL
-  #(model, effect.batch([modem.init(on_uri_change), check_auth()]))
+  #(
+    model,
+    effect.batch([
+      modem.init(on_uri_change),
+      check_auth(),
+      {
+        use dispatch <- effect.from
+        dispatch(BrowserChangedRoute(route))
+      },
+    ]),
+  )
 }
 
 fn uri_to_route(uri: Uri) -> Route {
