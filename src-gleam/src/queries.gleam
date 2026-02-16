@@ -2,6 +2,28 @@ import gleam/dynamic/decode
 import gleam/int
 import gleam/option.{type Option, None}
 
+pub fn get_entry_query(entry_id: String) {
+  "fragment NutritionItemFields on food_diary_nutrition_item {
+  id
+  description
+  calories
+	total_fat_grams
+  added_sugars_grams
+	protein_grams
+}
+  query GetDiaryEntry() {
+    food_diary_diary_entry_by_pk(id: " <> entry_id <> ") {
+      id
+      consumed_at
+      calories
+      servings
+      nutrition_item { ...NutritionItemFields }
+      recipe { id, name, calories, recipe_items { servings, nutrition_item { ...NutritionItemFields } } }
+    }
+  }
+"
+}
+
 pub fn get_entries_query(offset: Int) {
   "fragment NutritionItemFields on food_diary_nutrition_item {
   id
@@ -138,4 +160,29 @@ pub fn diary_entries_response_decoder() {
     decode.optional(diary_entries_response_data_decoder()),
   )
   decode.success(DiaryEntriesResponse(data))
+}
+
+pub type DiaryEntryResponseData {
+  DiaryEntryResponseData(entry: DiaryEntry)
+}
+
+fn food_diary_diary_entry_by_pk_decoder() {
+  use entry <- decode.field(
+    "food_diary_diary_entry_by_pk",
+    diary_entry_decoder(),
+  )
+  decode.success(DiaryEntryResponseData(entry: entry))
+}
+
+pub type DiaryEntryResponse {
+  DiaryEntryResponse(data: Option(DiaryEntryResponseData))
+}
+
+pub fn diary_entry_response_decoder() {
+  use data <- decode.optional_field(
+    "data",
+    None,
+    decode.optional(food_diary_diary_entry_by_pk_decoder()),
+  )
+  decode.success(DiaryEntryResponse(data))
 }

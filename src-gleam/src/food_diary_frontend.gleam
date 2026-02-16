@@ -38,6 +38,7 @@ pub fn main() -> Nil {
 pub type Route {
   DiaryList
   DiaryEntryEdit(String)
+  DiaryEntryNew
 }
 
 pub type Model {
@@ -86,6 +87,7 @@ fn init(_args) -> #(Model, Effect(Msg)) {
 fn uri_to_route(uri: Uri) -> Route {
   case uri.path_segments(uri.path) {
     ["diary_entry", id, "edit"] -> DiaryEntryEdit(id)
+    ["diary_entry", "new"] -> DiaryEntryNew
     _ -> DiaryList
   }
 }
@@ -110,6 +112,7 @@ type Msg {
 
   // gql
   ApiLoadedDiaryEntries(Result(queries.DiaryEntriesResponse, rsvp.Error))
+  ApiLoadedDiaryEntry(Result(queries.DiaryEntryResponse, rsvp.Error))
 
   // routing
   BrowserChangedRoute(Route)
@@ -276,10 +279,23 @@ fn load_diary_entries(token: String, offset: Int) -> Effect(Msg) {
   )
 }
 
+fn load_diary_entry(token: String, entry_id: String) -> Effect(Msg) {
+  run_graphql_query(
+    token,
+    queries.get_entry_query(entry_id),
+    queries.diary_entry_response_decoder(),
+    ApiLoadedDiaryEntry,
+  )
+}
+
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     BrowserChangedRoute(route) -> {
-      #(Model(..model, route: route), effect.none())
+      #(Model(..model, route: route), case route, model.access_token {
+        DiaryEntryEdit(entry_id), Some(token) ->
+          load_diary_entry(token, entry_id)
+        _, _ -> effect.none()
+      })
     }
 
     Login -> {
@@ -371,6 +387,27 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
         _ -> #(model, effect.none())
       }
     }
+    ApiLoadedDiaryEntry(Error(err)) -> {
+      #(Model(..model, error: Some(rsvp_error_to_string(err))), effect.none())
+    }
+    ApiLoadedDiaryEntry(Ok(res)) -> {
+      case res.data {
+        Some(data) -> {
+          #(
+            Model(
+              ..model,
+              diary_entries: dict.insert(
+                model.diary_entries,
+                data.entry.id,
+                data.entry,
+              ),
+            ),
+            effect.none(),
+          )
+        }
+        _ -> #(model, effect.none())
+      }
+    }
   }
 }
 
@@ -430,9 +467,23 @@ fn view(model: Model) -> Element(Msg) {
       case model.route {
         DiaryList -> diary_list_route(model)
         DiaryEntryEdit(id) -> diary_entry_edit_route(model, id)
+        DiaryEntryNew -> diary_entry_new_route(model)
       },
     ]),
   )
+}
+
+fn todo_view() {
+  html.div([], [html.text("TODO")])
+}
+
+fn diary_entry_new_route(_model) {
+  html.div([attribute.class("flex space-x-4 mb-4")], [
+    button_link([attribute.href("/")], [
+      html.text("Back to Diary"),
+    ]),
+    todo_view(),
+  ])
 }
 
 fn diary_list_route(model: Model) {
