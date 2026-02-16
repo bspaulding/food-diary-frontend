@@ -2,6 +2,7 @@ import auth0
 import gleam/float
 import queries
 
+import formal/form.{type Form}
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
@@ -37,7 +38,7 @@ pub fn main() -> Nil {
 
 pub type Route {
   DiaryList
-  DiaryEntryEdit(String)
+  DiaryEntryEdit(String, Form(DiaryEntryEditFormData))
   DiaryEntryNew
 }
 
@@ -96,7 +97,7 @@ fn init(_args) -> #(Model, Effect(Msg)) {
 
 fn uri_to_route(uri: Uri) -> Route {
   case uri.path_segments(uri.path) {
-    ["diary_entry", id, "edit"] -> DiaryEntryEdit(id)
+    ["diary_entry", id, "edit"] -> DiaryEntryEdit(id, diary_entry_edit_form(id))
     ["diary_entry", "new"] -> DiaryEntryNew
     _ -> DiaryList
   }
@@ -119,6 +120,9 @@ type Msg {
   // app
   UserDeletedEntry(queries.DiaryEntry)
   UserLoadedMoreEntries
+  UserSubmittedDiaryEntryEditForm(
+    result: Result(DiaryEntryEditFormData, Form(DiaryEntryEditFormData)),
+  )
 
   // gql
   ApiLoadedDiaryEntries(Result(queries.DiaryEntriesResponse, rsvp.Error))
@@ -298,11 +302,20 @@ fn load_diary_entry(token: String, entry_id: String) -> Effect(Msg) {
   )
 }
 
+fn update_diary_entry(token: String, form: DiaryEntryEditFormData) {
+  run_graphql_query(
+    token,
+    queries.update_entry_query(form.entry_id, form.servings, form.consumed_at),
+    queries.diary_entry_response_decoder(),
+    ApiLoadedDiaryEntry,
+  )
+}
+
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     BrowserChangedRoute(route) -> {
       #(Model(..model, route: route), case route, model.access_token {
-        DiaryEntryEdit(entry_id), Some(token) ->
+        DiaryEntryEdit(entry_id, _form), Some(token) ->
           load_diary_entry(token, entry_id)
         _, _ -> effect.none()
       })
@@ -380,6 +393,13 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
         )
         None -> #(model, effect.none())
       }
+    UserSubmittedDiaryEntryEditForm(Error(_form)) -> #(model, effect.none())
+    UserSubmittedDiaryEntryEditForm(Ok(data)) -> #(
+      model,
+      model.access_token
+        |> option.then(fn(token) { Some(update_diary_entry(token, data)) })
+        |> option.unwrap(or: effect.none()),
+    )
 
     // gql
     ApiLoadedDiaryEntries(Error(err)) -> {
@@ -476,7 +496,7 @@ fn view(model: Model) -> Element(Msg) {
     html.div([], [
       case model.route {
         DiaryList -> diary_list_route(model)
-        DiaryEntryEdit(id) -> diary_entry_edit_route(model, id)
+        DiaryEntryEdit(id, form) -> diary_entry_edit_route(model, id, form)
         DiaryEntryNew -> diary_entry_new_route(model)
       },
     ]),
@@ -733,7 +753,34 @@ fn diary_entry_recipe(recipe: queries.Recipe) {
   html.p([], [html.a([attribute.href(href)], [html.text(recipe.name)])])
 }
 
-fn diary_entry_edit_route(model: Model, entry_id: String) {
+pub type DiaryEntryEditFormData {
+  DiaryEntryEditFormData(entry_id: String, servings: Float, consumed_at: String)
+}
+
+fn diary_entry_edit_form(entry_id: String) -> Form(DiaryEntryEditFormData) {
+  form.new({
+    use servings <- form.field("servings", { form.parse_float })
+    use consumed_at <- form.field("consumed_at", { form.parse_string })
+    form.success(DiaryEntryEditFormData(
+      entry_id: entry_id,
+      servings: servings,
+      consumed_at: consumed_at,
+    ))
+  })
+}
+
+fn diary_entry_edit_route(
+  model: Model,
+  entry_id: String,
+  form: Form(DiaryEntryEditFormData),
+) -> Element(Msg) {
+  let submitted = fn(fields) {
+    form
+    |> form.add_values(fields)
+    |> form.run
+    |> UserSubmittedDiaryEntryEditForm
+  }
+
   let entry: Result(queries.DiaryEntry, Nil) =
     int.parse(entry_id)
     |> result.try(fn(id) { dict.get(model.diary_entries, id) })
@@ -767,7 +814,7 @@ fn diary_entry_edit_route(model: Model, entry_id: String) {
               html.a([attribute.href(href)], [html.text("View Detail")]),
             ]),
           ]),
-          html.form([], [
+          html.form([event.on_submit(submitted)], [
             html.fieldset([attribute.class("flex flex-col")], [
               html.label([attribute.for("servings")], [html.text("Servings")]),
               html.input([
@@ -797,6 +844,7 @@ fn diary_entry_edit_route(model: Model, entry_id: String) {
                   attribute.class(
                     "bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold",
                   ),
+                  attribute.type_("submit"),
                   // TODO
                 // attribute.disabled(disabled()),
                 ],

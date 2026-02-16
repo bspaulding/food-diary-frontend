@@ -1,6 +1,21 @@
 import gleam/dynamic/decode
+import gleam/float
 import gleam/int
 import gleam/option.{type Option, None}
+
+pub fn update_entry_query(
+  entry_id: String,
+  servings: Float,
+  consumed_at: String,
+) {
+  "mutation UpdateDiaryEntry {
+  update_food_diary_diary_entry_by_pk(pk_columns: {id: " <> entry_id <> "}, _set: { servings: " <> float.to_string(
+    servings,
+  ) <> ", consumed_at: " <> consumed_at <> "}) {
+    " <> get_entry_query(entry_id) <> "
+  }
+}"
+}
 
 pub fn get_entry_query(entry_id: String) {
   "fragment NutritionItemFields on food_diary_nutrition_item {
