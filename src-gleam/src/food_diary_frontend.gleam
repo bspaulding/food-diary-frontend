@@ -738,19 +738,71 @@ fn diary_entry_edit_route(model: Model, entry_id: String) {
     int.parse(entry_id)
     |> result.try(fn(id) { dict.get(model.diary_entries, id) })
 
+  let href = case entry {
+    Ok(entry) ->
+      case entry.nutrition_item, entry.recipe {
+        Some(item), _ -> "/nutrition_item/" <> int.to_string(item.id)
+        _, Some(recipe) -> "/recipe/" <> int.to_string(recipe.id)
+        _, _ -> ""
+      }
+    Error(_) -> ""
+  }
+
   html.div([], [
     html.div([attribute.class("flex space-x-4 mb-4")], [
       button_link([attribute.href("/")], [html.text("Back to Diary")]),
     ]),
     case entry {
       Ok(entry) ->
-        html.div([attribute.class("mb-4")], [
-          html.p([attribute.class("text-2xl")], [
-            html.text(case entry.nutrition_item, entry.recipe {
-              Some(item), _ -> item.description
-              _, Some(recipe) -> recipe.name
-              _, _ -> "Unknown"
-            }),
+        html.div([], [
+          html.div([attribute.class("mb-4")], [
+            html.p([attribute.class("text-2xl")], [
+              html.text(case entry.nutrition_item, entry.recipe {
+                Some(item), _ -> item.description
+                _, Some(recipe) -> recipe.name
+                _, _ -> "Unknown"
+              }),
+            ]),
+            html.p([attribute.class("text-indigo-600")], [
+              html.a([attribute.href(href)], [html.text("View Detail")]),
+            ]),
+          ]),
+          html.form([], [
+            html.fieldset([attribute.class("flex flex-col")], [
+              html.label([attribute.for("servings")], [html.text("Servings")]),
+              html.input([
+                attribute.id("servings"),
+                attribute.type_("number"),
+                attribute.inputmode("decimal"),
+                attribute.step("0.1"),
+                attribute.value(float.to_string(entry.servings)),
+              ]),
+            ]),
+            html.fieldset([attribute.class("flex flex-col")], [
+              html.label([attribute.for("consumed_at")], [
+                html.text("Consumed At"),
+              ]),
+              html.input([
+                attribute.id("consumed_at"),
+                attribute.type_("datetime-local"),
+                attribute.value(
+                  datetime.literal(entry.consumed_at)
+                  |> datetime.format(tempo.Custom("YYYY-MM-DDTHH:mm")),
+                ),
+              ]),
+            ]),
+            html.fieldset([attribute.class("mt-4 mb-4")], [
+              html.button(
+                [
+                  attribute.class(
+                    "bg-indigo-600 text-slate-50 py-3 w-full text-xl font-semibold",
+                  ),
+                  // TODO
+                // attribute.disabled(disabled()),
+                ],
+                [html.text("Save")],
+              ),
+            ]),
           ]),
         ])
       _ -> html.text("DiaryEntry with id " <> entry_id <> " not found")
