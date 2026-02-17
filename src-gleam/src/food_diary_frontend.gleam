@@ -36,22 +36,28 @@ pub fn main() -> Nil {
   Nil
 }
 
-pub type Route {
-  DiaryList
-  DiaryEntryEdit(String, Form(DiaryEntryEditFormData))
-  DiaryEntryNew
+pub type AuthInfo {
+  AuthInfo(access_token: String, user: Option(User))
 }
 
 pub type Model {
-  Model(
-    route: Route,
-    access_token: Option(String),
-    user: Option(User),
+  NotFound
+  AuthCallback
+  LoggedOut
+  DiaryList(
+    auth: AuthInfo,
     is_loading: Bool,
     error: Option(String),
     diary_entries: Dict(Int, queries.DiaryEntry),
     diary_list_offset: Int,
   )
+  DiaryEntryEdit(
+    auth: AuthInfo,
+    entry_id: String,
+    entry: Option(queries.DiaryEntry),
+    form: Form(DiaryEntryEditFormData),
+  )
+  DiaryEntryNew(auth: AuthInfo)
 }
 
 pub type User {
@@ -65,46 +71,56 @@ pub type User {
 }
 
 fn init(_args) -> #(Model, Effect(Msg)) {
-  let route: Route =
-    modem.initial_uri()
-    |> result.map(uri_to_route)
-    |> result.unwrap(DiaryList)
+  let assert Ok(uri) = modem.initial_uri()
+  init_from_uri(uri)
+}
 
-  let model =
-    Model(
-      route: route,
-      access_token: None,
-      user: None,
-      is_loading: False,
-      error: None,
-      diary_entries: dict.new(),
-      diary_list_offset: 0,
-    )
+fn init_from_uri(uri: uri.Uri) {
+  let token = decode.run(js_get_stored_token(), decode.optional(decode.string))
 
-  // Check if there's a token in localStorage or URL
+  let auth: Option(AuthInfo) = case token {
+    Ok(Some(token)) -> {
+      Some(AuthInfo(token, None))
+    }
+    _ -> None
+  }
+  let #(model, eff) = uri_to_route(auth, uri)
+
   #(
     model,
     effect.batch([
-      modem.init(on_uri_change),
-      check_auth(),
-      {
-        use dispatch <- effect.from
-        dispatch(BrowserChangedRoute(route))
+      modem.init(BrowserChangedRoute),
+      case auth {
+        Some(AuthInfo(token, _)) -> load_user_info(token)
+        _ -> effect.none()
       },
+      eff,
     ]),
   )
 }
 
-fn uri_to_route(uri: Uri) -> Route {
-  case uri.path_segments(uri.path) {
-    ["diary_entry", id, "edit"] -> DiaryEntryEdit(id, diary_entry_edit_form(id))
-    ["diary_entry", "new"] -> DiaryEntryNew
-    _ -> DiaryList
+fn uri_to_route(auth: Option(AuthInfo), uri: Uri) -> #(Model, Effect(Msg)) {
+  let segments = uri.path_segments(uri.path)
+  case auth, segments {
+    Some(auth), ["diary_entry", id, "edit"] -> #(
+      DiaryEntryEdit(auth, id, None, diary_entry_edit_form(id)),
+      load_diary_entry(auth.access_token, id),
+    )
+    Some(auth), ["diary_entry", "new"] -> #(DiaryEntryNew(auth), effect.none())
+    Some(auth), [] -> #(
+      DiaryList(
+        auth,
+        diary_entries: dict.new(),
+        diary_list_offset: 0,
+        is_loading: False,
+        error: None,
+      ),
+      load_diary_entries(auth.access_token, 0),
+    )
+    _, ["auth", "callback"] -> #(AuthCallback, handle_auth_callback())
+    None, [] -> #(LoggedOut, effect.none())
+    _, _ -> #(NotFound, effect.none())
   }
-}
-
-fn on_uri_change(uri: Uri) -> Msg {
-  BrowserChangedRoute(uri_to_route(uri))
 }
 
 type Msg {
@@ -112,10 +128,8 @@ type Msg {
   Login
   Logout
   HandleAuthCallback(String)
-  LoadedSavedToken(String)
   AuthGotToken(Result(String, rsvp.Error))
   ReceivedUserInfo(Result(User, rsvp.Error))
-  SetError(String)
 
   // app
   UserDeletedEntry(queries.DiaryEntry)
@@ -129,7 +143,7 @@ type Msg {
   ApiLoadedDiaryEntry(Result(queries.DiaryEntryResponse, rsvp.Error))
 
   // routing
-  BrowserChangedRoute(Route)
+  BrowserChangedRoute(Uri)
 }
 
 // ------
@@ -166,28 +180,17 @@ fn js_reset_location() -> Nil
 // Auth0 stuffs
 // ------------
 
-fn check_auth() -> Effect(Msg) {
-  let token = decode.run(js_get_stored_token(), decode.optional(decode.string))
-  case token {
-    Ok(Some(token)) -> {
-      io.println("loading saved token")
+fn handle_auth_callback() -> Effect(Msg) {
+  let code = decode.run(js_get_auth_code(), decode.optional(decode.string))
+  case code {
+    Ok(Some(code)) -> {
+      io.println("code was some")
       use dispatch <- effect.from
-      dispatch(LoadedSavedToken(token))
+      dispatch(HandleAuthCallback(code))
     }
     _ -> {
-      io.println("token was None")
-      let code = decode.run(js_get_auth_code(), decode.optional(decode.string))
-      case code {
-        Ok(Some(code)) -> {
-          io.println("code was some")
-          use dispatch <- effect.from
-          dispatch(HandleAuthCallback(code))
-        }
-        _ -> {
-          io.println("code was none")
-          effect.none()
-        }
-      }
+      io.println("code was none")
+      effect.none()
     }
   }
 }
@@ -234,6 +237,7 @@ fn exchange_code_for_token(code: String) -> Effect(Msg) {
 
 fn clear_token() -> Effect(Msg) {
   // Clear token from localStorage
+  js_clear_stored_token()
   effect.none()
 }
 
@@ -313,118 +317,122 @@ fn update_diary_entry(token: String, form: DiaryEntryEditFormData) {
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
-    BrowserChangedRoute(route) -> {
-      #(Model(..model, route: route), case route, model.access_token {
-        DiaryEntryEdit(entry_id, _form), Some(token) ->
-          load_diary_entry(token, entry_id)
-        _, _ -> effect.none()
-      })
-    }
+    BrowserChangedRoute(uri) -> init_from_uri(uri)
 
     Login -> {
       #(model, perform_login())
     }
 
     Logout -> {
-      let new_model = Model(..model, user: None)
-      #(new_model, clear_token())
+      #(LoggedOut, clear_token())
     }
 
-    LoadedSavedToken(token) -> #(Model(..model, access_token: Some(token)), {
-      effect.batch([
-        load_user_info(token),
-        load_diary_entries(token, model.diary_list_offset),
-      ])
-    })
-
     HandleAuthCallback(code) -> {
-      let loading_model = Model(..model, is_loading: True)
-      #(loading_model, exchange_code_for_token(code))
+      #(AuthCallback, exchange_code_for_token(code))
     }
 
     AuthGotToken(Error(error)) -> {
       echo error
-      #(Model(..model, error: Some("Failed to login")), effect.none())
+      #(LoggedOut, effect.none())
     }
 
     AuthGotToken(Ok(access_token)) -> {
-      #(Model(..model, access_token: Some(access_token), is_loading: False), {
+      #(AuthCallback, {
         js_store_token(access_token)
-        js_reset_location()
-        // unreachable
-        effect.none()
+        modem.push("/", None, None)
       })
     }
 
     ReceivedUserInfo(Ok(user)) -> {
-      let new_model =
-        Model(..model, user: Some(user), is_loading: False, error: None)
-      #(new_model, effect.none())
+      #(
+        case model {
+          NotFound -> NotFound
+          LoggedOut -> LoggedOut
+          AuthCallback -> AuthCallback
+          DiaryList(..) ->
+            DiaryList(
+              ..model,
+              auth: AuthInfo(model.auth.access_token, Some(user)),
+            )
+          DiaryEntryNew(..) ->
+            DiaryEntryNew(auth: AuthInfo(model.auth.access_token, Some(user)))
+          DiaryEntryEdit(..) ->
+            DiaryEntryEdit(
+              ..model,
+              auth: AuthInfo(model.auth.access_token, Some(user)),
+            )
+        },
+        effect.none(),
+      )
     }
 
     ReceivedUserInfo(Error(err)) -> {
       echo err
-      let new_model =
-        Model(
-          ..model,
-          access_token: None,
-          user: None,
-          is_loading: False,
-          error: Some("Failed to load user info: " <> rsvp_error_to_string(err)),
-        )
-      #(new_model, {
-        js_clear_stored_token()
-        effect.none()
-      })
-    }
-
-    SetError(err) -> {
-      let new_model = Model(..model, error: Some(err))
-      #(new_model, effect.none())
+      #(model, clear_token())
     }
 
     // app
-    UserDeletedEntry(_entry) -> #(model, effect.none())
+    UserDeletedEntry(_entry) -> {
+      // TODO
+      #(model, effect.none())
+    }
     UserLoadedMoreEntries ->
-      case model.access_token {
-        Some(token) -> #(
-          Model(..model, diary_list_offset: model.diary_list_offset + 50),
-          load_diary_entries(token, model.diary_list_offset + 50),
+      case model {
+        DiaryList(..) -> #(
+          DiaryList(..model, diary_list_offset: model.diary_list_offset + 50),
+          load_diary_entries(
+            model.auth.access_token,
+            model.diary_list_offset + 50,
+          ),
         )
-        None -> #(model, effect.none())
+        _ -> #(model, effect.none())
       }
     UserSubmittedDiaryEntryEditForm(Error(_form)) -> #(model, effect.none())
-    UserSubmittedDiaryEntryEditForm(Ok(data)) -> #(
-      model,
-      model.access_token
-        |> option.then(fn(token) { Some(update_diary_entry(token, data)) })
-        |> option.unwrap(or: effect.none()),
-    )
+    UserSubmittedDiaryEntryEditForm(Ok(data)) ->
+      case model {
+        DiaryEntryEdit(..) -> #(
+          model,
+          update_diary_entry(model.auth.access_token, data),
+        )
+        _ -> #(model, effect.none())
+      }
 
     // gql
     ApiLoadedDiaryEntries(Error(err)) -> {
-      #(Model(..model, error: Some(rsvp_error_to_string(err))), effect.none())
+      case model {
+        DiaryList(..) -> #(
+          DiaryList(..model, error: Some(rsvp_error_to_string(err))),
+          effect.none(),
+        )
+        _ -> #(model, effect.none())
+      }
     }
     ApiLoadedDiaryEntries(Ok(res)) -> {
-      case res.data {
-        Some(data) -> {
+      case model, res.data {
+        DiaryList(..), Some(data) -> {
           let entries_by_id =
             list.fold(data.entries, model.diary_entries, fn(by_id, entry) {
               dict.insert(by_id, entry.id, entry)
             })
-          #(Model(..model, diary_entries: entries_by_id), effect.none())
+          #(DiaryList(..model, diary_entries: entries_by_id), effect.none())
         }
-        _ -> #(model, effect.none())
+        _, _ -> #(model, effect.none())
       }
     }
     ApiLoadedDiaryEntry(Error(err)) -> {
-      #(Model(..model, error: Some(rsvp_error_to_string(err))), effect.none())
+      case model {
+        DiaryList(..) -> #(
+          DiaryList(..model, error: Some(rsvp_error_to_string(err))),
+          effect.none(),
+        )
+        _ -> #(model, effect.none())
+      }
     }
     ApiLoadedDiaryEntry(Ok(res)) -> {
-      case res.data {
-        Some(data) -> {
+      case model, res.data {
+        DiaryList(..), Some(data) -> {
           #(
-            Model(
+            DiaryList(
               ..model,
               diary_entries: dict.insert(
                 model.diary_entries,
@@ -435,7 +443,16 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
             effect.none(),
           )
         }
-        _ -> #(model, effect.none())
+        DiaryEntryEdit(entry_id: entry_id, ..), Some(data) -> {
+          case entry_id == int.to_string(data.entry.id) {
+            True -> #(
+              DiaryEntryEdit(..model, entry: Some(data.entry)),
+              effect.none(),
+            )
+            False -> #(model, effect.none())
+          }
+        }
+        _, _ -> #(model, effect.none())
       }
     }
   }
@@ -471,17 +488,14 @@ fn layout(model: Model, children: Element(msg)) -> Element(msg) {
           html.h1([attribute.class("text-2xl font-bold")], [
             html.text("Food Diary"),
           ]),
-          case model.user {
-            Some(user) ->
-              html.div([attribute.class("absolute right-2 w-12 h-12")], [
-                html.a([attribute.href(option.unwrap(user.profile, or: ""))], [
-                  html.img([
-                    attribute.src(user.picture),
-                    attribute.class("border border-slate-800 rounded-full"),
-                  ]),
-                ]),
-              ])
-            None -> html.text("")
+          case model {
+            DiaryList(auth: AuthInfo(user: Some(user), ..), ..) ->
+              user_profile_badge(user)
+            DiaryEntryNew(auth: AuthInfo(user: Some(user), ..)) ->
+              user_profile_badge(user)
+            DiaryEntryEdit(auth: AuthInfo(user: Some(user), ..), ..) ->
+              user_profile_badge(user)
+            _ -> html.text("")
           },
         ],
       ),
@@ -490,17 +504,41 @@ fn layout(model: Model, children: Element(msg)) -> Element(msg) {
   )
 }
 
+fn user_profile_badge(user: User) {
+  html.div([attribute.class("absolute right-2 w-12 h-12")], [
+    html.a([attribute.href(option.unwrap(user.profile, or: ""))], [
+      html.img([
+        attribute.src(user.picture),
+        attribute.class("border border-slate-800 rounded-full"),
+      ]),
+    ]),
+  ])
+}
+
 fn view(model: Model) -> Element(Msg) {
   layout(
     model,
     html.div([], [
-      case model.route {
-        DiaryList -> diary_list_route(model)
-        DiaryEntryEdit(id, form) -> diary_entry_edit_route(model, id, form)
-        DiaryEntryNew -> diary_entry_new_route(model)
+      case model {
+        DiaryList(
+          diary_entries: diary_entries,
+          error: error,
+          is_loading: is_loading,
+          ..,
+        ) -> diary_list_route(diary_entries, error, is_loading)
+        DiaryEntryEdit(_auth, id, entry, form) ->
+          diary_entry_edit_route(id, entry, form)
+        DiaryEntryNew(..) -> diary_entry_new_route(model)
+        LoggedOut -> logged_out_page()
+        AuthCallback -> html.text("")
+        NotFound -> html.text("Not Found")
       },
     ]),
   )
+}
+
+fn logged_out_page() {
+  html.button([event.on_click(Login)], [html.text("Login")])
 }
 
 fn todo_view() {
@@ -516,9 +554,11 @@ fn diary_entry_new_route(_model) {
   ])
 }
 
-fn diary_list_route(model: Model) {
-  case model.user {
-    Some(_user) ->
+fn diary_list_route(diary_entries, error, is_loading) {
+  case is_loading, error {
+    True, _ -> html.text("Loading...")
+    False, Some(error) -> html.text(error)
+    False, None ->
       element.fragment([
         html.div([attribute.class("flex space-x-4 mb-4")], [
           button_link([attribute.href("/diary_entry/new")], [
@@ -529,24 +569,13 @@ fn diary_list_route(model: Model) {
           ]),
           button_link([attribute.href("/recipe/new")], [html.text("Add Recipe")]),
         ]),
-        diary_entries_view(model.diary_entries),
+        diary_entries_view(diary_entries),
         html.div([attribute.class("mb-4 flex justify-center")], [
           button([event.on_click(UserLoadedMoreEntries)], [
             html.text("Load More"),
           ]),
         ]),
       ])
-    None -> {
-      case model.is_loading {
-        False -> {
-          case model.error {
-            Some(error) -> html.text(error)
-            None -> html.button([event.on_click(Login)], [html.text("Login")])
-          }
-        }
-        True -> html.text("Loading...")
-      }
-    }
   }
 }
 
@@ -770,8 +799,8 @@ fn diary_entry_edit_form(entry_id: String) -> Form(DiaryEntryEditFormData) {
 }
 
 fn diary_entry_edit_route(
-  model: Model,
   entry_id: String,
+  entry: Option(queries.DiaryEntry),
   form: Form(DiaryEntryEditFormData),
 ) -> Element(Msg) {
   let submitted = fn(fields) {
@@ -781,18 +810,14 @@ fn diary_entry_edit_route(
     |> UserSubmittedDiaryEntryEditForm
   }
 
-  let entry: Result(queries.DiaryEntry, Nil) =
-    int.parse(entry_id)
-    |> result.try(fn(id) { dict.get(model.diary_entries, id) })
-
   let href = case entry {
-    Ok(entry) ->
+    Some(entry) ->
       case entry.nutrition_item, entry.recipe {
         Some(item), _ -> "/nutrition_item/" <> int.to_string(item.id)
         _, Some(recipe) -> "/recipe/" <> int.to_string(recipe.id)
         _, _ -> ""
       }
-    Error(_) -> ""
+    None -> ""
   }
 
   html.div([], [
@@ -800,7 +825,7 @@ fn diary_entry_edit_route(
       button_link([attribute.href("/")], [html.text("Back to Diary")]),
     ]),
     case entry {
-      Ok(entry) ->
+      Some(entry) ->
         html.div([], [
           html.div([attribute.class("mb-4")], [
             html.p([attribute.class("text-2xl")], [
