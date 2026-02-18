@@ -6,6 +6,7 @@
 ```sh
 gleam add food_diary_frontend@1
 ```
+
 ```gleam
 import food_diary_frontend
 
