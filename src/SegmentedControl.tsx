@@ -25,7 +25,7 @@ const SegmentedControl: Component<Props> = (props: Props) => {
                 "bg-slate-500 text-slate-50 shadow-inner cursor-default"
               }
               ${currentSegment() !== segment() && "cursor-pointer"}`}
-              onClick={setCurrentSegment.bind(null, segment())}
+              onClick={() => setCurrentSegment(segment())}
             >
               {segment()}
             </li>
