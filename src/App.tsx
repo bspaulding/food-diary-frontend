@@ -1,7 +1,8 @@
 import type { Component, ParentProps } from "solid-js";
-import { Show } from "solid-js";
+import { Show, createEffect } from "solid-js";
 import { Router, Route } from "@solidjs/router";
 import { useAuth } from "./Auth0";
+import { registerLogoutHandler } from "./Api";
 
 type Auth0User = {
   picture?: string;
@@ -10,6 +11,18 @@ type Auth0User = {
 const App: Component<ParentProps> = (props: ParentProps) => {
   const [{ user, isAuthenticated, auth0 }] = useAuth();
   const userObj = (): Auth0User => (user() ?? {}) as Auth0User;
+
+  // Register the global logout handler once the Auth0 client is available.
+  // auth0() starts as undefined (resource loading) and resolves to the client,
+  // so this effect fires at most once with a truthy client.
+  createEffect(() => {
+    const client = auth0();
+    if (client) {
+      registerLogoutHandler(() => {
+        void client.logout({ returnTo: window.location.origin });
+      });
+    }
+  });
 
   return (
     <div class="font-sans text-slate-800 flex flex-col bg-slate-50 relative px-4 pt-20">

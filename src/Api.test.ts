@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, afterEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "./test-setup";
 import {
@@ -7,9 +7,15 @@ import {
   updateNutritionItem,
   createRecipe,
   GraphQLError,
+  registerLogoutHandler,
 } from "./Api";
 
 describe("Api authorization error handling", () => {
+  afterEach(() => {
+    // Clear the logout handler between tests to avoid cross-test pollution
+    registerLogoutHandler(undefined);
+  });
+
   it("should throw AuthorizationError when API returns 401", async () => {
     server.use(
       http.post("/api/v1/graphql", () => {
@@ -22,6 +28,56 @@ describe("Api authorization error handling", () => {
     await expect(fetchEntries("test-token")).rejects.toThrow(
       "Authorization failed",
     );
+  });
+
+  it("should invoke registered logout handler when API returns 401", async () => {
+    const mockHandler = vi.fn();
+    registerLogoutHandler(mockHandler);
+
+    server.use(
+      http.post("/api/v1/graphql", () => {
+        return new HttpResponse(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+        });
+      }),
+    );
+
+    await expect(fetchEntries("test-token")).rejects.toThrow(
+      "Authorization failed",
+    );
+    expect(mockHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it("should invoke registered logout handler when API returns 403", async () => {
+    const mockHandler = vi.fn();
+    registerLogoutHandler(mockHandler);
+
+    server.use(
+      http.post("/api/v1/graphql", () => {
+        return new HttpResponse(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+        });
+      }),
+    );
+
+    await expect(fetchEntries("test-token")).rejects.toThrow(
+      "Authorization failed",
+    );
+    expect(mockHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not invoke registered logout handler when API returns 200", async () => {
+    const mockHandler = vi.fn();
+    registerLogoutHandler(mockHandler);
+
+    server.use(
+      http.post("/api/v1/graphql", () => {
+        return HttpResponse.json({ data: { food_diary_diary_entry: [] } });
+      }),
+    );
+
+    await fetchEntries("test-token");
+    expect(mockHandler).not.toHaveBeenCalled();
   });
 
   it("should throw AuthorizationError when API returns 403", async () => {

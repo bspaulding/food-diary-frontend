@@ -10,6 +10,20 @@ export class AuthorizationError extends Error {
   }
 }
 
+type LogoutHandler = () => void;
+let logoutHandler: LogoutHandler | undefined;
+
+/**
+ * Register a callback to invoke whenever any API call receives a 401/403.
+ * Call this once at app startup (e.g. in App.tsx) with the Auth0 logout function.
+ * Pass `undefined` to clear the handler (useful in tests).
+ */
+export function registerLogoutHandler(
+  handler: LogoutHandler | undefined,
+): void {
+  logoutHandler = handler;
+}
+
 /**
  * Type for GraphQL error objects in the response
  */
@@ -74,6 +88,7 @@ async function fetchQuery<T = any>(
 
   // Check for authorization errors (401 Unauthorized or 403 Forbidden)
   if (response.status === 401 || response.status === 403) {
+    logoutHandler?.();
     throw new AuthorizationError("Authorization failed");
   }
 
