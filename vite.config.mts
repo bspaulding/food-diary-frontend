@@ -45,8 +45,7 @@ export default defineConfig(
       exclude: ["**/node_modules/**", "**/dist/**", "**/acceptance*.test.*"],
       browser: {
         enabled: false, // Can be enabled when browser providers are installed
-        name: "chromium",
-        provider: "playwright",
+        instances: [{ browser: "chromium" }],
       },
       coverage: {
         provider: "istanbul",
