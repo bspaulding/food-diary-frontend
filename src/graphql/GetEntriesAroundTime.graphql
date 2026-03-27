@@ -1,0 +1,16 @@
+query GetEntriesAroundTime($startTime: timestamptz!, $endTime: timestamptz!) {
+  food_diary_diary_entry(
+    where: { consumed_at: { _gte: $startTime, _lte: $endTime } }
+    order_by: { consumed_at: desc }
+  ) {
+    consumed_at
+    nutrition_item {
+      id
+      description
+    }
+    recipe {
+      id
+      name
+    }
+  }
+}

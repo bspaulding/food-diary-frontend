@@ -1,0 +1,15 @@
+mutation UpdateRecipe(
+  $id: Int!
+  $attrs: food_diary_recipe_set_input!
+  $items: [food_diary_recipe_item_insert_input!]!
+) {
+  update_food_diary_recipe_by_pk(pk_columns: { id: $id }, _set: $attrs) {
+    id
+  }
+  delete_food_diary_recipe_item(where: { recipe_id: { _eq: $id } }) {
+    affected_rows
+  }
+  insert_food_diary_recipe_item(objects: $items) {
+    affected_rows
+  }
+}

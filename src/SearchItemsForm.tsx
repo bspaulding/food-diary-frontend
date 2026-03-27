@@ -39,8 +39,18 @@ const SearchItemsForm: Component<Props> = (props: Props) => {
   );
   const nutritionItems = (): SearchNutritionItem[] =>
     getItemsQuery()?.data?.food_diary_search_nutrition_items || [];
-  const recipes = (): SearchRecipe[] =>
-    getItemsQuery()?.data?.food_diary_search_recipes || [];
+  const recipes = (): SearchRecipe[] => {
+    const query = getItemsQuery();
+    const data = query?.data;
+    if (
+      data &&
+      "food_diary_search_recipes" in data &&
+      Array.isArray((data as { food_diary_search_recipes: unknown }).food_diary_search_recipes)
+    ) {
+      return (data as { food_diary_search_recipes: SearchRecipe[] }).food_diary_search_recipes;
+    }
+    return [];
+  };
   const clear = (): string => setSearch("");
 
   return (

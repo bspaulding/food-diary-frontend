@@ -49,7 +49,10 @@ function recipeTotalForKey(
 
 function entryTotalMacro(key: MacroKey, entry: DiaryEntry): number {
   const itemTotal = entry.nutrition_item?.[key] || 0;
-  return entry.servings * (itemTotal + recipeTotalForKey(key, entry.recipe));
+  return (
+    entry.servings *
+    (itemTotal + recipeTotalForKey(key, entry.recipe || undefined))
+  );
 }
 
 function totalMacro(key: MacroKey, entries: DiaryEntry[]): number {
@@ -289,10 +292,7 @@ async function deleteEntry(
 ) {
   try {
     removeEntry(entry, entriesQuery, mutate);
-    const response: { data: unknown } = await deleteDiaryEntry(
-      accessToken(),
-      entry.id,
-    );
+    const response = await deleteDiaryEntry(accessToken(), entry.id);
     if (!response.data) {
       mutate(entriesQuery);
     }

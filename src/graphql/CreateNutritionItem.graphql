@@ -1,0 +1,7 @@
+mutation CreateNutritionItem(
+  $nutritionItem: food_diary_nutrition_item_insert_input!
+) {
+  insert_food_diary_nutrition_item_one(object: $nutritionItem) {
+    id
+  }
+}

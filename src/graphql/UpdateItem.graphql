@@ -1,0 +1,8 @@
+mutation UpdateItem($id: Int!, $attrs: food_diary_nutrition_item_set_input!) {
+  update_food_diary_nutrition_item_by_pk(
+    pk_columns: { id: $id }
+    _set: $attrs
+  ) {
+    id
+  }
+}

@@ -8,6 +8,19 @@ This is a [SolidJS](https://solidjs.com) frontend for [food-diary.motingo.com](h
 $ npm install
 ```
 
+## GraphQL Code Generation
+
+This project uses GraphQL Code Generator to create type-safe queries. The GraphQL schema is defined in `schema.graphql` and queries are in `src/graphql/*.graphql`.
+
+### `npm run codegen`
+
+Regenerates TypeScript types from the GraphQL schema and queries. Run this after:
+
+- Modifying the GraphQL schema in `schema.graphql`
+- Adding or updating queries in `src/graphql/*.graphql`
+
+The generated types are output to `src/generated/graphql.ts`.
+
 ## Available Scripts
 
 In the project directory, you can run:

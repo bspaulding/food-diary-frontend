@@ -1,0 +1,5 @@
+mutation CreateDiaryEntry($entry: food_diary_diary_entry_insert_input!) {
+  insert_food_diary_diary_entry_one(object: $entry) {
+    id
+  }
+}

@@ -350,18 +350,14 @@ const saveItem = async (
 ): Promise<number | undefined> => {
   setLoading(true);
   if (item.id) {
-    const response: GraphQLResponse<{
-      update_food_diary_nutrition_item_by_pk: { id: number };
-    }> = await updateNutritionItem(accessToken, item);
+    const response = await updateNutritionItem(accessToken, item);
     const id: number | undefined =
-      response.data?.update_food_diary_nutrition_item_by_pk.id;
+      response.data?.update_food_diary_nutrition_item_by_pk?.id;
     return id;
   } else {
-    const response: GraphQLResponse<{
-      insert_food_diary_nutrition_item_one: { id: number };
-    }> = await createNutritionItem(accessToken, item);
+    const response = await createNutritionItem(accessToken, item);
     const id: number | undefined =
-      response.data?.insert_food_diary_nutrition_item_one.id;
+      response.data?.insert_food_diary_nutrition_item_one?.id;
     return id;
   }
 };

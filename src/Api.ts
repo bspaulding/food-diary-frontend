@@ -1,4 +1,15 @@
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import { print } from "graphql";
+import type * as Types from "./generated/graphql";
+import * as Documents from "./generated/graphql";
+
 const host = "/api/v1/graphql";
+
+// Type aliases from generated types for backward compatibility
+export type DiaryEntry =
+  Types.GetEntriesQueryResult["food_diary_diary_entry"][number];
+export type GetEntriesQueryResponse =
+  GraphQLResponse<Types.GetEntriesQueryResult>;
 
 /**
  * Custom error class for authorization failures (401/403 responses)
@@ -35,8 +46,8 @@ interface GraphQLErrorObject {
 /**
  * Type for GraphQL response body
  */
-interface GraphQLResponse {
-  data?: unknown;
+interface GraphQLResponse<T = unknown> {
+  data?: T;
   errors?: GraphQLErrorObject[];
 }
 
@@ -53,31 +64,17 @@ export class GraphQLError extends Error {
   }
 }
 
-const getEntriesQuery = `
-fragment Macros on food_diary_nutrition_item {
-	total_fat_grams
-  added_sugars_grams
-	protein_grams
-}
-
-query GetEntries {
-    food_diary_diary_entry(order_by: { day: desc, consumed_at: asc }) {
-        id
-        consumed_at
-        calories
-        servings
-        nutrition_item { id, description, calories, ...Macros }
-        recipe { id, name, calories, recipe_items { servings, nutrition_item { ...Macros } } }
-    }
-}
-`;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchQuery<T = any>(
+/**
+ * Type-safe fetchQuery function using TypedDocumentNode
+ */
+async function fetchQuery<TResult, TVariables>(
   accessToken: string,
-  query: string,
-  variables: object = {},
-): Promise<T> {
+  document: TypedDocumentNode<TResult, TVariables>,
+  ...[variables]: TVariables extends Record<string, never>
+    ? []
+    : [variables: TVariables]
+): Promise<GraphQLResponse<TResult>> {
+  const query = print(document);
   const response = await fetch(`${host}`, {
     method: "POST",
     headers: {
@@ -100,7 +97,7 @@ async function fetchQuery<T = any>(
   }
 
   // Check for GraphQL errors in the response body
-  const json: GraphQLResponse = await response.json();
+  const json: GraphQLResponse<TResult> = await response.json();
   if (json.errors) {
     const errorMessage: string = json.errors
       .map((e: GraphQLErrorObject) => e.message)
@@ -108,7 +105,7 @@ async function fetchQuery<T = any>(
     throw new GraphQLError(errorMessage, json.errors);
   }
 
-  return json as T;
+  return json;
 }
 
 // Macro nutrient keys that can be accessed on nutrition items
@@ -127,86 +124,24 @@ export type MacroKey =
   | "dietary_fiber_grams"
   | "total_sugars_grams";
 
-// Nutrition item with all macro fields
-export type NutritionItemWithMacros = {
-  id: number;
-  description: string;
-  calories: number;
-  added_sugars_grams: number;
-  protein_grams: number;
-  total_fat_grams: number;
-  saturated_fat_grams: number;
-  trans_fat_grams: number;
-  polyunsaturated_fat_grams: number;
-  monounsaturated_fat_grams: number;
-  cholesterol_milligrams: number;
-  sodium_milligrams: number;
-  total_carbohydrate_grams: number;
-  dietary_fiber_grams: number;
-  total_sugars_grams: number;
-};
+// Type aliases from generated types for backward compatibility
+type GeneratedDiaryEntry =
+  Types.GetEntriesQueryResult["food_diary_diary_entry"][number];
+type GeneratedRecipe = NonNullable<GeneratedDiaryEntry["recipe"]>;
+type GeneratedRecipeItem = GeneratedRecipe["recipe_items"][number];
+type GeneratedNutritionItem = NonNullable<
+  GeneratedDiaryEntry["nutrition_item"]
+>;
 
-// Recipe item that's part of a recipe
-export type RecipeItem = {
-  id: number;
-  servings: number;
-  nutrition_item: NutritionItemWithMacros;
-};
-
-// Recipe with items
-export type RecipeWithItems = {
-  id: number;
-  name: string;
-  calories: number;
-  recipe_items: RecipeItem[];
-};
-
-export type DiaryEntry = {
-  id: number;
-  day: string;
-  consumed_at: string;
-  servings: number;
-  calories: number;
-  nutrition_item?: NutritionItemWithMacros;
-  recipe?: RecipeWithItems;
-};
-
-export type GetEntriesQueryResponse = {
-  data: {
-    food_diary_diary_entry: DiaryEntry[];
-  };
-};
+export type NutritionItemWithMacros = GeneratedNutritionItem;
+export type RecipeItem = GeneratedRecipeItem;
+export type RecipeWithItems = GeneratedRecipe;
 
 export async function fetchEntries(
   accessToken: string,
-): Promise<GetEntriesQueryResponse> {
-  return await fetchQuery(accessToken, getEntriesQuery);
+): Promise<GraphQLResponse<Types.GetEntriesQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetEntriesDocument);
 }
-
-const getWeeklyStatsQuery = `
-query GetWeeklyStats($currentWeekStart: timestamptz!, $todayStart: timestamptz!, $fourWeeksAgoStart: timestamptz!) {
-  current_week: food_diary_diary_entry_aggregate(
-    where: { consumed_at: { _gte: $currentWeekStart, _lt: $todayStart } }
-  ) {
-    aggregate {
-      sum {
-        calories
-      }
-    }
-  }
-  past_four_weeks: food_diary_diary_entry_aggregate(
-    where: { 
-      consumed_at: { _gte: $fourWeeksAgoStart, _lt: $todayStart }
-    }
-  ) {
-    aggregate {
-      sum {
-        calories
-      }
-    }
-  }
-}
-`;
 
 export type WeeklyStatsResponse = {
   data: {
@@ -232,27 +167,13 @@ export async function fetchWeeklyStats(
   currentWeekStart: string,
   todayStart: string,
   fourWeeksAgoStart: string,
-): Promise<WeeklyStatsResponse> {
-  return await fetchQuery(accessToken, getWeeklyStatsQuery, {
+): Promise<GraphQLResponse<Types.GetWeeklyStatsQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetWeeklyStatsDocument, {
     currentWeekStart,
     todayStart,
     fourWeeksAgoStart,
   });
 }
-
-const searchItemsAndRecipesQuery = `
-query SearchItemsAndRecipes($search: String!) {
-  food_diary_search_nutrition_items(args: { search: $search }) {
-    id,
-    description
-  }
-
-  food_diary_search_recipes(args: { search: $search }) {
-    id,
-    name
-  }
-}
-`;
 
 // Search result types
 export type SearchNutritionItem = {
@@ -275,20 +196,15 @@ export type SearchItemsAndRecipesQueryResponse = {
 export async function searchItemsAndRecipes(
   accessToken: string,
   search: string,
-): Promise<SearchItemsAndRecipesQueryResponse> {
-  return await fetchQuery(accessToken, searchItemsAndRecipesQuery, {
-    search,
-  });
+): Promise<GraphQLResponse<Types.SearchItemsAndRecipesQueryResult>> {
+  return await fetchQuery(
+    accessToken,
+    Documents.SearchItemsAndRecipesDocument,
+    {
+      search,
+    },
+  );
 }
-
-const searchItemsOnlyQuery = `
-query SearchItems($search: String!) {
-  food_diary_search_nutrition_items(args: { search: $search }) {
-    id,
-    description
-  }
-}
-`;
 
 export type SearchItemsOnlyQueryResponse = {
   data?: {
@@ -300,19 +216,11 @@ export type SearchItemsOnlyQueryResponse = {
 export async function searchItemsOnly(
   accessToken: string,
   search: string,
-): Promise<SearchItemsOnlyQueryResponse> {
-  return await fetchQuery(accessToken, searchItemsOnlyQuery, {
+): Promise<GraphQLResponse<Types.SearchItemsQueryResult>> {
+  return await fetchQuery(accessToken, Documents.SearchItemsDocument, {
     search,
   });
 }
-
-const createNutritionItemMutation = `
-mutation CreateNutritionItem($nutritionItem: food_diary_nutrition_item_insert_input!) {
-	insert_food_diary_nutrition_item_one(object: $nutritionItem) {
-    id
-  }
-}
-`;
 
 export type NutritionItemAttrs = {
   description: string;
@@ -338,27 +246,21 @@ export type NutritionItem = NutritionItemAttrs & {
 export async function createNutritionItem(
   accessToken: string,
   item: NutritionItem,
-) {
+): Promise<GraphQLResponse<Types.CreateNutritionItemMutationResult>> {
   // Exclude id field when creating a new item
   const { id: _id, ...itemWithoutId } = item;
-  return await fetchQuery(accessToken, createNutritionItemMutation, {
-    nutritionItem: objectToSnakeCaseKeys(itemWithoutId),
+  return await fetchQuery(accessToken, Documents.CreateNutritionItemDocument, {
+    nutritionItem: objectToSnakeCaseKeys(
+      itemWithoutId,
+    ) as Types.Food_Diary_Nutrition_Item_Insert_Input,
   });
 }
-
-const updateNutritionItemMutation = `
-mutation UpdateItem($id: Int!, $attrs: food_diary_nutrition_item_set_input!) {
-  update_food_diary_nutrition_item_by_pk(pk_columns: {id: $id }, _set: $attrs) {
-    id
-  }
-}
-`;
 
 export async function updateNutritionItem(
   accessToken: string,
   item: NutritionItem,
-) {
-  return await fetchQuery(accessToken, updateNutritionItemMutation, {
+): Promise<GraphQLResponse<Types.UpdateItemMutationResult>> {
+  return await fetchQuery(accessToken, Documents.UpdateItemDocument, {
     id: item.id,
     attrs: objectToSnakeCaseKeys(item),
   });
@@ -375,9 +277,11 @@ function camelToSnakeCase(s: string): string {
   );
 }
 
-function objectToSnakeCaseKeys(o: object): object {
+function objectToSnakeCaseKeys<T extends Record<string, unknown>>(
+  o: T,
+): Record<string, unknown> {
   return Object.entries(o).reduce(
-    (acc: object, [k, v]: [string, unknown]) => ({
+    (acc: Record<string, unknown>, [k, v]: [string, unknown]) => ({
       ...acc,
       [camelToSnakeCase(k)]: v,
     }),
@@ -385,27 +289,6 @@ function objectToSnakeCaseKeys(o: object): object {
   );
 }
 
-const getNutritionItemQuery = `
-query GetNutritionItem($id: Int!) {
-  food_diary_nutrition_item_by_pk(id: $id) {
-    id,
-    description
-    calories
-    totalFatGrams: total_fat_grams,
-    saturatedFatGrams: saturated_fat_grams,
-    transFatGrams: trans_fat_grams,
-    polyunsaturatedFatGrams: polyunsaturated_fat_grams
-    monounsaturatedFatGrams: monounsaturated_fat_grams
-    cholesterolMilligrams: cholesterol_milligrams
-    sodiumMilligrams: sodium_milligrams,
-    totalCarbohydrateGrams: total_carbohydrate_grams
-    dietaryFiberGrams: dietary_fiber_grams
-    totalSugarsGrams: total_sugars_grams
-    addedSugarsGrams: added_sugars_grams
-    proteinGrams: protein_grams
-  }
-}
-`;
 export type GetNutritionItemQueryResponse = {
   data?: {
     food_diary_nutrition_item_by_pk?: NutritionItem;
@@ -415,57 +298,28 @@ export type GetNutritionItemQueryResponse = {
 export async function fetchNutritionItem(
   accessToken: string,
   id: number | string,
-): Promise<GetNutritionItemQueryResponse> {
-  return await fetchQuery(accessToken, getNutritionItemQuery, { id });
+): Promise<GraphQLResponse<Types.GetNutritionItemQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetNutritionItemDocument, {
+    id: Number(id),
+  });
 }
 
-const getRecentEntriesQuery = `
-query GetRecentEntryItems {
-  food_diary_diary_entry_recent(order_by: {consumed_at:desc}, limit: 10) {
-    consumed_at
-  	nutrition_item { id, description }
-    recipe { id, name }
-  }
+export async function fetchRecentEntries(
+  accessToken: string,
+): Promise<GraphQLResponse<Types.GetRecentEntryItemsQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetRecentEntryItemsDocument);
 }
-`;
-
-export async function fetchRecentEntries(accessToken: string) {
-  return await fetchQuery(accessToken, getRecentEntriesQuery);
-}
-
-const getEntriesAroundTimeQuery = `
-query GetEntriesAroundTime($startTime: timestamptz!, $endTime: timestamptz!) {
-  food_diary_diary_entry(
-    where: {
-      consumed_at: { _gte: $startTime, _lte: $endTime }
-    }
-    order_by: {consumed_at: desc}
-    distinct_on: [nutrition_item_id, recipe_id]
-  ) {
-    consumed_at
-    nutrition_item { id, description }
-    recipe { id, name }
-  }
-}
-`;
 
 export async function fetchEntriesAroundTime(
   accessToken: string,
   startTime: string,
   endTime: string,
-) {
-  return await fetchQuery(accessToken, getEntriesAroundTimeQuery, {
+): Promise<GraphQLResponse<Types.GetEntriesAroundTimeQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetEntriesAroundTimeDocument, {
     startTime,
     endTime,
   });
 }
-
-const createDiaryEntryQuery = `
-mutation CreateDiaryEntry($entry: food_diary_diary_entry_insert_input!) {
-  insert_food_diary_diary_entry_one(object: $entry) {
-    id
-  }
-}`;
 
 export type CreateDiaryEntryInput =
   | CreateDiaryEntryRecipeInput
@@ -484,19 +338,17 @@ export type CreateDiaryEntryRecipeInput = {
 export async function createDiaryEntry(
   accessToken: string,
   entry: CreateDiaryEntryInput,
-) {
-  return await fetchQuery(accessToken, createDiaryEntryQuery, { entry });
+): Promise<GraphQLResponse<Types.CreateDiaryEntryMutationResult>> {
+  return await fetchQuery(accessToken, Documents.CreateDiaryEntryDocument, {
+    entry,
+  });
 }
 
-const deleteDiaryEntryQuery = `
-mutation DeleteEntry($id: Int!) {
-  delete_food_diary_diary_entry_by_pk(id: $id) {
-    id
-  }
-}`;
-
-export async function deleteDiaryEntry(accessToken: string, id: number) {
-  return await fetchQuery(accessToken, deleteDiaryEntryQuery, { id });
+export async function deleteDiaryEntry(
+  accessToken: string,
+  id: number,
+): Promise<GraphQLResponse<Types.DeleteEntryMutationResult>> {
+  return await fetchQuery(accessToken, Documents.DeleteEntryDocument, { id });
 }
 
 export type RecipeAttrs = {
@@ -523,14 +375,6 @@ export type InsertRecipeItemNewItem = {
   nutrition_item: NutritionItemAttrs;
 };
 
-const createRecipeMutation = `
-mutation CreateRecipe($input: food_diary_recipe_insert_input!) {
-  insert_food_diary_recipe_one(object: $input) {
-    id
-  }
-}
-`;
-
 function transformRecipeInput(formInput: RecipeAttrs) {
   return {
     ...formInput,
@@ -546,57 +390,28 @@ function transformRecipeInput(formInput: RecipeAttrs) {
 export async function createRecipe(
   accessToken: string,
   formInput: RecipeAttrs,
-) {
-  return await fetchQuery(accessToken, createRecipeMutation, {
+): Promise<GraphQLResponse<Types.CreateRecipeMutationResult>> {
+  return await fetchQuery(accessToken, Documents.CreateRecipeDocument, {
     input: transformRecipeInput(formInput),
   });
 }
 
-const updateRecipeMutation = `
-mutation UpdateRecipe($id: Int!, $attrs: food_diary_recipe_set_input!, $items: [food_diary_recipe_item_insert_input!]!) {
-  update_food_diary_recipe_by_pk(pk_columns: {id: $id }, _set: $attrs) {
-    id
-  }
-  delete_food_diary_recipe_item(where: { recipe_id: { _eq: $id } }) {
-    affected_rows
-  }
-  insert_food_diary_recipe_item(objects: $items) {
-    affected_rows
-  }
-}
-`;
-
-export async function updateRecipe(accessToken: string, recipe: Recipe) {
+export async function updateRecipe(
+  accessToken: string,
+  recipe: Recipe,
+): Promise<GraphQLResponse<Types.UpdateRecipeMutationResult>> {
   const { id, ...attrs } = recipe;
   const { recipe_items, ...recipeAttrs } = transformRecipeInput(attrs);
   const recipeItemsInput = recipe_items.data.map((item) => ({
     ...item,
     recipe_id: id,
   }));
-  return await fetchQuery(accessToken, updateRecipeMutation, {
+  return await fetchQuery(accessToken, Documents.UpdateRecipeDocument, {
     id,
     attrs: recipeAttrs,
     items: recipeItemsInput,
   });
 }
-
-const fetchRecipeQuery = `
-query GetRecipe($id: Int!) {
-  food_diary_recipe_by_pk(id: $id) {
-    id,
-    name,
-    total_servings,
-    recipe_items {
-      servings
-      nutrition_item {
-        id,
-        description,
-        calories
-      }
-    }
-  }
-}
-`;
 
 export type GetRecipeQueryResponse = {
   data?: {
@@ -612,8 +427,10 @@ export type GetRecipeQueryResponse = {
 export async function fetchRecipe(
   accessToken: string,
   id: number,
-): Promise<GetRecipeQueryResponse> {
-  return await fetchQuery(accessToken, fetchRecipeQuery, { id });
+): Promise<GraphQLResponse<Types.GetRecipeQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetRecipeDocument, {
+    id,
+  });
 }
 
 export type NewDiaryEntry = {
@@ -622,121 +439,54 @@ export type NewDiaryEntry = {
   nutrition_item: NutritionItemAttrs;
 };
 
-const insertDiaryEntriesWithItemsMutation = `
-mutation InsertDiaryEntriesWithNewItems($entries: [food_diary_diary_entry_insert_input!]!){
-  insert_food_diary_diary_entry(objects: $entries) {
-    affected_rows
-  }
-}
-`;
-
 export async function insertDiaryEntries(
   accessToken: string,
   entries: NewDiaryEntry[],
-) {
-  return await fetchQuery(accessToken, insertDiaryEntriesWithItemsMutation, {
-    entries: entries.map((entry) => ({
-      ...entry,
-      nutrition_item: {
-        data: objectToSnakeCaseKeys(entry.nutrition_item),
-      },
-    })),
+): Promise<
+  GraphQLResponse<Types.InsertDiaryEntriesWithNewItemsMutationResult>
+> {
+  return await fetchQuery(
+    accessToken,
+    Documents.InsertDiaryEntriesWithNewItemsDocument,
+    {
+      entries: entries.map((entry) => ({
+        ...entry,
+        nutrition_item: {
+          data: objectToSnakeCaseKeys(
+            entry.nutrition_item,
+          ) as Types.Food_Diary_Nutrition_Item_Insert_Input,
+        },
+      })),
+    },
+  );
+}
+
+export async function fetchExportEntries(
+  accessToken: string,
+): Promise<GraphQLResponse<Types.ExportEntriesQueryResult>> {
+  return await fetchQuery(accessToken, Documents.ExportEntriesDocument);
+}
+
+export async function getDiaryEntry(
+  accessToken: string,
+  id: number | string,
+): Promise<GraphQLResponse<Types.GetDiaryEntryQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetDiaryEntryDocument, {
+    id: Number(id),
   });
 }
-
-const exportEntriesQuery = `
-fragment nutritionItem on food_diary_nutrition_item {
-  description
-  calories
-  total_fat_grams
-  saturated_fat_grams
-  trans_fat_grams
-  polyunsaturated_fat_grams
-  monounsaturated_fat_grams
-  cholesterol_milligrams
-  sodium_milligrams
-  total_carbohydrate_grams
-  dietary_fiber_grams
-  total_sugars_grams
-  added_sugars_grams
-  protein_grams
-}
-
-query ExportEntries {
-  food_diary_diary_entry {
-    servings
-    consumed_at
-    nutrition_item {
-      ...nutritionItem
-    }
-    recipe {
-      name
-      recipe_items {
-				servings
-        nutrition_item {
-          ...nutritionItem
-        }
-      }
-    }
-  }
-}`;
-
-export async function fetchExportEntries(accessToken: string) {
-  return await fetchQuery(accessToken, exportEntriesQuery);
-}
-
-const getDiaryEntryQuery = `
-  fragment Macros on food_diary_nutrition_item {
-    total_fat_grams
-    added_sugars_grams
-    protein_grams
-  }
-
-  query GetDiaryEntry($id: Int!) {
-    food_diary_diary_entry_by_pk(id: $id) {
-      id
-      consumed_at
-      calories
-      servings
-      nutrition_item { id, description, calories, ...Macros }
-      recipe { id, name, calories, recipe_items { servings, nutrition_item { ...Macros } } }
-    }
-  }
-`;
-export async function getDiaryEntry(accessToken: string, id: number | string) {
-  return await fetchQuery(accessToken, getDiaryEntryQuery, { id });
-}
-
-const updateDiaryEntryMutation = `
-mutation UpdateDiaryEntry($id: Int!, $attrs: food_diary_diary_entry_set_input!) {
-  update_food_diary_diary_entry_by_pk(pk_columns: {id: $id }, _set: $attrs) {
-    id
-  }
-}
-`;
 
 export async function updateDiaryEntry(
   accessToken: string,
   entry: { id: number; servings: number; consumedAt: string },
-) {
-  return fetchQuery(accessToken, updateDiaryEntryMutation, {
+): Promise<GraphQLResponse<Types.UpdateDiaryEntryMutationResult>> {
+  return fetchQuery(accessToken, Documents.UpdateDiaryEntryDocument, {
     id: entry.id,
     attrs: objectToSnakeCaseKeys(entry),
   });
 }
 
 // Weekly trends query - uses backend view for pre-aggregated data
-const getWeeklyTrendsQuery = `
-query GetWeeklyTrends {
-  food_diary_trends_weekly {
-    week_of_year
-    protein
-    calories
-    added_sugar
-  }
-}
-`;
-
 export type WeeklyTrendsData = {
   week_of_year: string;
   protein: number;
@@ -752,6 +502,6 @@ export type GetWeeklyTrendsResponse = {
 
 export async function fetchWeeklyTrends(
   accessToken: string,
-): Promise<GetWeeklyTrendsResponse> {
-  return await fetchQuery(accessToken, getWeeklyTrendsQuery);
+): Promise<GraphQLResponse<Types.GetWeeklyTrendsQueryResult>> {
+  return await fetchQuery(accessToken, Documents.GetWeeklyTrendsDocument);
 }

@@ -1,0 +1,8 @@
+query GetWeeklyTrends {
+  food_diary_trends_weekly {
+    week_of_year
+    protein
+    calories
+    added_sugar
+  }
+}
