@@ -1,4 +1,5 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
 import solidPlugin from "vite-plugin-solid";
 import tailwindcss from "@tailwindcss/vite";
 
@@ -15,9 +16,9 @@ export default defineConfig({
     ],
     browser: {
       enabled: true,
-      name: "chromium",
-      provider: "playwright",
       headless: true,
+      provider: playwright(),
+      instances: [{ browser: "chromium" }],
     },
   },
 });
