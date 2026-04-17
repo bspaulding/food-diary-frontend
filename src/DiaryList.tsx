@@ -194,9 +194,9 @@ const DiaryList: Component = () => {
                         label="Protein"
                       />
                       <EntryMacro
-                        value={String(totalMacro("total_fat_grams", entries))}
+                        value={String(totalMacro("fiber_grams", entries))}
                         unit="g"
-                        label="Total Fat"
+                        label="Fiber"
                       />
                     </div>
                   </li>
