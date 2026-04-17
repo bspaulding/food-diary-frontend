@@ -194,7 +194,9 @@ const DiaryList: Component = () => {
                         label="Protein"
                       />
                       <EntryMacro
-                        value={String(totalMacro("fiber_grams", entries))}
+                        value={String(
+                          totalMacro("dietary_fiber_grams", entries),
+                        )}
                         unit="g"
                         label="Fiber"
                       />
