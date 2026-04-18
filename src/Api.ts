@@ -55,9 +55,9 @@ export class GraphQLError extends Error {
 
 const getEntriesQuery = `
 fragment Macros on food_diary_nutrition_item {
-	total_fat_grams
   added_sugars_grams
 	protein_grams
+	dietary_fiber_grams
 }
 
 query GetEntries {
