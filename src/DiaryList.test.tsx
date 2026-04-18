@@ -103,6 +103,7 @@ describe("DiaryList", () => {
                   protein_grams: 0.5,
                   added_sugars_grams: 0,
                   total_fat_grams: 0.3,
+                  dietary_fiber_grams: 2.4,
                 },
                 recipe: null,
               },
@@ -118,6 +119,7 @@ describe("DiaryList", () => {
                   protein_grams: 1.3,
                   added_sugars_grams: 0,
                   total_fat_grams: 0.4,
+                  dietary_fiber_grams: 3.1,
                 },
                 recipe: null,
               },
@@ -162,6 +164,7 @@ describe("DiaryList", () => {
                         protein_grams: 1.3,
                         added_sugars_grams: 0,
                         total_fat_grams: 0.4,
+                        dietary_fiber_grams: 3.1,
                       },
                     },
                   ],
@@ -201,6 +204,7 @@ describe("DiaryList", () => {
                   protein_grams: 0.5,
                   added_sugars_grams: 0,
                   total_fat_grams: 0.3,
+                  dietary_fiber_grams: 2.4,
                 },
                 recipe: null,
               },
@@ -217,6 +221,61 @@ describe("DiaryList", () => {
     await waitFor(() => {
       expect(screen.getByText("200")).toBeTruthy();
       expect(screen.getByText("KCAL")).toBeTruthy();
+    });
+  });
+
+  it("should display fiber totals in summary row", async () => {
+    server.use(
+      http.post("/api/v1/graphql", () => {
+        return HttpResponse.json({
+          data: {
+            food_diary_diary_entry: [
+              {
+                id: 1,
+                consumed_at: "2024-01-15T10:30:00Z",
+                servings: 1,
+                calories: 95,
+                nutrition_item: {
+                  id: 1,
+                  description: "Apple",
+                  calories: 95,
+                  protein_grams: 0.5,
+                  added_sugars_grams: 0,
+                  total_fat_grams: 0.3,
+                  dietary_fiber_grams: 4,
+                },
+                recipe: null,
+              },
+              {
+                id: 2,
+                consumed_at: "2024-01-15T14:00:00Z",
+                servings: 2,
+                calories: 210,
+                nutrition_item: {
+                  id: 2,
+                  description: "Banana",
+                  calories: 105,
+                  protein_grams: 1.3,
+                  added_sugars_grams: 0,
+                  total_fat_grams: 0.4,
+                  dietary_fiber_grams: 3,
+                },
+                recipe: null,
+              },
+            ],
+            current_week: { aggregate: { sum: { calories: 305 } } },
+            past_four_weeks: { aggregate: { sum: { calories: 1220 } } },
+          },
+        });
+      }),
+    );
+
+    render(() => <DiaryList />);
+
+    // Fiber total: 1*4 + 2*3 = 10
+    await waitFor(() => {
+      expect(screen.getByText("Fiber")).toBeTruthy();
+      expect(screen.getByText(/^10\s*g$/)).toBeTruthy();
     });
   });
 
@@ -250,6 +309,7 @@ describe("DiaryList", () => {
                   protein_grams: 0.5,
                   added_sugars_grams: 0,
                   total_fat_grams: 0.3,
+                  dietary_fiber_grams: 2.4,
                 },
                 recipe: null,
               },
@@ -306,6 +366,7 @@ describe("DiaryList", () => {
                   protein_grams: 0.5,
                   added_sugars_grams: 0,
                   total_fat_grams: 0.3,
+                  dietary_fiber_grams: 2.4,
                 },
                 recipe: null,
               },
@@ -365,6 +426,7 @@ describe("DiaryList", () => {
                   protein_grams: 0.5,
                   added_sugars_grams: 0,
                   total_fat_grams: 0.3,
+                  dietary_fiber_grams: 2.4,
                 },
                 recipe: null,
               },
@@ -415,6 +477,7 @@ describe("DiaryList", () => {
                   protein_grams: 0.5,
                   added_sugars_grams: 0,
                   total_fat_grams: 0.3,
+                  dietary_fiber_grams: 2.4,
                 },
                 recipe: null,
               },
@@ -486,6 +549,7 @@ describe("DiaryList", () => {
                   protein_grams: 0.5,
                   added_sugars_grams: 0,
                   total_fat_grams: 0.3,
+                  dietary_fiber_grams: 2.4,
                 },
                 recipe: null,
               },
@@ -530,6 +594,7 @@ describe("DiaryList", () => {
                         protein_grams: 1.3,
                         added_sugars_grams: 0,
                         total_fat_grams: 0.4,
+                        dietary_fiber_grams: 3.1,
                       },
                     },
                     {
@@ -541,6 +606,7 @@ describe("DiaryList", () => {
                         protein_grams: 5,
                         added_sugars_grams: 10,
                         total_fat_grams: 3,
+                        dietary_fiber_grams: 0,
                       },
                     },
                   ],
@@ -580,6 +646,7 @@ describe("DiaryList", () => {
                   protein_grams: 10,
                   added_sugars_grams: 0,
                   total_fat_grams: 5,
+                  dietary_fiber_grams: 2,
                 },
                 recipe: null,
               },
@@ -595,6 +662,7 @@ describe("DiaryList", () => {
                   protein_grams: 5,
                   added_sugars_grams: 0,
                   total_fat_grams: 3,
+                  dietary_fiber_grams: 4,
                 },
                 recipe: null,
               },
