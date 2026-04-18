@@ -90,6 +90,24 @@ describe("Browser Acceptance Tests", () => {
     expect(kcalElements).toHaveLength(2);
   });
 
+  it("should display fiber on each diary entry stats line", async () => {
+    render(() => (
+      <Router root={App}>
+        <Route path="/" component={DiaryList} />
+      </Router>
+    ));
+
+    await waitFor(
+      () => {
+        expect(screen.queryByText(/Banana/i)).not.toBeNull();
+      },
+      { timeout: 5000 },
+    );
+
+    // Banana: 1 serving * 3.1g fiber
+    expect(screen.getByText(/3\.1g fiber/i)).toBeTruthy();
+  });
+
   it("should complete Add Item flow - create new item and log it", async () => {
     const user = userEvent.setup();
 

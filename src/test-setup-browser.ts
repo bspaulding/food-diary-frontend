@@ -24,6 +24,7 @@ const mockNutritionItems = [
     total_fat_grams: 0.4,
     added_sugars_grams: 0,
     protein_grams: 1.3,
+    dietary_fiber_grams: 3.1,
   },
   {
     id: 2,
@@ -32,6 +33,7 @@ const mockNutritionItems = [
     total_fat_grams: 0.3,
     added_sugars_grams: 0,
     protein_grams: 0.5,
+    dietary_fiber_grams: 4.4,
   },
 ];
 
