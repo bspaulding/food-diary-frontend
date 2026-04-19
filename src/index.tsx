@@ -22,28 +22,28 @@ import { NutritionTargetsProvider } from "./NutritionTargets";
 render(
   () => (
     <NutritionTargetsProvider>
-    <Router root={App}>
-      <Route path="/auth/callback" />
-      <Route path="/auth/logout" />
-      <Route path="/" component={DiaryList} />
-      <Route path="/trends" component={Trends} />
-      <Route path="/profile" component={UserProfile} />
-      <Route
-        path="/diary_entry/new"
-        component={NewDiaryEntryForm as Component}
-      />
-      <Route path="/diary_entry/:id/edit" component={DiaryEntryEditForm} />
-      <Route path="/diary_entry/import" component={ImportDiaryEntries} />
-      <Route
-        path="/nutrition_item/new"
-        component={NewNutritionItemForm as Component}
-      />
-      <Route path="/nutrition_item/:id" component={NutritionItemShow} />
-      <Route path="/nutrition_item/:id/edit" component={NutritionItemEdit} />
-      <Route path="/recipe/new" component={NewRecipeForm as Component} />
-      <Route path="/recipe/:id" component={RecipeShow} />
-      <Route path="/recipe/:id/edit" component={RecipeEdit} />
-    </Router>
+      <Router root={App}>
+        <Route path="/auth/callback" />
+        <Route path="/auth/logout" />
+        <Route path="/" component={DiaryList} />
+        <Route path="/trends" component={Trends} />
+        <Route path="/profile" component={UserProfile} />
+        <Route
+          path="/diary_entry/new"
+          component={NewDiaryEntryForm as Component}
+        />
+        <Route path="/diary_entry/:id/edit" component={DiaryEntryEditForm} />
+        <Route path="/diary_entry/import" component={ImportDiaryEntries} />
+        <Route
+          path="/nutrition_item/new"
+          component={NewNutritionItemForm as Component}
+        />
+        <Route path="/nutrition_item/:id" component={NutritionItemShow} />
+        <Route path="/nutrition_item/:id/edit" component={NutritionItemEdit} />
+        <Route path="/recipe/new" component={NewRecipeForm as Component} />
+        <Route path="/recipe/:id" component={RecipeShow} />
+        <Route path="/recipe/:id/edit" component={RecipeEdit} />
+      </Router>
     </NutritionTargetsProvider>
   ),
   (() => {
