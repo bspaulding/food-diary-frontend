@@ -8,15 +8,17 @@ const circumference = 2 * Math.PI * r;
 const CircleProgress: Component<{
   value: number;
   target: number;
+  max?: number;
   label: string;
   unit?: string;
-  allowRed?: boolean;
 }> = (props) => {
-  const ratio = () => props.value / (props.target || 1);
+  const ceiling = () => props.max ?? props.target;
+  const ratio = () => props.value / (ceiling() || 1);
   const offset = () => circumference * (1 - Math.min(ratio(), 1));
 
   const color = () => {
-    if (ratio() >= 1) return props.allowRed ? "#ef4444" : "#22c55e";
+    if (props.max !== undefined && props.value > props.max) return "#ef4444";
+    if (props.value >= props.target) return "#22c55e";
     return "#eab308";
   };
 

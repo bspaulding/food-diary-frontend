@@ -3,6 +3,7 @@ import { createContext, useContext, createSignal } from "solid-js";
 
 export type NutritionTargets = {
   calories: number;
+  calories_max: number;
   protein_grams: number;
   dietary_fiber_grams: number;
   added_sugars_grams: number;
@@ -10,7 +11,8 @@ export type NutritionTargets = {
 
 export const DEFAULT_TARGETS: NutritionTargets = {
   calories: 2000,
-  protein_grams: 50,
+  calories_max: 2400,
+  protein_grams: 130,
   dietary_fiber_grams: 25,
   added_sugars_grams: 25,
 };

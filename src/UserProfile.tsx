@@ -20,6 +20,7 @@ const UserProfile: Component = () => {
   const [saved, setSaved] = createSignal(false);
 
   let caloriesRef!: HTMLInputElement;
+  let caloriesMaxRef!: HTMLInputElement;
   let proteinRef!: HTMLInputElement;
   let fiberRef!: HTMLInputElement;
   let sugarRef!: HTMLInputElement;
@@ -28,6 +29,7 @@ const UserProfile: Component = () => {
     e.preventDefault();
     updateTargets({
       calories: Number(caloriesRef.value),
+      calories_max: Number(caloriesMaxRef.value),
       protein_grams: Number(proteinRef.value),
       dietary_fiber_grams: Number(fiberRef.value),
       added_sugars_grams: Number(sugarRef.value),
@@ -51,12 +53,22 @@ const UserProfile: Component = () => {
         <h2 class="font-semibold text-lg mb-3">Daily Targets</h2>
         <form onSubmit={handleSaveTargets} class="flex flex-col gap-3">
           <label class="flex justify-between items-center">
-            <span>Calories (kcal)</span>
+            <span>Calorie min (kcal)</span>
             <input
               ref={caloriesRef}
               type="number"
               min="0"
               value={targets().calories}
+              class="w-24 border border-slate-300 rounded px-2 py-1 text-right"
+            />
+          </label>
+          <label class="flex justify-between items-center">
+            <span>Calorie max (kcal)</span>
+            <input
+              ref={caloriesMaxRef}
+              type="number"
+              min="0"
+              value={targets().calories_max}
               class="w-24 border border-slate-300 rounded px-2 py-1 text-right"
             />
           </label>
