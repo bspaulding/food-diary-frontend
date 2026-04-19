@@ -17,9 +17,11 @@ import ImportDiaryEntries from "./ImportDiaryEntries";
 import UserProfile from "./UserProfile";
 import DiaryEntryEditForm from "./DiaryEntryEditForm";
 import Trends from "./Trends";
+import { NutritionTargetsProvider } from "./NutritionTargets";
 
 render(
   () => (
+    <NutritionTargetsProvider>
     <Router root={App}>
       <Route path="/auth/callback" />
       <Route path="/auth/logout" />
@@ -42,6 +44,7 @@ render(
       <Route path="/recipe/:id" component={RecipeShow} />
       <Route path="/recipe/:id/edit" component={RecipeEdit} />
     </Router>
+    </NutritionTargetsProvider>
   ),
   (() => {
     const rootElement = document.getElementById("root");

@@ -12,6 +12,8 @@ import { useAuth } from "./Auth0";
 import { parseAndFormatTime, parseAndFormatDay, pluralize } from "./Util";
 import DateBadge from "./DateBadge";
 import ButtonLink from "./ButtonLink";
+import CircleProgress from "./CircleProgress";
+import { useNutritionTargets } from "./NutritionTargets";
 import {
   parseISO,
   format,
@@ -75,6 +77,7 @@ const EntryMacro: Component<{
 
 const DiaryList: Component = () => {
   const [{ accessToken }] = useAuth();
+  const [targets] = useNutritionTargets();
   const [getEntriesQuery, { mutate }] = createAuthorizedResource(
     (token: string) => fetchEntries(token),
   );
@@ -164,41 +167,39 @@ const DiaryList: Component = () => {
               <li class="grid grid-cols-6 -ml-4 mb-6">
                 <div>
                   <DateBadge class="col-span-1" date={parseISO(dateStr)} />
-                  <EntryMacro
-                    value={String(
-                      Math.ceil(
-                        entries.reduce(
-                          (acc: number, entry: DiaryEntry) =>
-                            acc + entry.calories,
-                          0,
-                        ),
-                      ),
-                    )}
-                    unit=""
-                    label="KCAL"
-                  />
                 </div>
                 <ul class="col-span-5 mb-6">
                   <li class="mb-4">
                     <div class="flex flex-row justify-around">
-                      <EntryMacro
-                        value={String(
-                          totalMacro("added_sugars_grams", entries),
+                      <CircleProgress
+                        value={Math.ceil(
+                          entries.reduce(
+                            (acc: number, entry: DiaryEntry) =>
+                              acc + entry.calories,
+                            0,
+                          ),
                         )}
-                        unit="g"
+                        target={targets().calories}
+                        label="Calories"
+                        allowRed={true}
+                      />
+                      <CircleProgress
+                        value={totalMacro("added_sugars_grams", entries)}
+                        target={targets().added_sugars_grams}
                         label="Added Sugar"
-                      />
-                      <EntryMacro
-                        value={String(totalMacro("protein_grams", entries))}
                         unit="g"
+                      />
+                      <CircleProgress
+                        value={totalMacro("protein_grams", entries)}
+                        target={targets().protein_grams}
                         label="Protein"
-                      />
-                      <EntryMacro
-                        value={String(
-                          totalMacro("dietary_fiber_grams", entries),
-                        )}
                         unit="g"
+                      />
+                      <CircleProgress
+                        value={totalMacro("dietary_fiber_grams", entries)}
+                        target={targets().dietary_fiber_grams}
                         label="Fiber"
+                        unit="g"
                       />
                     </div>
                   </li>
