@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress Circles Preview</title>
+<style>
+  body { font-family: sans-serif; background: #f8fafc; color: #1e293b; padding: 1rem; }
+  header { background: #f8fafc; padding: 1rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem; }
+  h1 { font-size: 1.5rem; font-weight: bold; }
+  .day-row { display: grid; grid-template-columns: 3rem 1fr; gap: 1rem; margin-bottom: 2rem; }
+  .date-badge { display: flex; flex-direction: column; align-items: center; }
+  .date-badge .day-num { font-size: 1.5rem; font-weight: bold; }
+  .date-badge .month { font-size: 0.7rem; text-transform: uppercase; color: #64748b; }
+  .circles-row { display: flex; justify-content: space-around; align-items: flex-end; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0; }
+  .circle-wrap { display: flex; flex-direction: column; align-items: center; }
+  .circle-wrap p { font-size: 0.7rem; text-transform: uppercase; color: #64748b; margin: 0.25rem 0 0 0; }
+  .entry { margin-bottom: 0.75rem; }
+  .entry .title { font-weight: 600; font-size: 0.9rem; }
+  .entry .meta { font-size: 0.8rem; color: #64748b; }
+  .section-label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .scenario { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+  .scenario h2 { font-size: 0.85rem; color: #94a3b8; margin: 0 0 1rem 0; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<header><h1>Food Diary</h1></header>
+
+<p class="section-label" style="padding: 0 0.5rem">Diary list — three states shown</p>
+
+<!-- Scenario 1: In progress (yellow) -->
+<div class="scenario">
+  <h2>In progress — morning entries only</h2>
+  <div class="day-row">
+    <div class="date-badge">
+      <span class="day-num">19</span>
+      <span class="month">Apr</span>
+    </div>
+    <div>
+      <div class="circles-row">
+        <!-- Calories ~50% -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#eab308" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="75.4"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">1005</text>
+          </svg>
+          <p>Calories</p>
+        </div>
+        <!-- Added Sugar ~40% -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#eab308" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="90.5"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">10g</text>
+          </svg>
+          <p>Added Sugar</p>
+        </div>
+        <!-- Protein ~60% -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#eab308" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="60.3"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">30g</text>
+          </svg>
+          <p>Protein</p>
+        </div>
+        <!-- Fiber ~30% -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#eab308" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="105.6"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">8g</text>
+          </svg>
+          <p>Fiber</p>
+        </div>
+      </div>
+      <div class="entry"><p class="title">420 kcal, 18g protein, 4g fiber</p><p class="meta">Greek Yogurt &amp; Granola — 1 serving at 7:30 AM</p></div>
+      <div class="entry"><p class="title">585 kcal, 12g protein, 4g fiber</p><p class="meta">Oatmeal with Banana — 1 serving at 9:00 AM</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Scenario 2: Targets met (green) -->
+<div class="scenario">
+  <h2>Goals met — green</h2>
+  <div class="day-row">
+    <div class="date-badge">
+      <span class="day-num">18</span>
+      <span class="month">Apr</span>
+    </div>
+    <div>
+      <div class="circles-row">
+        <!-- Calories exactly at goal -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#22c55e" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="0"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">2000</text>
+          </svg>
+          <p>Calories</p>
+        </div>
+        <!-- Sugar over but no red -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#22c55e" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="0"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">28g</text>
+          </svg>
+          <p>Added Sugar</p>
+        </div>
+        <!-- Protein met -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#22c55e" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="0"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">52g</text>
+          </svg>
+          <p>Protein</p>
+        </div>
+        <!-- Fiber met -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#22c55e" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="0"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">27g</text>
+          </svg>
+          <p>Fiber</p>
+        </div>
+      </div>
+      <div class="entry"><p class="title">650 kcal, 20g protein, 8g fiber</p><p class="meta">Chicken &amp; Rice Bowl — 1 serving at 12:30 PM</p></div>
+      <div class="entry"><p class="title">720 kcal, 18g protein, 10g fiber</p><p class="meta">Salmon with Veggies — 1 serving at 7:00 PM</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Scenario 3: Calories over (red) -->
+<div class="scenario">
+  <h2>Calories exceeded — red</h2>
+  <div class="day-row">
+    <div class="date-badge">
+      <span class="day-num">17</span>
+      <span class="month">Apr</span>
+    </div>
+    <div>
+      <div class="circles-row">
+        <!-- Calories over limit: red, full circle -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#ef4444" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="0"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">2480</text>
+          </svg>
+          <p>Calories</p>
+        </div>
+        <!-- Sugar in progress -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#eab308" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="75.4"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">13g</text>
+          </svg>
+          <p>Added Sugar</p>
+        </div>
+        <!-- Protein met -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#22c55e" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="0"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">55g</text>
+          </svg>
+          <p>Protein</p>
+        </div>
+        <!-- Fiber in progress -->
+        <div class="circle-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+            <circle cx="32" cy="32" r="24" fill="none" stroke="#eab308" stroke-width="4"
+              stroke-dasharray="150.8 150.8" stroke-dashoffset="45.2"
+              stroke-linecap="round" transform="rotate(-90 32 32)"/>
+            <text x="32" y="36" text-anchor="middle" font-size="11" fill="#1e293b">20g</text>
+          </svg>
+          <p>Fiber</p>
+        </div>
+      </div>
+      <div class="entry"><p class="title">980 kcal, 30g protein, 10g fiber</p><p class="meta">Pasta Bolognese — 2 servings at 1:00 PM</p></div>
+      <div class="entry"><p class="title">1100 kcal, 25g protein, 10g fiber</p><p class="meta">Pizza — 3 slices at 7:30 PM</p></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
