@@ -41,7 +41,6 @@ export function getStoredToken() {
 // Remove token from localStorage
 export function clearStoredToken() {
   localStorage.removeItem("auth0_token");
-  alert("removed stored token");
 }
 
 // Verify token is still valid (basic check)
@@ -65,6 +64,36 @@ export function getLocationHost() {
 
 export function resetLocation() {
   history.pushState({}, "", "/");
+}
+
+export function getApiBaseUrl() {
+  return location.origin;
+}
+
+export function downloadCsv(content, filename) {
+  const blob = new Blob([content], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+let debounceTimer;
+export function debounceSearch(fn, delay) {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(fn, delay);
+}
+
+export function nowMinusOneHourISO() {
+  return new Date(Date.now() - 3600000).toISOString();
+}
+
+export function nowPlusOneHourISO() {
+  return new Date(Date.now() + 3600000).toISOString();
 }
 
 // Loading eruda for mobile debugging
