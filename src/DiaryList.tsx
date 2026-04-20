@@ -181,7 +181,7 @@ const DiaryList: Component = () => {
                         )}
                         target={targets().calories}
                         max={targets().calories_max}
-                        label="Calories"
+                        label="KCAL"
                       />
                       <CircleProgress
                         value={totalMacro("added_sugars_grams", entries)}
