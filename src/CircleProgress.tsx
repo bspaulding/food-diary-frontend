@@ -18,10 +18,10 @@ const CircleProgress: Component<{
   const offset = () => circumference * (1 - Math.min(ratio(), 1));
 
   const arcColor = () => {
-    if (props.isLimit && props.value > props.target) return "#ef4444";
-    if (props.max !== undefined && props.value > props.max) return "#ef4444";
-    if (props.value >= props.target) return "#22c55e";
-    return "#eab308";
+    if (props.isLimit && props.value > props.target) return "#dc2626";
+    if (props.max !== undefined && props.value > props.max) return "#dc2626";
+    if (props.value >= props.target) return "#16a34a";
+    return "#ca8a04";
   };
 
   return (
@@ -33,7 +33,7 @@ const CircleProgress: Component<{
           r={r}
           fill="none"
           stroke="#e2e8f0"
-          stroke-width="5"
+          stroke-width="6"
         />
         <circle
           cx={cx}
@@ -41,7 +41,7 @@ const CircleProgress: Component<{
           r={r}
           fill="none"
           stroke={arcColor()}
-          stroke-width="5"
+          stroke-width="6"
           stroke-dasharray={`${circumference} ${circumference}`}
           stroke-dashoffset={offset()}
           stroke-linecap="round"
