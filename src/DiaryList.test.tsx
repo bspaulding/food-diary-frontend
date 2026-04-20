@@ -220,7 +220,7 @@ describe("DiaryList", () => {
 
     await waitFor(() => {
       expect(screen.getByText("200")).toBeTruthy();
-      expect(screen.getByText("KCAL")).toBeTruthy();
+      expect(screen.getByText("Calories")).toBeTruthy();
     });
   });
 
