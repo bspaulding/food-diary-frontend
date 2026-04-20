@@ -59,7 +59,7 @@ const CircleProgress: Component<{
           {props.unit}
         </text>
       </svg>
-      <p class="text-xs uppercase text-slate-700 mt-0.5">{props.label}</p>
+      <p class="text-sm uppercase text-slate-700 mt-0.5">{props.label}</p>
     </div>
   );
 };
