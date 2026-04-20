@@ -23,6 +23,9 @@ vi.mock("./ImportDiaryEntries", () => ({ default: vi.fn() }));
 vi.mock("./UserProfile", () => ({ default: vi.fn() }));
 vi.mock("./DiaryEntryEditForm", () => ({ default: vi.fn() }));
 vi.mock("./Trends", () => ({ default: vi.fn() }));
+vi.mock("./NutritionTargets", () => ({
+  NutritionTargetsProvider: ({ children }: { children: unknown }) => children,
+}));
 
 describe("index", () => {
   it("should call render with router and routes", async () => {
