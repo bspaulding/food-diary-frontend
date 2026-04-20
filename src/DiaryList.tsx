@@ -1,5 +1,5 @@
 import type { Accessor, Component, Setter } from "solid-js";
-import { Index, Show } from "solid-js";
+import { Index, Show, createMemo } from "solid-js";
 import type {
   DiaryEntry,
   GetEntriesQueryResponse,
@@ -162,18 +162,19 @@ const DiaryList: Component = () => {
         </Show>
         <Index each={entriesByDay()}>
           {(dayEntries: () => [string, DiaryEntry[]], i: number) => {
-            const [dateStr, entries]: [string, DiaryEntry[]] = dayEntries();
+            const dateStr = createMemo(() => dayEntries()[0]);
+            const entries = createMemo(() => dayEntries()[1]);
             return (
               <li class="grid grid-cols-6 -ml-4 mb-6">
                 <div>
-                  <DateBadge class="col-span-1" date={parseISO(dateStr)} />
+                  <DateBadge class="col-span-1" date={parseISO(dateStr())} />
                 </div>
                 <ul class="col-span-5 mb-6">
                   <li class="mb-4">
                     <div class="flex flex-row justify-around">
                       <CircleProgress
                         value={Math.ceil(
-                          entries.reduce(
+                          entries().reduce(
                             (acc: number, entry: DiaryEntry) =>
                               acc + entry.calories,
                             0,
@@ -184,27 +185,29 @@ const DiaryList: Component = () => {
                         label="KCAL"
                       />
                       <CircleProgress
-                        value={totalMacro("added_sugars_grams", entries)}
+                        value={totalMacro("added_sugars_grams", entries())}
                         target={targets().added_sugars_grams}
                         label="Added Sugar"
                         unit="g"
                         isLimit={true}
                       />
                       <CircleProgress
-                        value={totalMacro("protein_grams", entries)}
+                        value={totalMacro("protein_grams", entries())}
                         target={targets().protein_grams}
                         label="Protein"
                         unit="g"
                       />
                       <CircleProgress
-                        value={totalMacro("dietary_fiber_grams", entries)}
+                        value={totalMacro("dietary_fiber_grams", entries())}
                         target={targets().dietary_fiber_grams}
                         label="Fiber"
                         unit="g"
                       />
                     </div>
                   </li>
-                  <Index each={entries.sort(compareEntriesByConsumedAt)}>
+                  <Index
+                    each={entries().slice().sort(compareEntriesByConsumedAt)}
+                  >
                     {(entry: () => DiaryEntry, i: number) => (
                       <li class="mb-4">
                         <p class="font-semibold">

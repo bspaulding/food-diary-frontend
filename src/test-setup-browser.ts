@@ -200,6 +200,17 @@ const graphqlHandler: HttpResponseResolver = async ({ request }) => {
     });
   }
 
+  // Handle DeleteEntry mutation
+  if (query.includes("DeleteEntry")) {
+    return HttpResponse.json({
+      data: {
+        delete_food_diary_diary_entry_by_pk: {
+          id: 1,
+        },
+      },
+    });
+  }
+
   // If we reach here, it's an unhandled GraphQL query
   // Throw an error so the test fails
   const queryPreview: string = query.substring(0, 100);

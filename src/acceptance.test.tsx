@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { Router, Route } from "@solidjs/router";
 import type { Component } from "solid-js";
+import { http, HttpResponse } from "msw";
 import { worker } from "./test-setup-browser";
 import App from "./App";
 import DiaryList from "./DiaryList";
@@ -106,6 +107,103 @@ describe("Browser Acceptance Tests", () => {
 
     // Banana: 1 serving * 3.1g fiber
     expect(screen.getByText(/3\.1g fiber/i)).toBeTruthy();
+  });
+
+  it("should remove a deleted entry from the list without a page reload", async () => {
+    const user = userEvent.setup();
+
+    // Two entries on the same day — this is the scenario the bug affected.
+    // A single-entry day always worked because the whole day node was removed;
+    // a multi-entry day left the deleted entry visible due to stale closure state.
+    worker.use(
+      http.post("*/api/v1/graphql", async ({ request }) => {
+        const body = (await request.json()) as { query?: string };
+        const query = body?.query ?? "";
+
+        if (query.includes("DeleteEntry")) {
+          return HttpResponse.json({
+            data: { delete_food_diary_diary_entry_by_pk: { id: 1 } },
+          });
+        }
+
+        if (query.includes("GetWeeklyStats")) {
+          return HttpResponse.json({
+            data: {
+              current_week: { aggregate: { sum: { calories: 0 } } },
+              past_four_weeks: { aggregate: { sum: { calories: 0 } } },
+            },
+          });
+        }
+
+        // GetEntries — two entries on the same day
+        return HttpResponse.json({
+          data: {
+            food_diary_diary_entry: [
+              {
+                id: 1,
+                consumed_at: "2024-01-01T09:00:00Z",
+                servings: 1,
+                calories: 105,
+                nutrition_item: {
+                  id: 1,
+                  description: "Banana",
+                  calories: 105,
+                  protein_grams: 1.3,
+                  added_sugars_grams: 0,
+                  total_fat_grams: 0.4,
+                  dietary_fiber_grams: 3.1,
+                },
+                recipe: null,
+              },
+              {
+                id: 2,
+                consumed_at: "2024-01-01T12:00:00Z",
+                servings: 1,
+                calories: 95,
+                nutrition_item: {
+                  id: 2,
+                  description: "Apple",
+                  calories: 95,
+                  protein_grams: 0.5,
+                  added_sugars_grams: 0,
+                  total_fat_grams: 0.3,
+                  dietary_fiber_grams: 4.4,
+                },
+                recipe: null,
+              },
+            ],
+          },
+        });
+      }),
+    );
+
+    render(() => (
+      <Router root={App}>
+        <Route path="/" component={DiaryList} />
+      </Router>
+    ));
+
+    // Both entries load
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Banana")).not.toBeNull();
+        expect(screen.queryByText("Apple")).not.toBeNull();
+      },
+      { timeout: 5000 },
+    );
+
+    // Delete the first entry
+    const deleteButtons = screen.getAllByText("Delete");
+    await user.click(deleteButtons[0]);
+
+    // Banana is gone; Apple stays
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Banana")).toBeNull();
+      },
+      { timeout: 5000 },
+    );
+    expect(screen.queryByText("Apple")).not.toBeNull();
   });
 
   it("should complete Add Item flow - create new item and log it", async () => {
