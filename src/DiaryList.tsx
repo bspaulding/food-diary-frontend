@@ -188,6 +188,7 @@ const DiaryList: Component = () => {
                         target={targets().added_sugars_grams}
                         label="Added Sugar"
                         unit="g"
+                        isLimit={true}
                       />
                       <CircleProgress
                         value={totalMacro("protein_grams", entries)}
