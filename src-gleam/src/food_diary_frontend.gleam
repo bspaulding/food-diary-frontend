@@ -57,7 +57,26 @@ pub type Model {
     entry: Option(queries.DiaryEntry),
     form: Form(DiaryEntryEditFormData),
   )
-  DiaryEntryNew(auth: AuthInfo)
+  DiaryEntryNew(
+    auth: AuthInfo,
+    tab: NewEntryTab,
+    search_query: String,
+    search_results: Option(queries.SearchResponseData),
+    recent_entries: List(queries.SuggestionEntry),
+    time_entries: List(queries.SuggestionEntry),
+    logging_item: Option(LoggingItem),
+    saving: Bool,
+  )
+}
+
+pub type NewEntryTab {
+  SuggestionsTab
+  SearchTab
+}
+
+pub type LoggingItem {
+  LoggingNutritionItem(id: Int, description: String, servings: Float)
+  LoggingRecipe(id: Int, name: String, servings: Float)
 }
 
 pub type User {
@@ -106,7 +125,26 @@ fn uri_to_route(auth: Option(AuthInfo), uri: Uri) -> #(Model, Effect(Msg)) {
       DiaryEntryEdit(auth, id, None, diary_entry_edit_form(id)),
       load_diary_entry(auth.access_token, id),
     )
-    Some(auth), ["diary_entry", "new"] -> #(DiaryEntryNew(auth), effect.none())
+    Some(auth), ["diary_entry", "new"] -> #(
+      DiaryEntryNew(
+        auth: auth,
+        tab: SuggestionsTab,
+        search_query: "",
+        search_results: None,
+        recent_entries: [],
+        time_entries: [],
+        logging_item: None,
+        saving: False,
+      ),
+      effect.batch([
+        load_recent_entries(auth.access_token),
+        load_time_entries(
+          auth.access_token,
+          js_now_minus_one_hour(),
+          js_now_plus_one_hour(),
+        ),
+      ]),
+    )
     Some(auth), [] -> #(
       DiaryList(
         auth,
@@ -131,16 +169,29 @@ type Msg {
   AuthGotToken(Result(String, rsvp.Error))
   ReceivedUserInfo(Result(User, rsvp.Error))
 
-  // app
-  UserDeletedEntry(queries.DiaryEntry)
+  // app - diary list
+  UserDeletedEntry(Int)
   UserLoadedMoreEntries
   UserSubmittedDiaryEntryEditForm(
     result: Result(DiaryEntryEditFormData, Form(DiaryEntryEditFormData)),
   )
 
+  // app - new diary entry
+  UserSwitchedNewEntryTab(NewEntryTab)
+  UserSearchedItems(String)
+  UserDebouncedSearch
+  UserToggledLoggingItem(LoggingItem)
+  UserChangedServings(String)
+  UserSavedNewEntry
+
   // gql
   ApiLoadedDiaryEntries(Result(queries.DiaryEntriesResponse, rsvp.Error))
   ApiLoadedDiaryEntry(Result(queries.DiaryEntryResponse, rsvp.Error))
+  ApiDeletedEntry(Result(queries.DeleteEntryResponse, rsvp.Error))
+  ApiSearchedItems(Result(queries.SearchResponse, rsvp.Error))
+  ApiLoadedRecentEntries(Result(queries.RecentEntriesResponse, rsvp.Error))
+  ApiLoadedTimeEntries(Result(queries.TimeEntriesResponse, rsvp.Error))
+  ApiCreatedEntry(Result(queries.CreateEntryResponse, rsvp.Error))
 
   // routing
   BrowserChangedRoute(Uri)
@@ -167,6 +218,18 @@ fn js_clear_stored_token() -> Nil
 
 @external(javascript, "./app.ffi.mjs", "resetLocation")
 fn js_reset_location() -> Nil
+
+@external(javascript, "./app.ffi.mjs", "getApiBaseUrl")
+fn js_get_api_base_url() -> String
+
+@external(javascript, "./app.ffi.mjs", "debounceSearch")
+fn js_debounce_search(callback: fn() -> Nil, delay: Int) -> Nil
+
+@external(javascript, "./app.ffi.mjs", "nowMinusOneHourISO")
+fn js_now_minus_one_hour() -> String
+
+@external(javascript, "./app.ffi.mjs", "nowPlusOneHourISO")
+fn js_now_plus_one_hour() -> String
 
 // @external(javascript, "./app.ffi.mjs", "exchangeCodeForToken")
 // fn js_exchange_code_for_token(
@@ -270,17 +333,19 @@ fn load_user_info(token: String) -> Effect(Msg) {
   rsvp.send(request, handler)
 }
 
-fn run_graphql_query(token, query, decoder, msg) {
+fn run_graphql_query(token, query, variables, decoder, msg) {
   let body =
     json.object([
       #("query", json.string(query)),
+      #("variables", variables),
     ])
     |> json.to_string
+  let assert Ok(base_uri) = uri.parse(js_get_api_base_url())
   let request =
     request.new()
     |> request.set_method(Post)
     |> request.set_header("authorization", "Bearer " <> token)
-    |> request.set_host("food-diary.motingo.com")
+    |> request.set_host(option.unwrap(base_uri.host, ""))
     |> request.set_path("/api/v1/graphql")
     |> request.set_header("content-type", "application/json")
     |> request.set_body(body)
@@ -292,27 +357,129 @@ fn load_diary_entries(token: String, offset: Int) -> Effect(Msg) {
   run_graphql_query(
     token,
     queries.get_entries_query(offset),
+    json.object([]),
     queries.diary_entries_response_decoder(),
     ApiLoadedDiaryEntries,
   )
 }
 
 fn load_diary_entry(token: String, entry_id: String) -> Effect(Msg) {
+  let assert Ok(id) = int.parse(entry_id)
   run_graphql_query(
     token,
-    queries.get_entry_query(entry_id),
+    queries.get_entry_query(),
+    json.object([#("id", json.int(id))]),
     queries.diary_entry_response_decoder(),
     ApiLoadedDiaryEntry,
   )
 }
 
 fn update_diary_entry(token: String, form: DiaryEntryEditFormData) {
+  let assert Ok(id) = int.parse(form.entry_id)
   run_graphql_query(
     token,
-    queries.update_entry_query(form.entry_id, form.servings, form.consumed_at),
+    queries.update_entry_query(),
+    json.object([
+      #("id", json.int(id)),
+      #("attrs", json.object([
+        #("servings", json.float(form.servings)),
+        #("consumed_at", json.string(form.consumed_at)),
+      ])),
+    ]),
     queries.diary_entry_response_decoder(),
     ApiLoadedDiaryEntry,
   )
+}
+
+fn delete_diary_entry(token: String, entry_id: Int) -> Effect(Msg) {
+  run_graphql_query(
+    token,
+    queries.delete_entry_mutation(),
+    json.object([#("id", json.int(entry_id))]),
+    queries.delete_entry_response_decoder(),
+    ApiDeletedEntry,
+  )
+}
+
+fn search_items_and_recipes(token: String, search: String) -> Effect(Msg) {
+  run_graphql_query(
+    token,
+    queries.search_items_and_recipes_query(),
+    json.object([#("search", json.string(search))]),
+    queries.search_response_decoder(),
+    ApiSearchedItems,
+  )
+}
+
+fn load_recent_entries(token: String) -> Effect(Msg) {
+  run_graphql_query(
+    token,
+    queries.get_recent_entries_query(),
+    json.object([]),
+    queries.recent_entries_response_decoder(),
+    ApiLoadedRecentEntries,
+  )
+}
+
+fn load_time_entries(
+  token: String,
+  start_time: String,
+  end_time: String,
+) -> Effect(Msg) {
+  run_graphql_query(
+    token,
+    queries.get_entries_around_time_query(),
+    json.object([
+      #("startTime", json.string(start_time)),
+      #("endTime", json.string(end_time)),
+    ]),
+    queries.time_entries_response_decoder(),
+    ApiLoadedTimeEntries,
+  )
+}
+
+fn create_diary_entry(token: String, item: LoggingItem) -> Effect(Msg) {
+  let entry_json = case item {
+    LoggingNutritionItem(id, _, servings) ->
+      json.object([
+        #("servings", json.float(servings)),
+        #("nutrition_item_id", json.int(id)),
+      ])
+    LoggingRecipe(id, _, servings) ->
+      json.object([
+        #("servings", json.float(servings)),
+        #("recipe_id", json.int(id)),
+      ])
+  }
+  run_graphql_query(
+    token,
+    queries.create_diary_entry_mutation(),
+    json.object([#("entry", entry_json)]),
+    queries.create_entry_response_decoder(),
+    ApiCreatedEntry,
+  )
+}
+
+fn logging_item_matches(a: LoggingItem, b: LoggingItem) -> Bool {
+  case a, b {
+    LoggingNutritionItem(id_a, _, _), LoggingNutritionItem(id_b, _, _) ->
+      id_a == id_b
+    LoggingRecipe(id_a, _, _), LoggingRecipe(id_b, _, _) -> id_a == id_b
+    _, _ -> False
+  }
+}
+
+fn handle_api_error(
+  model: Model,
+  err: rsvp.Error,
+) -> #(Model, Effect(Msg)) {
+  case err {
+    rsvp.HttpError(response) if response.status == 401 || response.status == 403 -> #(
+      LoggedOut,
+      clear_token(),
+    )
+    _ -> #(model, effect.none())
+  }
 }
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
@@ -355,7 +522,10 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
               auth: AuthInfo(model.auth.access_token, Some(user)),
             )
           DiaryEntryNew(..) ->
-            DiaryEntryNew(auth: AuthInfo(model.auth.access_token, Some(user)))
+            DiaryEntryNew(
+              ..model,
+              auth: AuthInfo(model.auth.access_token, Some(user)),
+            )
           DiaryEntryEdit(..) ->
             DiaryEntryEdit(
               ..model,
@@ -372,10 +542,17 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     }
 
     // app
-    UserDeletedEntry(_entry) -> {
-      // TODO
-      #(model, effect.none())
-    }
+    UserDeletedEntry(entry_id) ->
+      case model {
+        DiaryList(..) -> #(
+          DiaryList(
+            ..model,
+            diary_entries: dict.delete(model.diary_entries, entry_id),
+          ),
+          delete_diary_entry(model.auth.access_token, entry_id),
+        )
+        _ -> #(model, effect.none())
+      }
     UserLoadedMoreEntries ->
       case model {
         DiaryList(..) -> #(
@@ -397,16 +574,96 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
         _ -> #(model, effect.none())
       }
 
-    // gql
-    ApiLoadedDiaryEntries(Error(err)) -> {
+    // app - new diary entry
+    UserSwitchedNewEntryTab(tab) ->
       case model {
-        DiaryList(..) -> #(
-          DiaryList(..model, error: Some(rsvp_error_to_string(err))),
+        DiaryEntryNew(..) -> #(
+          DiaryEntryNew(..model, tab: tab),
           effect.none(),
         )
         _ -> #(model, effect.none())
       }
-    }
+    UserSearchedItems(query) ->
+      case model {
+        DiaryEntryNew(..) -> #(
+          DiaryEntryNew(..model, search_query: query),
+          case query {
+            "" -> effect.none()
+            _ -> {
+              use dispatch <- effect.from
+              js_debounce_search(
+                fn() { dispatch(UserDebouncedSearch) },
+                500,
+              )
+            }
+          },
+        )
+        _ -> #(model, effect.none())
+      }
+    UserDebouncedSearch ->
+      case model {
+        DiaryEntryNew(..) if model.search_query != "" -> #(
+          model,
+          search_items_and_recipes(
+            model.auth.access_token,
+            model.search_query,
+          ),
+        )
+        _ -> #(model, effect.none())
+      }
+    UserToggledLoggingItem(item) ->
+      case model {
+        DiaryEntryNew(..) -> {
+          let new_logging = case model.logging_item {
+            Some(current) ->
+              case logging_item_matches(current, item) {
+                True -> None
+                False -> Some(item)
+              }
+            None -> Some(item)
+          }
+          #(DiaryEntryNew(..model, logging_item: new_logging), effect.none())
+        }
+        _ -> #(model, effect.none())
+      }
+    UserChangedServings(value) ->
+      case model {
+        DiaryEntryNew(logging_item: Some(item), ..) -> {
+          let servings = result.unwrap(float.parse(value), 1.0)
+          let new_item = case item {
+            LoggingNutritionItem(id, desc, _) ->
+              LoggingNutritionItem(id, desc, servings)
+            LoggingRecipe(id, name, _) -> LoggingRecipe(id, name, servings)
+          }
+          #(
+            DiaryEntryNew(..model, logging_item: Some(new_item)),
+            effect.none(),
+          )
+        }
+        _ -> #(model, effect.none())
+      }
+    UserSavedNewEntry ->
+      case model {
+        DiaryEntryNew(logging_item: Some(item), ..) -> #(
+          DiaryEntryNew(..model, saving: True),
+          create_diary_entry(model.auth.access_token, item),
+        )
+        _ -> #(model, effect.none())
+      }
+
+    // gql
+    ApiLoadedDiaryEntries(Error(err)) ->
+      case handle_api_error(model, err) {
+        #(LoggedOut, eff) -> #(LoggedOut, eff)
+        _ ->
+          case model {
+            DiaryList(..) -> #(
+              DiaryList(..model, error: Some(rsvp_error_to_string(err))),
+              effect.none(),
+            )
+            _ -> #(model, effect.none())
+          }
+      }
     ApiLoadedDiaryEntries(Ok(res)) -> {
       case model, res.data {
         DiaryList(..), Some(data) -> {
@@ -419,15 +676,18 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
         _, _ -> #(model, effect.none())
       }
     }
-    ApiLoadedDiaryEntry(Error(err)) -> {
-      case model {
-        DiaryList(..) -> #(
-          DiaryList(..model, error: Some(rsvp_error_to_string(err))),
-          effect.none(),
-        )
-        _ -> #(model, effect.none())
+    ApiLoadedDiaryEntry(Error(err)) ->
+      case handle_api_error(model, err) {
+        #(LoggedOut, eff) -> #(LoggedOut, eff)
+        _ ->
+          case model {
+            DiaryList(..) -> #(
+              DiaryList(..model, error: Some(rsvp_error_to_string(err))),
+              effect.none(),
+            )
+            _ -> #(model, effect.none())
+          }
       }
-    }
     ApiLoadedDiaryEntry(Ok(res)) -> {
       case model, res.data {
         DiaryList(..), Some(data) -> {
@@ -455,6 +715,50 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
         _, _ -> #(model, effect.none())
       }
     }
+    ApiDeletedEntry(Error(err)) -> handle_api_error(model, err)
+    ApiDeletedEntry(Ok(_)) -> #(model, effect.none())
+    ApiSearchedItems(Error(err)) -> handle_api_error(model, err)
+    ApiSearchedItems(Ok(res)) ->
+      case model {
+        DiaryEntryNew(..) -> #(
+          DiaryEntryNew(..model, search_results: res.data),
+          effect.none(),
+        )
+        _ -> #(model, effect.none())
+      }
+    ApiLoadedRecentEntries(Error(err)) -> handle_api_error(model, err)
+    ApiLoadedRecentEntries(Ok(res)) ->
+      case model {
+        DiaryEntryNew(..) -> {
+          let entries = case res.data {
+            Some(data) -> data.entries
+            None -> []
+          }
+          #(DiaryEntryNew(..model, recent_entries: entries), effect.none())
+        }
+        _ -> #(model, effect.none())
+      }
+    ApiLoadedTimeEntries(Error(err)) -> handle_api_error(model, err)
+    ApiLoadedTimeEntries(Ok(res)) ->
+      case model {
+        DiaryEntryNew(..) -> {
+          let entries = case res.data {
+            Some(data) -> data.entries
+            None -> []
+          }
+          #(DiaryEntryNew(..model, time_entries: entries), effect.none())
+        }
+        _ -> #(model, effect.none())
+      }
+    ApiCreatedEntry(Error(err)) -> handle_api_error(model, err)
+    ApiCreatedEntry(Ok(_)) ->
+      case model {
+        DiaryEntryNew(..) -> #(
+          DiaryEntryNew(..model, saving: False, logging_item: None),
+          effect.none(),
+        )
+        _ -> #(model, effect.none())
+      }
   }
 }
 
@@ -528,7 +832,7 @@ fn view(model: Model) -> Element(Msg) {
         ) -> diary_list_route(diary_entries, error, is_loading)
         DiaryEntryEdit(_auth, id, entry, form) ->
           diary_entry_edit_route(id, entry, form)
-        DiaryEntryNew(..) -> diary_entry_new_route(model)
+        DiaryEntryNew(..) as m -> diary_entry_new_route(m)
         LoggedOut -> logged_out_page()
         AuthCallback -> html.text("")
         NotFound -> html.text("Not Found")
@@ -541,16 +845,251 @@ fn logged_out_page() {
   html.button([event.on_click(Login)], [html.text("Login")])
 }
 
-fn todo_view() {
-  html.div([], [html.text("TODO")])
+fn diary_entry_new_route(model: Model) -> Element(Msg) {
+  case model {
+    DiaryEntryNew(..) ->
+      html.div([], [
+        html.div([attribute.class("flex space-x-4 mb-4")], [
+          button_link([attribute.href("/")], [html.text("Back to Diary")]),
+          button_link([attribute.href("/nutrition_item/new")], [
+            html.text("Add Item"),
+          ]),
+          button_link([attribute.href("/recipe/new")], [
+            html.text("Add Recipe"),
+          ]),
+        ]),
+        segmented_control(model.tab),
+        case model.tab {
+          SuggestionsTab -> suggestions_view(model)
+          SearchTab -> search_view(model)
+        },
+      ])
+    _ -> html.text("")
+  }
 }
 
-fn diary_entry_new_route(_model) {
-  html.div([attribute.class("flex space-x-4 mb-4")], [
-    button_link([attribute.href("/")], [
-      html.text("Back to Diary"),
+fn segmented_control(active: NewEntryTab) -> Element(Msg) {
+  let tab_class = fn(tab: NewEntryTab) {
+    let base = "flex-1 py-2 text-center cursor-pointer font-semibold"
+    case tab == active {
+      True -> base <> " bg-indigo-600 text-slate-50"
+      False -> base <> " bg-slate-200 text-slate-600"
+    }
+  }
+  html.div([attribute.class("flex rounded-md overflow-hidden mb-4")], [
+    html.button(
+      [
+        attribute.class(tab_class(SuggestionsTab)),
+        event.on_click(UserSwitchedNewEntryTab(SuggestionsTab)),
+      ],
+      [html.text("Suggestions")],
+    ),
+    html.button(
+      [
+        attribute.class(tab_class(SearchTab)),
+        event.on_click(UserSwitchedNewEntryTab(SearchTab)),
+      ],
+      [html.text("Search")],
+    ),
+  ])
+}
+
+fn suggestions_view(model: Model) -> Element(Msg) {
+  case model {
+    DiaryEntryNew(..) ->
+      html.div([], [
+        case list.is_empty(model.time_entries) {
+          True -> html.text("")
+          False ->
+            html.div([], [
+              html.h2([attribute.class("text-lg font-semibold")], [
+                html.text("Logged around this time"),
+              ]),
+              suggestions_list(model.time_entries, model.logging_item),
+            ])
+        },
+        html.h2([attribute.class("text-lg font-semibold")], [
+          html.text("Suggested Items"),
+        ]),
+        case list.is_empty(model.recent_entries) {
+          True ->
+            html.p([attribute.class("text-slate-400 text-center")], [
+              html.text("No suggestions available"),
+            ])
+          False -> suggestions_list(model.recent_entries, model.logging_item)
+        },
+      ])
+    _ -> html.text("")
+  }
+}
+
+fn suggestions_list(
+  entries: List(queries.SuggestionEntry),
+  logging_item: Option(LoggingItem),
+) -> Element(Msg) {
+  html.ul(
+    [attribute.class("mb-4")],
+    list.map(entries, fn(entry) {
+      case entry.nutrition_item, entry.recipe {
+        Some(item), _ ->
+          html.li([], [
+            loggable_item(
+              LoggingNutritionItem(item.id, item.description, 1.0),
+              logging_item,
+            ),
+          ])
+        _, Some(recipe) ->
+          html.li([], [
+            loggable_item(
+              LoggingRecipe(recipe.id, recipe.name, 1.0),
+              logging_item,
+            ),
+          ])
+        _, _ -> html.text("")
+      }
+    }),
+  )
+}
+
+fn search_view(model: Model) -> Element(Msg) {
+  case model {
+    DiaryEntryNew(..) ->
+      html.section([attribute.class("flex flex-col mt-5")], [
+        html.input([
+          attribute.class("border rounded px-2 text-lg"),
+          attribute.type_("search"),
+          attribute.placeholder("Search Previous Items"),
+          attribute.name("entry-item-search"),
+          attribute.value(model.search_query),
+          event.on_input(UserSearchedItems),
+        ]),
+        html.div([attribute.class("px-1")], [
+          case model.search_query {
+            "" ->
+              html.p([attribute.class("text-center mt-4 text-slate-400")], [
+                html.text(
+                  "Search for an item or recipe you've previously added.",
+                ),
+              ])
+            _ ->
+              case model.search_results {
+                None ->
+                  html.p([attribute.class("text-center mt-4 text-slate-400")], [
+                    html.text("Searching..."),
+                  ])
+                Some(data) -> {
+                  let total =
+                    list.length(data.nutrition_items)
+                    + list.length(data.recipes)
+                  html.div([], [
+                    html.p(
+                      [attribute.class("text-center mt-4 text-slate-400")],
+                      [html.text(int.to_string(total) <> " items")],
+                    ),
+                    html.ul(
+                      [],
+                      list.append(
+                        list.map(data.nutrition_items, fn(item) {
+                          html.li([], [
+                            loggable_item(
+                              LoggingNutritionItem(
+                                item.id,
+                                item.description,
+                                1.0,
+                              ),
+                              model.logging_item,
+                            ),
+                            html.span(
+                              [
+                                attribute.class(
+                                  "bg-slate-400 text-slate-50 px-2 py-1 rounded text-xs ml-8",
+                                ),
+                              ],
+                              [html.text("ITEM")],
+                            ),
+                          ])
+                        }),
+                        list.map(data.recipes, fn(recipe) {
+                          html.li([], [
+                            loggable_item(
+                              LoggingRecipe(recipe.id, recipe.name, 1.0),
+                              model.logging_item,
+                            ),
+                            html.span(
+                              [
+                                attribute.class(
+                                  "bg-slate-400 text-slate-50 px-2 py-1 rounded text-xs ml-8",
+                                ),
+                              ],
+                              [html.text("RECIPE")],
+                            ),
+                          ])
+                        }),
+                      ),
+                    ),
+                  ])
+                }
+              }
+          },
+        ]),
+      ])
+    _ -> html.text("")
+  }
+}
+
+fn loggable_item(
+  item: LoggingItem,
+  current_logging: Option(LoggingItem),
+) -> Element(Msg) {
+  let is_logging = case current_logging {
+    Some(current) -> logging_item_matches(current, item)
+    None -> False
+  }
+  let name = case item {
+    LoggingNutritionItem(_, desc, _) -> desc
+    LoggingRecipe(_, name, _) -> name
+  }
+  let servings = case current_logging {
+    Some(LoggingNutritionItem(_, _, s)) if is_logging -> s
+    Some(LoggingRecipe(_, _, s)) if is_logging -> s
+    _ -> 1.0
+  }
+  html.div([attribute.class("ml-7")], [
+    html.div([attribute.class("flex items-center -ml-7")], [
+      html.button(
+        [
+          attribute.class(
+            "mr-1 text-3xl text-indigo-600 transition-transform"
+            <> case is_logging {
+              True -> " rotate-45"
+              False -> ""
+            },
+          ),
+          event.on_click(UserToggledLoggingItem(item)),
+        ],
+        [html.text("⊕")],
+      ),
+      html.p([], [html.text(name)]),
     ]),
-    todo_view(),
+    case is_logging {
+      True ->
+        html.div([attribute.class("ml-2 flex")], [
+          html.input([
+            attribute.type_("number"),
+            attribute.inputmode("decimal"),
+            attribute.step("0.1"),
+            attribute.value(float.to_string(servings)),
+            attribute.style([
+              #("min-width", "50px"),
+              #("border", "1px solid #3e4a49"),
+              #("padding", "8px"),
+            ]),
+            event.on_input(UserChangedServings),
+          ]),
+          button([event.on_click(UserSavedNewEntry)], [html.text("Save")]),
+        ])
+      False -> html.text("")
+    },
   ])
 }
 
@@ -748,7 +1287,7 @@ fn diary_entry_item(entry: queries.DiaryEntry) {
           ],
         ),
         html.button(
-          [attribute.class("ml-2"), event.on_click(UserDeletedEntry(entry))],
+          [attribute.class("ml-2"), event.on_click(UserDeletedEntry(entry.id))],
           [html.text("Delete")],
         ),
       ]),
