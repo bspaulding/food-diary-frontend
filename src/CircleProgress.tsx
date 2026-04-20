@@ -18,10 +18,10 @@ const CircleProgress: Component<{
   const offset = () => circumference * (1 - Math.min(ratio(), 1));
 
   const arcColor = () => {
-    if (props.isLimit && props.value > props.target) return "#dc2626";
-    if (props.max !== undefined && props.value > props.max) return "#dc2626";
-    if (props.value >= props.target) return "#16a34a";
-    return "#ca8a04";
+    if (props.isLimit && props.value > props.target) return "#f87171";
+    if (props.max !== undefined && props.value > props.max) return "#f87171";
+    if (props.value >= props.target) return "#4ade80";
+    return "#fbbf24";
   };
 
   return (
