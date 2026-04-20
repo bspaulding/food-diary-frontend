@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "./test-setup";
 import UserProfile from "./UserProfile";
+import { NutritionTargetsProvider } from "./NutritionTargets";
 
 vi.mock("./Auth0", () => ({
   useAuth: () => [
@@ -117,6 +118,27 @@ describe("UserProfile", () => {
 
     // Restore
     document.createElement = originalCreateElement;
+  });
+
+  it("should save daily targets when form is submitted", async () => {
+    const user = userEvent.setup();
+
+    render(() => (
+      <NutritionTargetsProvider>
+        <UserProfile />
+      </NutritionTargetsProvider>
+    ));
+
+    const caloriesInput = screen.getByDisplayValue("2000");
+    await user.clear(caloriesInput);
+    await user.type(caloriesInput, "2200");
+
+    const saveButton = screen.getByText("Save Targets");
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("Saved!")).toBeTruthy();
+    });
   });
 
   it("should call logout when logout button is clicked", async () => {

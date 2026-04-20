@@ -17,10 +17,12 @@ const CircleProgress: Component<{
   const ratio = () => props.value / (ceiling() || 1);
   const offset = () => circumference * (1 - Math.min(ratio(), 1));
 
-  const color = () => {
-    if (props.isLimit) {
-      return props.value > props.target ? "#ef4444" : "#22c55e";
-    }
+  // For isLimit: green track, red arc fills in as value grows toward the limit.
+  // This makes the circle green at zero (good) and red when the limit is exceeded.
+  const trackColor = () => (props.isLimit ? "#22c55e" : "#e2e8f0");
+
+  const arcColor = () => {
+    if (props.isLimit) return "#ef4444";
     if (props.max !== undefined && props.value > props.max) return "#ef4444";
     if (props.value >= props.target) return "#22c55e";
     return "#eab308";
@@ -34,7 +36,7 @@ const CircleProgress: Component<{
           cy={cy}
           r={r}
           fill="none"
-          stroke="#e2e8f0"
+          stroke={trackColor()}
           stroke-width="4"
         />
         <circle
@@ -42,7 +44,7 @@ const CircleProgress: Component<{
           cy={cy}
           r={r}
           fill="none"
-          stroke={color()}
+          stroke={arcColor()}
           stroke-width="4"
           stroke-dasharray={`${circumference} ${circumference}`}
           stroke-dashoffset={offset()}
@@ -51,9 +53,10 @@ const CircleProgress: Component<{
         />
         <text
           x={cx}
-          y={cy + 4}
+          y={cy}
           text-anchor="middle"
-          font-size="11"
+          dominant-baseline="central"
+          font-size="16"
           fill="currentColor"
         >
           {Math.round(props.value)}
