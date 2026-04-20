@@ -1,8 +1,8 @@
 import type { Component } from "solid-js";
 
-const r = 24;
-const cx = 32;
-const cy = 32;
+const r = 30;
+const cx = 40;
+const cy = 40;
 const circumference = 2 * Math.PI * r;
 
 const CircleProgress: Component<{
@@ -17,12 +17,8 @@ const CircleProgress: Component<{
   const ratio = () => props.value / (ceiling() || 1);
   const offset = () => circumference * (1 - Math.min(ratio(), 1));
 
-  // For isLimit: green track, red arc fills in as value grows toward the limit.
-  // This makes the circle green at zero (good) and red when the limit is exceeded.
-  const trackColor = () => (props.isLimit ? "#22c55e" : "#e2e8f0");
-
   const arcColor = () => {
-    if (props.isLimit) return "#ef4444";
+    if (props.isLimit && props.value > props.target) return "#ef4444";
     if (props.max !== undefined && props.value > props.max) return "#ef4444";
     if (props.value >= props.target) return "#22c55e";
     return "#eab308";
@@ -30,14 +26,14 @@ const CircleProgress: Component<{
 
   return (
     <div class="flex flex-col items-center">
-      <svg width="64" height="64" viewBox="0 0 64 64">
+      <svg width="80" height="80" viewBox="0 0 80 80">
         <circle
           cx={cx}
           cy={cy}
           r={r}
           fill="none"
-          stroke={trackColor()}
-          stroke-width="4"
+          stroke="#e2e8f0"
+          stroke-width="5"
         />
         <circle
           cx={cx}
@@ -45,7 +41,7 @@ const CircleProgress: Component<{
           r={r}
           fill="none"
           stroke={arcColor()}
-          stroke-width="4"
+          stroke-width="5"
           stroke-dasharray={`${circumference} ${circumference}`}
           stroke-dashoffset={offset()}
           stroke-linecap="round"
