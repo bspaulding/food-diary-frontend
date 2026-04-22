@@ -165,9 +165,12 @@ const DiaryList: Component = () => {
             const dateStr = createMemo(() => dayEntries()[0]);
             const entries = createMemo(() => dayEntries()[1]);
             return (
-              <li class="grid grid-cols-6 -ml-4 mb-6">
-                <div>
-                  <DateBadge class="col-span-1" date={parseISO(dateStr())} />
+              <li class="grid grid-cols-8 -ml-4 mb-6">
+                <div class="col-span-2">
+                  <DateBadge
+                    class="col-span-1 mb-2"
+                    date={parseISO(dateStr())}
+                  />
                   <CircleProgress
                     value={Math.ceil(
                       entries().reduce(
@@ -180,31 +183,27 @@ const DiaryList: Component = () => {
                     max={targets().calories_max}
                     label="KCAL"
                   />
+                  <CircleProgress
+                    value={totalMacro("protein_grams", entries())}
+                    target={targets().protein_grams}
+                    label="Protein"
+                    unit="g"
+                  />
+                  <CircleProgress
+                    value={totalMacro("dietary_fiber_grams", entries())}
+                    target={targets().dietary_fiber_grams}
+                    label="Fiber"
+                    unit="g"
+                  />
+                  <CircleProgress
+                    value={totalMacro("added_sugars_grams", entries())}
+                    target={targets().added_sugars_grams}
+                    label="Added Sugar"
+                    unit="g"
+                    isLimit={true}
+                  />
                 </div>
-                <ul class="col-span-5 mb-6">
-                  <li class="mb-4">
-                    <div class="flex flex-row justify-around">
-                      <CircleProgress
-                        value={totalMacro("added_sugars_grams", entries())}
-                        target={targets().added_sugars_grams}
-                        label="Added Sugar"
-                        unit="g"
-                        isLimit={true}
-                      />
-                      <CircleProgress
-                        value={totalMacro("protein_grams", entries())}
-                        target={targets().protein_grams}
-                        label="Protein"
-                        unit="g"
-                      />
-                      <CircleProgress
-                        value={totalMacro("dietary_fiber_grams", entries())}
-                        target={targets().dietary_fiber_grams}
-                        label="Fiber"
-                        unit="g"
-                      />
-                    </div>
-                  </li>
+                <ul class="col-span-6 mb-6">
                   <Index
                     each={entries().slice().sort(compareEntriesByConsumedAt)}
                   >
