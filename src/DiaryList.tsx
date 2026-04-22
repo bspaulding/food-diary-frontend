@@ -168,22 +168,22 @@ const DiaryList: Component = () => {
               <li class="grid grid-cols-6 -ml-4 mb-6">
                 <div>
                   <DateBadge class="col-span-1" date={parseISO(dateStr())} />
+                  <CircleProgress
+                    value={Math.ceil(
+                      entries().reduce(
+                        (acc: number, entry: DiaryEntry) =>
+                          acc + entry.calories,
+                        0,
+                      ),
+                    )}
+                    target={targets().calories}
+                    max={targets().calories_max}
+                    label="KCAL"
+                  />
                 </div>
                 <ul class="col-span-5 mb-6">
                   <li class="mb-4">
                     <div class="flex flex-row justify-around">
-                      <CircleProgress
-                        value={Math.ceil(
-                          entries().reduce(
-                            (acc: number, entry: DiaryEntry) =>
-                              acc + entry.calories,
-                            0,
-                          ),
-                        )}
-                        target={targets().calories}
-                        max={targets().calories_max}
-                        label="KCAL"
-                      />
                       <CircleProgress
                         value={totalMacro("added_sugars_grams", entries())}
                         target={targets().added_sugars_grams}
