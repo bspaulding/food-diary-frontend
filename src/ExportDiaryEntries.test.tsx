@@ -118,13 +118,14 @@ describe("ExportDiaryEntries", () => {
 
   it("should export with date range variables when date inputs are set", async () => {
     const user = userEvent.setup();
-    let capturedRequestBody: {
+    let capturedRequestBody!: {
       variables: { startDate: string; endDate: string };
     };
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        capturedRequestBody = await request.json();
+        capturedRequestBody =
+          (await request.json()) as typeof capturedRequestBody;
         return HttpResponse.json(exportResponse);
       }),
     );
@@ -157,11 +158,12 @@ describe("ExportDiaryEntries", () => {
 
   it("should export all entries with no date variables when 'All dates' is checked", async () => {
     const user = userEvent.setup();
-    let capturedRequestBody: { variables: Record<string, never> };
+    let capturedRequestBody!: { variables: Record<string, never> };
 
     server.use(
       http.post("/api/v1/graphql", async ({ request }) => {
-        capturedRequestBody = await request.json();
+        capturedRequestBody =
+          (await request.json()) as typeof capturedRequestBody;
         return HttpResponse.json(exportResponse);
       }),
     );
