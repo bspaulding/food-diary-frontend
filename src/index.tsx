@@ -14,6 +14,7 @@ import NewRecipeForm from "./NewRecipeForm";
 import RecipeShow from "./RecipeShow";
 import RecipeEdit from "./RecipeEdit";
 import ImportDiaryEntries from "./ImportDiaryEntries";
+import ExportDiaryEntries from "./ExportDiaryEntries";
 import UserProfile from "./UserProfile";
 import DiaryEntryEditForm from "./DiaryEntryEditForm";
 import Trends from "./Trends";
@@ -34,6 +35,7 @@ render(
         />
         <Route path="/diary_entry/:id/edit" component={DiaryEntryEditForm} />
         <Route path="/diary_entry/import" component={ImportDiaryEntries} />
+        <Route path="/diary_entry/export" component={ExportDiaryEntries} />
         <Route
           path="/nutrition_item/new"
           component={NewNutritionItemForm as Component}

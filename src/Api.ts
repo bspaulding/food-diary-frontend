@@ -644,7 +644,7 @@ export async function insertDiaryEntries(
   });
 }
 
-const exportEntriesQuery = `
+const nutritionItemFragment = `
 fragment nutritionItem on food_diary_nutrition_item {
   description
   calories
@@ -660,10 +660,9 @@ fragment nutritionItem on food_diary_nutrition_item {
   total_sugars_grams
   added_sugars_grams
   protein_grams
-}
+}`;
 
-query ExportEntries {
-  food_diary_diary_entry {
+const entryFields = `
     servings
     consumed_at
     nutrition_item {
@@ -672,16 +671,42 @@ query ExportEntries {
     recipe {
       name
       recipe_items {
-				servings
+        servings
         nutrition_item {
           ...nutritionItem
         }
       }
-    }
+    }`;
+
+const exportEntriesQuery = `
+${nutritionItemFragment}
+
+query ExportEntries {
+  food_diary_diary_entry {
+    ${entryFields}
   }
 }`;
 
-export async function fetchExportEntries(accessToken: string) {
+const exportEntriesWithDateRangeQuery = `
+${nutritionItemFragment}
+
+query ExportEntriesWithDateRange($startDate: timestamptz!, $endDate: timestamptz!) {
+  food_diary_diary_entry(where: { consumed_at: { _gte: $startDate, _lte: $endDate } }) {
+    ${entryFields}
+  }
+}`;
+
+export async function fetchExportEntries(
+  accessToken: string,
+  startDate?: string,
+  endDate?: string,
+) {
+  if (startDate && endDate) {
+    return await fetchQuery(accessToken, exportEntriesWithDateRangeQuery, {
+      startDate,
+      endDate,
+    });
+  }
   return await fetchQuery(accessToken, exportEntriesQuery);
 }
 
