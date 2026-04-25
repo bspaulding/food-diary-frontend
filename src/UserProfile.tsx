@@ -1,8 +1,6 @@
 import type { Component } from "solid-js";
 import { createSignal } from "solid-js";
 import { useAuth } from "./Auth0";
-import { fetchExportEntries } from "./Api";
-import { entriesToCsv, EntryRecord } from "./CSVExport";
 import { useNutritionTargets } from "./NutritionTargets";
 
 type Auth0User = {
@@ -13,7 +11,7 @@ type Auth0User = {
 };
 
 const UserProfile: Component = () => {
-  const [{ user, isAuthenticated, auth0, accessToken }] = useAuth();
+  const [{ user, auth0 }] = useAuth();
   const userObj = (): Auth0User => (user() ?? {}) as Auth0User;
 
   const [targets, updateTargets] = useNutritionTargets();
@@ -111,35 +109,11 @@ const UserProfile: Component = () => {
         </form>
       </div>
 
-      <div class="mt-6 flex flex-col items-center">
-        <a class="ml-3" href="/diary_entry/import">
-          Import Entries
-        </a>
-        <button
-          onClick={async (): Promise<void> => {
-            const responseData: {
-              data: { food_diary_diary_entry: EntryRecord[] };
-            } = await fetchExportEntries(accessToken());
-            const data: string = entriesToCsv(
-              responseData.data.food_diary_diary_entry,
-            );
-            const blob: Blob = new Blob([data], { type: "text/csv" });
-            const url: string = URL.createObjectURL(blob);
-
-            const a: HTMLAnchorElement = document.createElement("a");
-            a.href = url;
-            a.download = "food-diary-entries.csv";
-            a.style.display = "none";
-            document.body.appendChild(a);
-            a.click();
-
-            URL.revokeObjectURL(url);
-            a.remove();
-          }}
-        >
-          Export Entries As CSV
-        </button>
+      <div class="mt-6 flex flex-col gap-2 w-full max-w-sm">
+        <a href="/diary_entry/import">Import Entries</a>
+        <a href="/diary_entry/export">Export Entries</a>
       </div>
+
       <button
         class="text-red-600 mt-4"
         onClick={(): void => {

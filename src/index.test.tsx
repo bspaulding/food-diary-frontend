@@ -20,6 +20,7 @@ vi.mock("./NewRecipeForm", () => ({ default: vi.fn() }));
 vi.mock("./RecipeShow", () => ({ default: vi.fn() }));
 vi.mock("./RecipeEdit", () => ({ default: vi.fn() }));
 vi.mock("./ImportDiaryEntries", () => ({ default: vi.fn() }));
+vi.mock("./ExportDiaryEntries", () => ({ default: vi.fn() }));
 vi.mock("./UserProfile", () => ({ default: vi.fn() }));
 vi.mock("./DiaryEntryEditForm", () => ({ default: vi.fn() }));
 vi.mock("./Trends", () => ({ default: vi.fn() }));
