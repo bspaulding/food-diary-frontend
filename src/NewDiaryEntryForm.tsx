@@ -2,7 +2,7 @@ import type { Component } from "solid-js";
 import { createMemo, createSignal, Show } from "solid-js";
 import {
   fetchRecentEntries,
-  fetchEntriesAroundTime,
+  fetchTopEntriesAroundHour,
   fetchTopLoggedItems,
   createDiaryEntry,
   SearchNutritionItem,
@@ -42,9 +42,9 @@ interface GetRecentEntriesResponse {
   };
 }
 
-interface GetEntriesAroundTimeResponse {
+interface GetTopEntriesAroundHourResponse {
   data: {
-    food_diary_diary_entry: RecentEntry[];
+    food_diary_top_entries_around_hour: RecentEntry[];
   };
 }
 
@@ -67,11 +67,11 @@ const NewDiaryEntryForm: Component<Props> = ({ onSubmit }: Props) => {
   const endHour: number = addHours(now, 1).getUTCHours();
 
   const [getTimeBasedItemsQuery] = createAuthorizedResource((token: string) =>
-    fetchEntriesAroundTime(token, startHour, endHour),
+    fetchTopEntriesAroundHour(token, startHour, endHour),
   );
   const timeBasedItems = (): RecentEntry[] =>
-    (getTimeBasedItemsQuery() as GetEntriesAroundTimeResponse | undefined)?.data
-      ?.food_diary_diary_entry ?? [];
+    (getTimeBasedItemsQuery() as GetTopEntriesAroundHourResponse | undefined)
+      ?.data?.food_diary_top_entries_around_hour ?? [];
 
   const [getTopLoggedItemsQuery] = createAuthorizedResource((token: string) =>
     fetchTopLoggedItems(token),
